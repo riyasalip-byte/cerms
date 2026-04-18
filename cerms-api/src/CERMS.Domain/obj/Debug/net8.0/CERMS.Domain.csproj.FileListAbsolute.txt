@@ -1,0 +1,12 @@
+R:\Projects\cerms\cerms-api\src\CERMS.Domain\bin\Debug\net8.0\CERMS.Domain.deps.json
+R:\Projects\cerms\cerms-api\src\CERMS.Domain\bin\Debug\net8.0\CERMS.Domain.dll
+R:\Projects\cerms\cerms-api\src\CERMS.Domain\bin\Debug\net8.0\CERMS.Domain.pdb
+R:\Projects\cerms\cerms-api\src\CERMS.Domain\obj\Debug\net8.0\CERMS.Domain.GeneratedMSBuildEditorConfig.editorconfig
+R:\Projects\cerms\cerms-api\src\CERMS.Domain\obj\Debug\net8.0\CERMS.Domain.AssemblyInfoInputs.cache
+R:\Projects\cerms\cerms-api\src\CERMS.Domain\obj\Debug\net8.0\CERMS.Domain.AssemblyInfo.cs
+R:\Projects\cerms\cerms-api\src\CERMS.Domain\obj\Debug\net8.0\CERMS.Domain.csproj.CoreCompileInputs.cache
+R:\Projects\cerms\cerms-api\src\CERMS.Domain\obj\Debug\net8.0\CERMS.Domain.sourcelink.json
+R:\Projects\cerms\cerms-api\src\CERMS.Domain\obj\Debug\net8.0\CERMS.Domain.dll
+R:\Projects\cerms\cerms-api\src\CERMS.Domain\obj\Debug\net8.0\refint\CERMS.Domain.dll
+R:\Projects\cerms\cerms-api\src\CERMS.Domain\obj\Debug\net8.0\CERMS.Domain.pdb
+R:\Projects\cerms\cerms-api\src\CERMS.Domain\obj\Debug\net8.0\ref\CERMS.Domain.dll
