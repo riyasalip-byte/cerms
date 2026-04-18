@@ -12,8 +12,8 @@ const MENU_ITEMS: MenuItem[] = [
   { label: 'Rentals', to: '/rentals' },
   { label: 'Invoices', to: '/invoices' },
   { label: 'Staff', to: '/staff' },
-  { label: 'Reports', to: '/reports' },
-  { label: 'Settings', to: '/settings' },
+  { label: 'Reports', to: '/reports/revenue' },
+  { label: 'Settings', to: '/settings/general' },
 ]
 
 export type SidebarProps = {
