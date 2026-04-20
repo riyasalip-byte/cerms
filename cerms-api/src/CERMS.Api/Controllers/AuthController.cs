@@ -1,50 +1,64 @@
-using CERMS.Application.Interfaces;
+using CERMS.Application.Features.Auth.Commands.Login;
+using CERMS.Application.Features.Auth.Commands.Logout;
+using CERMS.Application.Features.Auth.Commands.Refresh;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CERMS.Api.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/v1/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly IJwtService _jwtService;
+    private readonly IMediator _mediator;
 
-    public AuthController(IJwtService jwtService)
+    public AuthController(IMediator mediator)
     {
-        _jwtService = jwtService;
+        _mediator = mediator;
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginCommand command)
     {
-        // Dummy validation
-        if (request.Username == "admin" && request.Password == "password")
-        {
-            var token = _jwtService.GenerateToken(
-                userId: Guid.Parse("00000000-0000-0000-0000-000000000001"),
-                email: "admin@cerms.com",
-                role: "Admin",
-                companyId: Guid.Parse("00000000-0000-0000-0000-000000000001"),
-                branchId: Guid.Parse("00000000-0000-0000-0000-000000000001")
-            );
+        var result = await _mediator.Send(command);
+        SetRefreshTokenCookie(result.RefreshToken);
+        return Ok(result.Response);
+    }
 
-            return Ok(new ApiResponse<string>
-            {
-                Success = true,
-                Data = token
-            });
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh()
+    {
+        var refreshToken = Request.Cookies["refreshToken"];
+        if (string.IsNullOrEmpty(refreshToken))
+            return Unauthorized();
+
+        var result = await _mediator.Send(new RefreshTokenCommand(refreshToken));
+        SetRefreshTokenCookie(result.RefreshToken);
+        return Ok(result.Response);
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var refreshToken = Request.Cookies["refreshToken"];
+        if (!string.IsNullOrEmpty(refreshToken))
+        {
+            await _mediator.Send(new LogoutCommand(refreshToken));
         }
 
-        return Unauthorized(new ApiResponse<string>
-        {
-            Success = false,
-            Errors = new[] { "Invalid username or password." }
-        });
+        Response.Cookies.Delete("refreshToken");
+        return NoContent();
     }
-}
 
-public class LoginRequest
-{
-    public string Username { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+    private void SetRefreshTokenCookie(string refreshToken)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddDays(7)
+        };
+        Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+    }
 }

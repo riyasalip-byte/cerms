@@ -1,41 +1,77 @@
-import { useMemo, useState } from 'react'
+import { useRental, useCreateRental, useUpdateRentalStatus } from '@/hooks/useRentals'
+import { useAssets } from '@/hooks/useAssets'
+import { useCustomers } from '@/hooks/useCustomers'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { mockRentalAssets, mockRentalCustomers, mockRentals, type RentalStatus } from './mockRentals'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 type RentalFormValues = {
   assetId: string
   customerId: string
   startDate: string
-  endDate: string
-  totalAmount: string
-  status: RentalStatus
+  expectedEndDate: string
+  rentalRate: number
+  rateType: number
+  status: number
 }
 
 export function RentalForm() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const editRentalId = searchParams.get('rentalId')
+  const { id } = useParams()
+  const isEditMode = Boolean(id)
 
-  const existingRental = useMemo(
-    () => mockRentals.find((rental) => rental.id === editRentalId),
-    [editRentalId],
-  )
+  const { data: rentalData, isLoading: isRentalLoading } = useRental(id!)
+  const { data: assetsData } = useAssets({ pageSize: 100 })
+  const { data: customersData } = useCustomers({ pageSize: 100 })
+  
+  const createRental = useCreateRental()
+  const updateStatus = useUpdateRentalStatus()
 
   const [formValues, setFormValues] = useState<RentalFormValues>({
-    assetId: existingRental?.assetId ?? mockRentalAssets[0]?.id ?? '',
-    customerId: existingRental?.customerId ?? mockRentalCustomers[0]?.id ?? '',
-    startDate: existingRental?.startDate ?? '',
-    endDate: existingRental?.endDate ?? '',
-    totalAmount: existingRental ? String(existingRental.totalAmount) : '',
-    status: existingRental?.status ?? 'pending',
+    assetId: '',
+    customerId: '',
+    startDate: '',
+    expectedEndDate: '',
+    rentalRate: 0,
+    rateType: 0,
+    status: 0,
   })
 
-  const isEditMode = Boolean(existingRental)
+  useEffect(() => {
+    if (rentalData) {
+      setFormValues({
+        assetId: rentalData.assetId,
+        customerId: rentalData.customerId,
+        startDate: rentalData.startDate.split('T')[0],
+        expectedEndDate: rentalData.expectedEndDate.split('T')[0],
+        rentalRate: rentalData.rentalRate,
+        rateType: rentalData.rateType,
+        status: rentalData.status,
+      })
+    }
+  }, [rentalData])
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  if (isEditMode && isRentalLoading) {
+    return (
+      <div className="px-4 py-12 flex justify-center text-sm text-slate-600 dark:text-slate-300">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></div>
+          Loading rental data...
+        </div>
+      </div>
+    )
+  }
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    navigate('/rentals', { replace: true })
+    
+    if (isEditMode) {
+      await updateStatus.mutateAsync({ id: id!, status: formValues.status })
+    } else {
+      await createRental.mutateAsync(formValues)
+    }
+    
+    navigate('/rentals')
   }
 
   return (
@@ -43,10 +79,10 @@ export function RentalForm() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {isEditMode ? 'Edit Rental' : 'Create Rental'}
+            {isEditMode ? 'Manage Rental' : 'Create Rental'}
           </h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Dummy form only. Submitted data is not persisted.
+            {isEditMode ? 'Update rental status or record extensions.' : 'Setup a new rental agreement.'}
           </p>
         </div>
         <Link
@@ -63,26 +99,29 @@ export function RentalForm() {
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-sm font-medium">Asset</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Asset</span>
             <select
+              disabled={isEditMode}
               value={formValues.assetId}
               onChange={(event) =>
                 setFormValues((prev) => ({ ...prev, assetId: event.target.value }))
               }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
               required
             >
-              {mockRentalAssets.map((asset) => (
-                <option key={asset.id} value={asset.id}>
-                  {asset.name} ({asset.id})
-                </option>
-              ))}
+               <option value="">Select an asset</option>
+               {assetsData?.items.map((asset) => (
+                 <option key={asset.id} value={asset.id}>
+                   {asset.name} ({asset.assetCode})
+                 </option>
+               ))}
             </select>
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium">Customer</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Customer</span>
             <select
+              disabled={isEditMode}
               value={formValues.customerId}
               onChange={(event) =>
                 setFormValues((prev) => ({
@@ -90,88 +129,114 @@ export function RentalForm() {
                   customerId: event.target.value,
                 }))
               }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
               required
             >
-              {mockRentalCustomers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name} ({customer.id})
-                </option>
-              ))}
+               <option value="">Select a customer</option>
+               {customersData?.items.map((customer) => (
+                 <option key={customer.id} value={customer.id}>
+                   {customer.name}
+                 </option>
+               ))}
             </select>
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium">Start Date</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Start Date</span>
             <input
+              disabled={isEditMode}
               type="date"
               value={formValues.startDate}
               onChange={(event) =>
                 setFormValues((prev) => ({ ...prev, startDate: event.target.value }))
               }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
               required
             />
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium">End Date</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Expected End Date</span>
             <input
+              disabled={isEditMode}
               type="date"
-              value={formValues.endDate}
+              value={formValues.expectedEndDate}
               onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, endDate: event.target.value }))
+                setFormValues((prev) => ({ ...prev, expectedEndDate: event.target.value }))
               }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
               required
             />
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium">Total Amount</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Rental Rate</span>
             <input
+              disabled={isEditMode}
               type="number"
               min="0"
-              step="1"
-              value={formValues.totalAmount}
+              value={formValues.rentalRate}
               onChange={(event) =>
                 setFormValues((prev) => ({
                   ...prev,
-                  totalAmount: event.target.value,
+                  rentalRate: Number(event.target.value),
                 }))
               }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
               required
               placeholder="500"
             />
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium">Status</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Rate Type</span>
             <select
-              value={formValues.status}
+              disabled={isEditMode}
+              value={formValues.rateType}
               onChange={(event) =>
                 setFormValues((prev) => ({
                   ...prev,
-                  status: event.target.value as RentalStatus,
+                  rateType: Number(event.target.value),
                 }))
               }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
             >
-              <option value="pending">Pending</option>
-              <option value="active">Active</option>
-              <option value="completed">Completed</option>
-              <option value="overdue">Overdue</option>
+              <option value={0}>Hourly</option>
+              <option value={1}>Daily</option>
+              <option value={2}>Weekly</option>
+              <option value={3}>Monthly</option>
             </select>
           </label>
+
+          {isEditMode && (
+            <label className="space-y-1">
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Status</span>
+              <select
+                value={formValues.status}
+                onChange={(event) =>
+                  setFormValues((prev) => ({
+                    ...prev,
+                    status: Number(event.target.value),
+                  }))
+                }
+                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              >
+                <option value={0}>Draft</option>
+                <option value={1}>Confirmed</option>
+                <option value={2}>Active</option>
+                <option value={3}>Closed</option>
+              </select>
+            </label>
+          )}
         </div>
 
         <div className="mt-6 flex items-center gap-3">
           <button
             type="submit"
-            className="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+            disabled={createRental.isPending || updateStatus.isPending}
+            className="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
           >
-            {isEditMode ? 'Save Changes' : 'Create Rental'}
+            {(createRental.isPending || updateStatus.isPending) ? 'Saving...' : isEditMode ? 'Update Status' : 'Create Rental'}
           </button>
           <Link
             to="/rentals"

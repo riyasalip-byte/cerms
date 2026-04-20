@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { login as loginService, refresh as refreshService } from '@/api/services'
 import { AppLayout } from '@/components/shared/AppLayout'
 import { AssetDetail } from '@/features/assets/AssetDetail'
 import { AssetForm } from '@/features/assets/AssetForm'
@@ -32,19 +33,32 @@ function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard', { replace: true })
     }
   }, [isAuthenticated, navigate])
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    login()
+    setIsLoading(true)
+    setError(null)
 
-    const redirectPath =
-      (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
-    navigate(redirectPath || '/dashboard', { replace: true })
+    try {
+      const { accessToken, user } = await loginService({ email, password })
+      login(user, accessToken)
+
+      const redirectPath =
+        (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
+      navigate(redirectPath || '/dashboard', { replace: true })
+    } catch (err) {
+      setError('Invalid email or password')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -92,11 +106,18 @@ function LoginPage() {
             />
           </div>
 
+          {error && (
+            <div className="rounded-md bg-rose-50 p-3 text-sm text-rose-600 dark:bg-rose-900/20 dark:text-rose-400">
+              {error}
+            </div>
+          )}
+
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+            disabled={isLoading}
+            className="inline-flex w-full items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
           >
-            Login
+            {isLoading ? 'Logging in...' : 'Login'}
           </button>
         </form>
       </div>
@@ -105,6 +126,28 @@ function LoginPage() {
 }
 
 export function AppRouter() {
+  const login = useAuthStore((state) => state.login)
+  const setRefreshing = useAuthStore((state) => state.setRefreshing)
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+
+  useEffect(() => {
+    const recoverSession = async () => {
+      if (isAuthenticated) return
+
+      setRefreshing(true)
+      try {
+        const { accessToken, user } = await refreshService()
+        login(user, accessToken)
+      } catch (error) {
+        // Silent failure is fine here as it just means no active session
+      } finally {
+        setRefreshing(false)
+      }
+    }
+
+    recoverSession()
+  }, [isAuthenticated, login, setRefreshing])
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

@@ -1,5 +1,7 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { mockRentals, type RentalStatus } from './mockRentals'
+import { getRentalById } from '@/api/services'
+import { type RentalStatus } from './mockRentals'
 
 const statusClassMap: Record<RentalStatus, string> = {
   pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
@@ -15,12 +17,31 @@ function formatStatus(status: RentalStatus) {
 
 export function RentalDetail() {
   const { id } = useParams()
-  const rental = mockRentals.find((item) => item.id === id)
+  
+  const {
+    data: rental,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['rentals', id],
+    queryFn: () => getRentalById(id!),
+    enabled: !!id,
+  })
 
-  if (!rental) {
+  if (isLoading) {
+    return (
+      <div className="px-4 py-6 text-sm text-slate-600 dark:text-slate-300">
+        Loading rental details...
+      </div>
+    )
+  }
+
+  if (isError || !rental) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-        <h1 className="text-xl font-semibold">Rental not found</h1>
+        <h1 className="text-xl font-semibold text-rose-600 dark:text-rose-400">
+          Rental not found
+        </h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
           No rental matches ID: {id}
         </p>

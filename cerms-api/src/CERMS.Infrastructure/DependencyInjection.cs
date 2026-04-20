@@ -21,6 +21,8 @@ public static class DependencyInjection
         services.AddScoped<IAssetRepository, AssetRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IJwtService, JwtService>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddHttpContextAccessor();
 
         services.AddDbContext<CermsDbContext>(options =>
             options.UseNpgsql(connectionString,

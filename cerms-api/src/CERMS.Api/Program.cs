@@ -27,7 +27,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "CERMS",
             ValidAudience = builder.Configuration["Jwt:Audience"] ?? "CERMS_Users",
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"] ?? "a_very_long_and_secure_secret_key_1234567890"))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"] ?? "a_very_long_and_secure_secret_key_1234567890")),
+            ClockSkew = TimeSpan.Zero
         };
     });
 

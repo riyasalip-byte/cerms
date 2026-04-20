@@ -1,4 +1,6 @@
 using CERMS.Application.Behaviours;
+using CERMS.Application.Interfaces;
+using CERMS.Application.Services;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +22,8 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(LoggingBehaviour<,>));
             cfg.AddOpenBehavior(typeof(ValidationBehaviour<,>));
         });
+
+        services.AddScoped<IBillingCalculatorService, BillingCalculatorService>();
 
         return services;
     }

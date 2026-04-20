@@ -1,10 +1,33 @@
 using CERMS.Application.Interfaces;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace CERMS.Infrastructure.MultiTenancy;
 
 public class CurrentTenantService : ICurrentTenantService
 {
-    // Static IDs for now as per requirements
-    public Guid? CompanyId => Guid.Parse("00000000-0000-0000-0000-000000000001");
-    public Guid? BranchId => Guid.Parse("00000000-0000-0000-0000-000000000001");
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public CurrentTenantService(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    public Guid? CompanyId
+    {
+        get
+        {
+            var claim = _httpContextAccessor.HttpContext?.User?.FindFirst("company_id")?.Value;
+            return Guid.TryParse(claim, out var id) ? id : null;
+        }
+    }
+
+    public Guid? BranchId
+    {
+        get
+        {
+            var claim = _httpContextAccessor.HttpContext?.User?.FindFirst("branch_id")?.Value;
+            return Guid.TryParse(claim, out var id) ? id : null;
+        }
+    }
 }

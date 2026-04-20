@@ -14,6 +14,8 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         _dbContext = dbContext;
     }
 
+    public IQueryable<T> Entities => _dbContext.Set<T>();
+
     public async Task<T?> GetByIdAsync(Guid id)
     {
         return await _dbContext.Set<T>().FindAsync(id);

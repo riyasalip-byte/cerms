@@ -1,6 +1,10 @@
+using CERMS.Domain.Entities;
+
 namespace CERMS.Application.Interfaces;
 
 public interface IJwtService
 {
-    string GenerateToken(Guid userId, string email, string role, Guid companyId, Guid branchId);
+    string GenerateAccessToken(User user);
+    string GenerateRefreshToken();
+    string HashToken(string token);
 }

@@ -1,29 +1,23 @@
-import { useQuery } from '@tanstack/react-query'
+import { useAssets } from '@/hooks/useAssets'
 import { Link } from 'react-router-dom'
-import { getAssets } from '@/api/services'
-import type { AssetStatus } from './mockAssets'
 
-const statusClassMap: Record<AssetStatus, string> = {
-  available:
-    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-  rented: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  maintenance:
-    'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+const statusClassMap: Record<number, string> = {
+  0: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300', // Available
+  1: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300', // Rented
+  2: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300', // Maintenance
+  3: 'bg-slate-100 text-slate-700 dark:bg-slate-900/40 dark:text-slate-300', // Decommissioned
 }
 
-function formatStatus(status: AssetStatus) {
-  return status.charAt(0).toUpperCase() + status.slice(1)
+const statusTextMap: Record<number, string> = {
+  0: 'Available',
+  1: 'Rented',
+  2: 'Maintenance',
+  3: 'Decommissioned',
 }
 
 export function AssetList() {
-  const {
-    data: assets = [],
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ['assets'],
-    queryFn: getAssets,
-  })
+  const { data, isLoading, isError } = useAssets()
+  const assets = data?.items || []
 
   return (
     <section className="space-y-4">
@@ -44,73 +38,83 @@ export function AssetList() {
 
       <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
         {isLoading && (
-          <div className="px-4 py-6 text-sm text-slate-600 dark:text-slate-300">
-            Loading assets...
+          <div className="px-4 py-12 flex justify-center text-sm text-slate-600 dark:text-slate-300">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></div>
+              Loading assets...
+            </div>
           </div>
         )}
         {isError && (
-          <div className="px-4 py-6 text-sm text-rose-600 dark:text-rose-400">
-            Failed to load assets.
+          <div className="px-4 py-6 text-sm text-rose-600 dark:text-rose-400 text-center">
+            Failed to load assets. Please try again.
           </div>
         )}
-        <table className="min-w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400">
-              <th className="px-4 py-3 font-medium">Asset</th>
-              <th className="px-4 py-3 font-medium">Category</th>
-              <th className="px-4 py-3 font-medium">Location</th>
-              <th className="px-4 py-3 font-medium">Daily Rate</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {assets.map((asset) => (
-              <tr
-                key={asset.id}
-                className="border-b border-slate-100 last:border-0 dark:border-slate-800/70"
-              >
-                <td className="px-4 py-3">
-                  <div className="font-medium text-slate-900 dark:text-slate-100">
-                    {asset.name}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {asset.id} - {asset.serialNumber}
-                  </div>
-                </td>
-                <td className="px-4 py-3">{asset.category}</td>
-                <td className="px-4 py-3">{asset.location}</td>
-                <td className="px-4 py-3">${asset.dailyRate}/day</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={[
-                      'inline-flex rounded-full px-2.5 py-1 text-xs font-medium',
-                      statusClassMap[asset.status],
-                    ].join(' ')}
-                  >
-                    {formatStatus(asset.status)}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Link
-                      to={`/assets/${asset.id}`}
-                      className="text-sm font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
-                    >
-                      View
-                    </Link>
-                    <Link
-                      to={`/assets/new?assetId=${asset.id}`}
-                      className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                    >
-                      Edit
-                    </Link>
-                  </div>
-                </td>
+        {!isLoading && !isError && (
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="px-4 py-3 font-medium">Asset</th>
+                <th className="px-4 py-3 font-medium">Type</th>
+                <th className="px-4 py-3 font-medium">Odometer</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {assets.map((asset) => (
+                <tr
+                  key={asset.id}
+                  className="border-b border-slate-100 last:border-0 dark:border-slate-800/70"
+                >
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-slate-900 dark:text-slate-100">
+                      {asset.name}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {asset.assetCode}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">{asset.assetType}</td>
+                  <td className="px-4 py-3">{asset.currentOdometer.toLocaleString()} units</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={[
+                        'inline-flex rounded-full px-2.5 py-1 text-xs font-medium',
+                        statusClassMap[asset.status] || 'bg-slate-100 text-slate-700',
+                      ].join(' ')}
+                    >
+                      {statusTextMap[asset.status] || 'Unknown'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <Link
+                        to={`/assets/${asset.id}`}
+                        className="text-sm font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
+                      >
+                        View
+                      </Link>
+                      <Link
+                        to={`/assets/${asset.id}/edit`}
+                        className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        Edit
+                      </Link>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {assets.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
+                    No assets found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </section>
   )

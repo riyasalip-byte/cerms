@@ -1,5 +1,7 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { mockAssets, type AssetStatus } from './mockAssets'
+import { getAssetById } from '@/api/services'
+import { type AssetStatus } from './mockAssets'
 
 const statusClassMap: Record<AssetStatus, string> = {
   available:
@@ -15,12 +17,31 @@ function formatStatus(status: AssetStatus) {
 
 export function AssetDetail() {
   const { id } = useParams()
-  const asset = mockAssets.find((item) => item.id === id)
+  
+  const {
+    data: asset,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['assets', id],
+    queryFn: () => getAssetById(id!),
+    enabled: !!id,
+  })
 
-  if (!asset) {
+  if (isLoading) {
+    return (
+      <section className="px-4 py-6 text-sm text-slate-600 dark:text-slate-300">
+        Loading asset details...
+      </section>
+    )
+  }
+
+  if (isError || !asset) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-        <h1 className="text-xl font-semibold">Asset not found</h1>
+        <h1 className="text-xl font-semibold text-rose-600 dark:text-rose-400">
+          Asset not found
+        </h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
           No asset matches ID: {id}
         </p>

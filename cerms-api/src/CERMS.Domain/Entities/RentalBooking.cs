@@ -13,6 +13,7 @@ public class RentalBooking : BaseEntity
     public DateTime? ActualEndDate { get; private set; }
     public RateType RateType { get; private set; }
     public decimal RentalRate { get; private set; }
+    public RentalStatus Status { get; private set; }
 
     public RentalBooking(Guid assetId, Guid customerId, DateTime startDate, DateTime expectedEndDate, RateType rateType, decimal rentalRate)
     {
@@ -23,11 +24,39 @@ public class RentalBooking : BaseEntity
         ExpectedEndDate = expectedEndDate;
         RateType = rateType;
         RentalRate = rentalRate;
+        Status = RentalStatus.Draft;
     }
 
-    public void CompleteRental(DateTime actualEndDate)
+    public void Confirm()
     {
+        if (Status != RentalStatus.Draft)
+            throw new InvalidOperationException("Can only confirm from draft status.");
+        Status = RentalStatus.Confirmed;
+        Update();
+    }
+
+    public void Activate()
+    {
+        if (Status != RentalStatus.Confirmed)
+            throw new InvalidOperationException("Can only activate from confirmed status.");
+        Status = RentalStatus.Active;
+        Update();
+    }
+
+    public void Close(DateTime actualEndDate)
+    {
+        if (Status != RentalStatus.Active)
+            throw new InvalidOperationException("Can only close from active status.");
         ActualEndDate = actualEndDate;
+        Status = RentalStatus.Closed;
+        Update();
+    }
+
+    public void Extend(DateTime newExpectedEndDate)
+    {
+        if (newExpectedEndDate <= ExpectedEndDate)
+            throw new ArgumentException("New end date must be after current end date.");
+        ExpectedEndDate = newExpectedEndDate;
         Update();
     }
 }

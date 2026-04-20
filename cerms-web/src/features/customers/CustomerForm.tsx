@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { mockCustomers } from './mockCustomers'
+import { getCustomerById } from '@/api/services'
 
 type CustomerFormValues = {
   name: string
+  company: string
   email: string
   phone: string
-  company: string
   status: 'active' | 'inactive'
 }
 
@@ -16,20 +17,41 @@ export function CustomerForm() {
   const [searchParams] = useSearchParams()
   const editCustomerId = searchParams.get('customerId')
 
-  const existingCustomer = useMemo(
-    () => mockCustomers.find((customer) => customer.id === editCustomerId),
-    [editCustomerId],
-  )
-
-  const [formValues, setFormValues] = useState<CustomerFormValues>({
-    name: existingCustomer?.name ?? '',
-    email: existingCustomer?.email ?? '',
-    phone: existingCustomer?.phone ?? '',
-    company: existingCustomer?.company ?? '',
-    status: existingCustomer?.status ?? 'active',
+  const { data: existingCustomer, isLoading } = useQuery({
+    queryKey: ['customers', editCustomerId],
+    queryFn: () => getCustomerById(editCustomerId!),
+    enabled: !!editCustomerId,
   })
 
-  const isEditMode = Boolean(existingCustomer)
+  const [formValues, setFormValues] = useState<CustomerFormValues>({
+    name: '',
+    company: '',
+    email: '',
+    phone: '',
+    status: 'active',
+  })
+
+  useEffect(() => {
+    if (existingCustomer) {
+      setFormValues({
+        name: existingCustomer.name,
+        company: existingCustomer.company,
+        email: existingCustomer.email,
+        phone: existingCustomer.phone,
+        status: existingCustomer.status,
+      })
+    }
+  }, [existingCustomer])
+
+  const isEditMode = Boolean(editCustomerId)
+
+  if (editCustomerId && isLoading) {
+    return (
+      <div className="px-4 py-6 text-sm text-slate-600 dark:text-slate-300">
+        Loading customer data...
+      </div>
+    )
+  }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

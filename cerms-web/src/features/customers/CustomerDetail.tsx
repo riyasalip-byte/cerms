@@ -1,5 +1,7 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { mockCustomers, mockRentalHistoryByCustomer, type RentalHistoryItem } from './mockCustomers'
+import { getCustomerById } from '@/api/services'
+import { mockRentalHistoryByCustomer, type RentalHistoryItem } from './mockCustomers'
 
 const rentalStatusClassMap: Record<RentalHistoryItem['status'], string> = {
   completed:
@@ -10,14 +12,33 @@ const rentalStatusClassMap: Record<RentalHistoryItem['status'], string> = {
 
 export function CustomerDetail() {
   const { id } = useParams()
-  const customer = mockCustomers.find((item) => item.id === id)
+  
+  const {
+    data: customer,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['customers', id],
+    queryFn: () => getCustomerById(id!),
+    enabled: !!id,
+  })
 
-  if (!customer) {
+  if (isLoading) {
+    return (
+      <div className="px-4 py-6 text-sm text-slate-600 dark:text-slate-300">
+        Loading customer details...
+      </div>
+    )
+  }
+
+  if (isError || !customer) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-        <h1 className="text-xl font-semibold">Customer not found</h1>
+        <h1 className="text-xl font-semibold text-rose-600 dark:text-rose-400">
+          Customer not found
+        </h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          No customer matches ID: {id}
+          No customer record matches ID: {id}
         </p>
         <Link
           to="/customers"

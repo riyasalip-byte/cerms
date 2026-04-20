@@ -1,41 +1,73 @@
-import { useMemo, useState } from 'react'
+import { useAsset, useCreateAsset, useUpdateAsset } from '@/hooks/useAssets'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { mockAssets, type AssetStatus } from './mockAssets'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 type AssetFormValues = {
   name: string
-  category: string
-  serialNumber: string
-  location: string
-  dailyRate: string
-  status: AssetStatus
+  assetType: string
+  assetCode: string
+  currentOdometer: number
+  status: number
 }
 
 export function AssetForm() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const editAssetId = searchParams.get('assetId')
+  const { id } = useParams()
+  const isEditMode = Boolean(id)
 
-  const existingAsset = useMemo(
-    () => mockAssets.find((asset) => asset.id === editAssetId),
-    [editAssetId],
-  )
+  const { data: existingAsset, isLoading } = useAsset(id!)
+  const createAsset = useCreateAsset()
+  const updateAsset = useUpdateAsset()
 
   const [formValues, setFormValues] = useState<AssetFormValues>({
-    name: existingAsset?.name ?? '',
-    category: existingAsset?.category ?? '',
-    serialNumber: existingAsset?.serialNumber ?? '',
-    location: existingAsset?.location ?? '',
-    dailyRate: existingAsset ? String(existingAsset.dailyRate) : '',
-    status: existingAsset?.status ?? 'available',
+    name: '',
+    assetType: '',
+    assetCode: '',
+    currentOdometer: 0,
+    status: 0,
   })
 
-  const isEditMode = Boolean(existingAsset)
+  useEffect(() => {
+    if (existingAsset) {
+      setFormValues({
+        name: existingAsset.name,
+        assetType: existingAsset.assetType,
+        assetCode: existingAsset.assetCode,
+        currentOdometer: existingAsset.currentOdometer,
+        status: existingAsset.status,
+      })
+    }
+  }, [existingAsset])
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  if (isEditMode && isLoading) {
+    return (
+      <div className="px-4 py-12 flex justify-center text-sm text-slate-600 dark:text-slate-300">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></div>
+          Loading asset data...
+        </div>
+      </div>
+    )
+  }
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    navigate('/assets', { replace: true })
+    
+    if (isEditMode) {
+      await updateAsset.mutateAsync({ 
+        id: id!, 
+        data: { 
+          id: id!,
+          status: formValues.status, 
+          currentOdometer: formValues.currentOdometer 
+        } 
+      })
+    } else {
+      await createAsset.mutateAsync(formValues)
+    }
+    
+    navigate('/assets')
   }
 
   return (
@@ -46,7 +78,7 @@ export function AssetForm() {
             {isEditMode ? 'Edit Asset' : 'Create Asset'}
           </h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Dummy form only. Submitted data is not persisted.
+            {isEditMode ? 'Update asset status and odometer.' : 'Register a new asset in the system.'}
           </p>
         </div>
         <Link
@@ -63,91 +95,81 @@ export function AssetForm() {
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-sm font-medium">Name</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Name</span>
             <input
               required
+              disabled={isEditMode}
               value={formValues.name}
               onChange={(event) =>
                 setFormValues((prev) => ({ ...prev, name: event.target.value }))
               }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
               placeholder="Excavator EX-21"
             />
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium">Category</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Asset Type</span>
             <input
               required
-              value={formValues.category}
+              disabled={isEditMode}
+              value={formValues.assetType}
               onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, category: event.target.value }))
+                setFormValues((prev) => ({ ...prev, assetType: event.target.value }))
               }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
               placeholder="Heavy Equipment"
             />
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium">Serial Number</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Asset Code</span>
             <input
               required
-              value={formValues.serialNumber}
+              disabled={isEditMode}
+              value={formValues.assetCode}
               onChange={(event) =>
                 setFormValues((prev) => ({
                   ...prev,
-                  serialNumber: event.target.value,
+                  assetCode: event.target.value,
                 }))
               }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
               placeholder="EX21-AX-9901"
             />
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium">Location</span>
-            <input
-              required
-              value={formValues.location}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, location: event.target.value }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-              placeholder="Yard A"
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-medium">Daily Rate</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Current Odometer</span>
             <input
               required
               min="0"
-              step="1"
               type="number"
-              value={formValues.dailyRate}
+              value={formValues.currentOdometer}
               onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, dailyRate: event.target.value }))
+                setFormValues((prev) => ({ ...prev, currentOdometer: Number(event.target.value) }))
               }
               className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-              placeholder="150"
+              placeholder="0"
             />
           </label>
 
           <label className="space-y-1">
-            <span className="text-sm font-medium">Status</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Status</span>
             <select
               value={formValues.status}
               onChange={(event) =>
                 setFormValues((prev) => ({
                   ...prev,
-                  status: event.target.value as AssetStatus,
+                  status: Number(event.target.value),
                 }))
               }
               className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
             >
-              <option value="available">Available</option>
-              <option value="rented">Rented</option>
-              <option value="maintenance">Maintenance</option>
+              <option value={0}>Available</option>
+              <option value={1}>Rented</option>
+              <option value={2}>Maintenance</option>
+              <option value={3}>Decommissioned</option>
             </select>
           </label>
         </div>
@@ -155,9 +177,10 @@ export function AssetForm() {
         <div className="mt-6 flex items-center gap-3">
           <button
             type="submit"
-            className="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+            disabled={createAsset.isPending || updateAsset.isPending}
+            className="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
           >
-            {isEditMode ? 'Save Changes' : 'Create Asset'}
+            {(createAsset.isPending || updateAsset.isPending) ? 'Saving...' : isEditMode ? 'Save Changes' : 'Create Asset'}
           </button>
           <Link
             to="/assets"

@@ -1,20 +1,106 @@
-import { assetsMockData, customersMockData, rentalsMockData } from './mockData'
+import { api } from '@/lib/axios'
+import type { User } from '@/stores/authStore'
 
-function withDelay<T>(data: T, delayMs = 550): Promise<T> {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(data), delayMs)
-  })
+export type AuthResponse = {
+  accessToken: string
+  user: User
 }
 
-export function getAssets() {
-  return withDelay(assetsMockData)
+export type PaginatedList<T> = {
+  items: T[]
+  pageNumber: number
+  totalPages: number
+  totalCount: number
+  hasPreviousPage: boolean
+  hasNextPage: boolean
 }
 
-export function getCustomers() {
-  return withDelay(customersMockData)
+// Asset types
+export type Asset = {
+  id: string
+  assetCode: string
+  name: string
+  assetType: string
+  status: number
+  currentOdometer: number
 }
 
-export function getRentals() {
-  return withDelay(rentalsMockData)
+// Rental types
+export type Rental = {
+  id: string
+  assetId: string
+  assetName: string
+  customerId: string
+  customerName: string
+  startDate: string
+  expectedEndDate: string
+  actualEndDate?: string
+  status: number
+  rentalRate: decimal
+  rateType: number
 }
 
+// Invoice types
+export type Invoice = {
+  id: string
+  bookingId: string
+  invoiceNumber: string
+  subtotal: number
+  tax: number
+  total: number
+  amountPaid: number
+  balanceDue: number
+  status: number
+  issuedDate: string
+  lineItems: InvoiceLineItem[]
+}
+
+export type InvoiceLineItem = {
+  description: string
+  quantity: number
+  unitPrice: number
+  totalPrice: number
+}
+
+// Services
+// Customer types
+export type Customer = {
+  id: string
+  name: string
+  email: string
+  phone: string
+}
+
+export const customerService = {
+  getAll: (params?: any) => api.get<PaginatedList<Customer>>('/customers', { params }).then(r => r.data),
+  getById: (id: string) => api.get<Customer>(`/customers/${id}`).then(r => r.data)
+}
+
+export const assetService = {
+  getAll: (params: any) => api.get<PaginatedList<Asset>>('/assets', { params }).then(r => r.data),
+  getById: (id: string) => api.get<Asset>(`/assets/${id}`).then(r => r.data),
+  create: (data: any) => api.post<string>('/assets', data).then(r => r.data),
+  update: (id: string, data: any) => api.put(`/assets/${id}`, data),
+  delete: (id: string) => api.delete(`/assets/${id}`)
+}
+
+export const rentalService = {
+  getAll: (params: any) => api.get<PaginatedList<Rental>>('/rentals', { params }).then(r => r.data),
+  getById: (id: string) => api.get<Rental>(`/rentals/${id}`).then(r => r.data),
+  create: (data: any) => api.post<string>('/rentals', data).then(r => r.data),
+  updateStatus: (id: string, status: number) => api.put(`/rentals/${id}/status`, status),
+  close: (id: string, actualEndDate: string) => api.post<{ invoiceId: string }>(`/rentals/${id}/close`, actualEndDate).then(r => r.data),
+  extend: (id: string, newExpectedEndDate: string) => api.post(`/rentals/${id}/extend`, newExpectedEndDate)
+}
+
+export const invoiceService = {
+  getAll: (params: any) => api.get<PaginatedList<Invoice>>('/invoices', { params }).then(r => r.data),
+  getById: (id: string) => api.get<Invoice>(`/invoices/${id}`).then(r => r.data),
+  recordPayment: (id: string, amount: number) => api.post(`/invoices/${id}/payments`, amount)
+}
+
+export const authService = {
+  login: (credentials: any) => api.post<AuthResponse>('/auth/login', credentials).then(r => r.data),
+  refresh: () => api.post<AuthResponse>('/auth/refresh').then(r => r.data),
+  logout: () => api.post('/auth/logout')
+}

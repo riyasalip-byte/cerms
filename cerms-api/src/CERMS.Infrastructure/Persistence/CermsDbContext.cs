@@ -21,6 +21,8 @@ public class CermsDbContext : DbContext
     public DbSet<StaffMember> StaffMembers => Set<StaffMember>();
     public DbSet<RentalBooking> RentalBookings => Set<RentalBooking>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceLineItem> InvoiceLineItems => Set<InvoiceLineItem>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
