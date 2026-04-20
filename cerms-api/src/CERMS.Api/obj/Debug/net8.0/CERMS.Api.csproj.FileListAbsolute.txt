@@ -76,3 +76,16 @@ R:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\System.IO.Pipelines.d
 R:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\System.Text.Encodings.Web.dll
 R:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\System.Text.Json.dll
 R:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\runtimes\browser\lib\net8.0\System.Text.Encodings.Web.dll
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\EFCore.NamingConventions.dll
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.dll
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Relational.dll
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\Microsoft.Extensions.Caching.Memory.dll
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\Npgsql.dll
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\CERMS.Infrastructure.dll
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\CERMS.Infrastructure.pdb
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+r:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
