@@ -24,6 +24,7 @@ public class LogoutCommandHandler : IRequestHandler<LogoutCommand>
         
         var refreshTokenEntity = await _unitOfWork.Repository<RefreshToken>()
             .Entities
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(r => r.TokenHash == tokenHash, cancellationToken);
 
         if (refreshTokenEntity != null)

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "3od9juGKZk4=",
+  "dgSpecHash": "kV04RwmJTvg=",
   "success": true,
-  "projectFilePath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj",
+  "projectFilePath": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\riyas\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
     "C:\\Users\\riyas\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",
@@ -32,11 +32,12 @@
     "C:\\Users\\riyas\\.nuget\\packages\\microsoft.identitymodel.tokens\\8.14.0\\microsoft.identitymodel.tokens.8.14.0.nupkg.sha512",
     "C:\\Users\\riyas\\.nuget\\packages\\npgsql\\8.0.6\\npgsql.8.0.6.nupkg.sha512",
     "C:\\Users\\riyas\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\8.0.11\\npgsql.entityframeworkcore.postgresql.8.0.11.nupkg.sha512",
+    "C:\\Users\\riyas\\.nuget\\packages\\questpdf\\2026.2.4\\questpdf.2026.2.4.nupkg.sha512",
     "C:\\Users\\riyas\\.nuget\\packages\\system.diagnostics.diagnosticsource\\10.0.0\\system.diagnostics.diagnosticsource.10.0.0.nupkg.sha512",
     "C:\\Users\\riyas\\.nuget\\packages\\system.identitymodel.tokens.jwt\\8.0.2\\system.identitymodel.tokens.jwt.8.0.2.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.24\\microsoft.aspnetcore.app.ref.8.0.24.nupkg.sha512",
     "C:\\Users\\riyas\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.24\\microsoft.netcore.app.ref.8.0.24.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.24\\microsoft.windowsdesktop.app.ref.8.0.24.nupkg.sha512"
+    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.24\\microsoft.windowsdesktop.app.ref.8.0.24.nupkg.sha512",
+    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.24\\microsoft.aspnetcore.app.ref.8.0.24.nupkg.sha512"
   ],
   "logs": []
 }

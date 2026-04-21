@@ -3,13 +3,13 @@ namespace CERMS.Application.Common;
 public class Result<T>
 {
     public bool IsSuccess { get; }
-    public T? Data { get; }
+    public T? Value { get; }
     public string? Error { get; }
 
-    private Result(bool isSuccess, T? data, string? error)
+    private Result(bool isSuccess, T? value, string? error)
     {
         IsSuccess = isSuccess;
-        Data = data;
+        Value = value;
         Error = error;
     }
 

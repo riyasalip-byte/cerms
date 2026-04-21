@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CERMS.Application.Features.Rentals.Commands.CloseRental;
 
-public record CloseRentalCommand(Guid Id, DateTime ActualEndDate) : IRequest<Result<Guid>>;
+public record CloseRentalCommand(Guid Id, DateTime ActualEndDate, decimal? CurrentOdometer = null) : IRequest<Result<Guid>>;
 
 public class CloseRentalHandler : IRequestHandler<CloseRentalCommand, Result<Guid>>
 {
@@ -30,9 +30,16 @@ public class CloseRentalHandler : IRequestHandler<CloseRentalCommand, Result<Gui
             // Close the rental
             rental.Close(request.ActualEndDate);
 
-            // Update asset status to Available
+            // Update asset status to Available and update odometer
             var asset = await _unitOfWork.Repository<Asset>().GetByIdAsync(rental.AssetId);
-            asset?.UpdateStatus(AssetStatus.Available);
+            if (asset != null)
+            {
+                asset.UpdateStatus(AssetStatus.Available);
+                if (request.CurrentOdometer.HasValue)
+                {
+                    asset.UpdateOdometer(request.CurrentOdometer.Value);
+                }
+            }
 
             // Trigger billing calculation
             var billingResult = _billingService.Calculate(

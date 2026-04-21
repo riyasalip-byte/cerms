@@ -27,6 +27,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
         
         var refreshTokenEntity = await _unitOfWork.Repository<RefreshToken>()
             .Entities
+            .IgnoreQueryFilters()
             .Include(r => r.User)
             .FirstOrDefaultAsync(r => r.TokenHash == tokenHash, cancellationToken);
 

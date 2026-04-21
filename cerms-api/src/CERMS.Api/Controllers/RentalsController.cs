@@ -49,10 +49,16 @@ public class RentalsController : ControllerBase
     }
 
     [HttpPost("{id}/close")]
-    public async Task<IActionResult> Close(Guid id, [FromBody] DateTime actualEndDate)
+    public async Task<IActionResult> Close(Guid id, [FromBody] CloseRentalRequest request)
     {
-        var result = await _mediator.Send(new CloseRentalCommand(id, actualEndDate));
+        var result = await _mediator.Send(new CloseRentalCommand(id, request.ActualEndDate, request.CurrentOdometer));
         return result.IsSuccess ? Ok(new { InvoiceId = result.Value }) : BadRequest(result.Error);
+    }
+
+    public class CloseRentalRequest
+    {
+        public DateTime ActualEndDate { get; set; }
+        public decimal? CurrentOdometer { get; set; }
     }
 
     [HttpPost("{id}/extend")]

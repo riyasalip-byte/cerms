@@ -17,6 +17,8 @@ import { RentalDetail } from '@/features/rentals/RentalDetail'
 import { RentalForm } from '@/features/rentals/RentalForm'
 import { RentalList } from '@/features/rentals/RentalList'
 import { RevenueReport } from '@/features/reports/RevenueReport'
+import { ReportsOverview } from '@/features/reports/ReportsOverview'
+import { UtilisationReport } from '@/features/reports/UtilisationReport'
 import { GeneralSettings } from '@/features/settings/GeneralSettings'
 import { UserManagement } from '@/features/settings/UserManagement'
 import { StaffDetail } from '@/features/staff/StaffDetail'
@@ -54,8 +56,14 @@ function LoginPage() {
       const redirectPath =
         (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
       navigate(redirectPath || '/dashboard', { replace: true })
-    } catch (err) {
-      setError('Invalid email or password')
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setError('Invalid email or password')
+      } else if (err.code === 'ERR_NETWORK') {
+        setError('Unable to connect to the server. Please ensure the backend is running.')
+      } else {
+        setError('An unexpected error occurred. Please try again.')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -178,8 +186,16 @@ export function AppRouter() {
           <Route path="/staff/:id" element={<StaffDetail />} />
 
           <Route
+            path="/reports"
+            element={<ReportsOverview />}
+          />
+          <Route
             path="/reports/revenue"
             element={<RevenueReport />}
+          />
+          <Route
+            path="/reports/utilisation"
+            element={<UtilisationReport />}
           />
 
           <Route

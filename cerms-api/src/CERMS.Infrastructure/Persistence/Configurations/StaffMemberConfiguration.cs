@@ -21,6 +21,9 @@ public class StaffMemberConfiguration : IEntityTypeConfiguration<StaffMember>
         builder.Property(s => s.EmployeeCode)
             .IsRequired()
             .HasMaxLength(50);
+
+        builder.Property(s => s.MonthlySalary)
+            .HasPrecision(18, 2);
             
         builder.HasIndex(s => s.EmployeeCode).IsUnique();
 

@@ -27,6 +27,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResult>
     {
         var user = await _unitOfWork.Repository<User>()
             .Entities
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
         if (user == null || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))

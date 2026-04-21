@@ -101,10 +101,10 @@ export function AssetDetail() {
             <span
               className={[
                 'mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-medium',
-                statusClassMap[asset.status],
+                (statusClassMap as any)[asset.status],
               ].join(' ')}
             >
-              {formatStatus(asset.status)}
+              {(formatStatus as any)(asset.status)}
             </span>
           </div>
         </div>

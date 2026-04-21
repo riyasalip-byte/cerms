@@ -23,6 +23,8 @@ public class CermsDbContext : DbContext
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<InvoiceLineItem> InvoiceLineItems => Set<InvoiceLineItem>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<RemunerationRecord> RemunerationRecords => Set<RemunerationRecord>();
+    public DbSet<SalaryAdvance> SalaryAdvances => Set<SalaryAdvance>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -83,8 +85,10 @@ public class CermsDbContext : DbContext
             switch (entry.State)
             {
                 case EntityState.Added:
-                    entry.Entity.CompanyId = _currentTenantService.CompanyId ?? Guid.Empty;
-                    entry.Entity.BranchId = _currentTenantService.BranchId ?? Guid.Empty;
+                    if (entry.Entity.CompanyId == Guid.Empty)
+                        entry.Entity.CompanyId = _currentTenantService.CompanyId ?? Guid.Empty;
+                    if (entry.Entity.BranchId == Guid.Empty)
+                        entry.Entity.BranchId = _currentTenantService.BranchId ?? Guid.Empty;
                     break;
                 case EntityState.Modified:
                     entry.Entity.Update();

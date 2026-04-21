@@ -14,7 +14,16 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
             .IsRequired()
             .HasMaxLength(50);
 
-        builder.Property(i => i.Amount)
+        builder.Property(i => i.Subtotal)
+            .HasPrecision(18, 2);
+
+        builder.Property(i => i.Tax)
+            .HasPrecision(18, 2);
+
+        builder.Property(i => i.Total)
+            .HasPrecision(18, 2);
+
+        builder.Property(i => i.AmountPaid)
             .HasPrecision(18, 2);
 
         builder.HasIndex(i => i.InvoiceNumber).IsUnique();

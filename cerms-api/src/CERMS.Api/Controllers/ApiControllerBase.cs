@@ -18,7 +18,7 @@ public abstract class ApiControllerBase : ControllerBase
             return Ok(new ApiResponse<T>
             {
                 Success = true,
-                Data = result.Data
+                Data = result.Value
             });
         }
 

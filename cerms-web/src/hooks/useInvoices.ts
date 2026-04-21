@@ -17,6 +17,14 @@ export function useInvoice(id: string) {
   })
 }
 
+export function useInvoicePdf(id: string) {
+  return useQuery({
+    queryKey: ['invoices', id, 'pdf'],
+    queryFn: () => invoiceService.getPdf(id),
+    enabled: false // Only fetch when requested
+  })
+}
+
 export function useRecordPayment() {
   const queryClient = useQueryClient()
   return useMutation({

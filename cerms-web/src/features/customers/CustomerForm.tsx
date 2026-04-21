@@ -35,10 +35,10 @@ export function CustomerForm() {
     if (existingCustomer) {
       setFormValues({
         name: existingCustomer.name,
-        company: existingCustomer.company,
+        company: existingCustomer.company || '',
         email: existingCustomer.email,
         phone: existingCustomer.phone,
-        status: existingCustomer.status,
+        status: (existingCustomer.status as any) || 'active',
       })
     }
   }, [existingCustomer])

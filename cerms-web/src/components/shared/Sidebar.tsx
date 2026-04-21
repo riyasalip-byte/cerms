@@ -12,7 +12,7 @@ const MENU_ITEMS: MenuItem[] = [
   { label: 'Rentals', to: '/rentals' },
   { label: 'Invoices', to: '/invoices' },
   { label: 'Staff', to: '/staff' },
-  { label: 'Reports', to: '/reports/revenue' },
+  { label: 'Reports', to: '/reports' },
   { label: 'Settings', to: '/settings/general' },
 ]
 

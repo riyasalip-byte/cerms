@@ -22,6 +22,13 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IInvoicePdfService, InvoicePdfService>();
+        services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddScoped<IRemunerationCalculatorService, RemunerationCalculatorService>();
+        services.AddScoped<CERMS.Infrastructure.Jobs.PayrollJob>();
+        services.AddScoped<CERMS.Infrastructure.Jobs.InvoiceReminderJob>();
+        services.AddScoped<CERMS.Infrastructure.Jobs.LicenceExpiryAlertJob>();
+        services.AddScoped<CermsDbContextInitialiser>();
         services.AddHttpContextAccessor();
 
         services.AddDbContext<CermsDbContext>(options =>

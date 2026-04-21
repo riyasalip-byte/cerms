@@ -33,7 +33,7 @@ api.interceptors.response.use(
       originalRequest._retry = true
 
       try {
-        const { setAccessToken, logout } = useAuthStore.getState()
+        const { setAccessToken } = useAuthStore.getState()
 
         // Attempt to refresh token (cookies are sent automatically)
         const response = await axios.post(

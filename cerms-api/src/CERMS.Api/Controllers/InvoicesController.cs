@@ -1,46 +1,47 @@
-using CERMS.Application.Features.Invoices.Commands.RecordPayment;
-using CERMS.Application.Features.Invoices.Queries;
-using MediatR;
+using CERMS.Application.Interfaces;
+using CERMS.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CERMS.Api.Controllers;
 
-[ApiController]
-[Route("api/v1/invoices")]
-public class InvoicesController : ControllerBase
+[Route("api/v1/[controller]")]
+public class InvoicesController : ApiControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IFileStorageService _fileStorageService;
 
-    public InvoicesController(IMediator mediator)
+    public InvoicesController(IUnitOfWork unitOfWork, IFileStorageService fileStorageService)
     {
-        _mediator = mediator;
+        _unitOfWork = unitOfWork;
+        _fileStorageService = fileStorageService;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    [HttpGet("{id}/pdf")]
+    public async Task<IActionResult> GetInvoicePdf(Guid id)
     {
-        var result = await _mediator.Send(new GetInvoicesQuery(pageNumber, pageSize));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
-    }
+        var invoice = await _unitOfWork.Repository<Invoice>()
+            .Entities
+            .FirstOrDefaultAsync(i => i.Id == id);
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
-    {
-        var result = await _mediator.Send(new GetInvoiceByIdQuery(id));
-        return result.IsSuccess ? Ok(result.Value) : NotFound(result.Error);
-    }
+        if (invoice == null)
+        {
+            return NotFound("Invoice not found.");
+        }
 
-    [HttpPost("{id}/payments")]
-    public async Task<IActionResult> RecordPayment(Guid id, [FromBody] decimal amount)
-    {
-        var result = await _mediator.Send(new RecordPaymentCommand(id, amount));
-        return result.IsSuccess ? NoContent() : BadRequest(result.Error);
-    }
+        if (string.IsNullOrEmpty(invoice.PdfUrl))
+        {
+            return BadRequest("Invoice PDF not generated yet.");
+        }
 
-    [HttpGet("{id}/pdf-stub")]
-    public IActionResult GetPdfStub(Guid id)
-    {
-        // Stub PDF generation
-        return Ok(new { Message = $"PDF generation for invoice {id} is not implemented yet.", DownloadUrl = $"/api/v1/invoices/{id}/pdf-stub/download" });
+        try
+        {
+            var pdfBytes = await _fileStorageService.GetFileAsync(invoice.PdfUrl);
+            return File(pdfBytes, "application/pdf", $"{invoice.InvoiceNumber}.pdf");
+        }
+        catch (FileNotFoundException)
+        {
+            return NotFound("Invoice PDF file not found on storage.");
+        }
     }
 }

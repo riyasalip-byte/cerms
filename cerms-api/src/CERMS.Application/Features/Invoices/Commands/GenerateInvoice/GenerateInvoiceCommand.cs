@@ -11,11 +11,19 @@ public class GenerateInvoiceCommandHandler : IRequestHandler<GenerateInvoiceComm
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IBillingCalculatorService _billingService;
+    private readonly IInvoicePdfService _pdfService;
+    private readonly IFileStorageService _fileStorageService;
 
-    public GenerateInvoiceCommandHandler(IUnitOfWork unitOfWork, IBillingCalculatorService billingService)
+    public GenerateInvoiceCommandHandler(
+        IUnitOfWork unitOfWork, 
+        IBillingCalculatorService billingService,
+        IInvoicePdfService pdfService,
+        IFileStorageService fileStorageService)
     {
         _unitOfWork = unitOfWork;
         _billingService = billingService;
+        _pdfService = pdfService;
+        _fileStorageService = fileStorageService;
     }
 
     public async Task<Guid> Handle(GenerateInvoiceCommand request, CancellationToken cancellationToken)
@@ -64,6 +72,23 @@ public class GenerateInvoiceCommandHandler : IRequestHandler<GenerateInvoiceComm
 
         await _unitOfWork.Repository<Invoice>().AddAsync(invoice);
         await _unitOfWork.Repository<InvoiceLineItem>().AddAsync(lineItem);
+        
+        // Generate and Save PDF
+        var customer = await _unitOfWork.Repository<Customer>()
+            .Entities
+            .FirstOrDefaultAsync(c => c.Id == booking.CustomerId, cancellationToken);
+            
+        if (customer != null)
+        {
+            // Add line items to invoice for PDF generation
+            invoice.LineItems.Add(lineItem);
+            
+            var pdfBytes = _pdfService.GenerateInvoicePdf(invoice, customer);
+            var fileName = $"{invoice.InvoiceNumber}.pdf";
+            var savedPath = await _fileStorageService.SaveFileAsync(pdfBytes, fileName, "application/pdf");
+            invoice.SetPdfUrl(savedPath);
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return invoice.Id;

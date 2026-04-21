@@ -2,6 +2,8 @@ import { useCallback, useMemo, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
+import { PWAPrompt } from './PWAPrompt'
+import { OfflineSyncManager } from './OfflineSyncManager'
 
 export type AppLayoutProps = {
   defaultCollapsed?: boolean
@@ -46,6 +48,8 @@ export function AppLayout({ defaultCollapsed }: AppLayoutProps) {
           </div>
         </main>
       </div>
+      <PWAPrompt />
+      <OfflineSyncManager />
     </div>
   )
 }

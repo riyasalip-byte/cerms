@@ -21,6 +21,10 @@ export type Asset = {
   assetCode: string
   name: string
   assetType: string
+  category?: string
+  serialNumber?: string
+  location?: string
+  dailyRate?: number
   status: number
   currentOdometer: number
 }
@@ -34,10 +38,13 @@ export type Rental = {
   customerName: string
   startDate: string
   expectedEndDate: string
+  endDate?: string
   actualEndDate?: string
   status: number
-  rentalRate: decimal
+  rentalRate: number
   rateType: number
+  totalAmount?: number
+  currentOdometer?: number
 }
 
 // Invoice types
@@ -62,13 +69,20 @@ export type InvoiceLineItem = {
   totalPrice: number
 }
 
-// Services
+export type ChartDataDto = {
+  label: string
+  value: number
+}
+
 // Customer types
 export type Customer = {
   id: string
   name: string
   email: string
   phone: string
+  company?: string
+  joinedOn?: string
+  status?: string
 }
 
 export const customerService = {
@@ -89,14 +103,22 @@ export const rentalService = {
   getById: (id: string) => api.get<Rental>(`/rentals/${id}`).then(r => r.data),
   create: (data: any) => api.post<string>('/rentals', data).then(r => r.data),
   updateStatus: (id: string, status: number) => api.put(`/rentals/${id}/status`, status),
-  close: (id: string, actualEndDate: string) => api.post<{ invoiceId: string }>(`/rentals/${id}/close`, actualEndDate).then(r => r.data),
+  close: (id: string, data: { actualEndDate: string; currentOdometer: number }) => api.post<{ invoiceId: string }>(`/rentals/${id}/close`, data).then(r => r.data),
   extend: (id: string, newExpectedEndDate: string) => api.post(`/rentals/${id}/extend`, newExpectedEndDate)
 }
 
 export const invoiceService = {
   getAll: (params: any) => api.get<PaginatedList<Invoice>>('/invoices', { params }).then(r => r.data),
   getById: (id: string) => api.get<Invoice>(`/invoices/${id}`).then(r => r.data),
+  getPdf: (id: string) => api.get(`/invoices/${id}/pdf`, { responseType: 'blob' }).then(r => r.data),
   recordPayment: (id: string, amount: number) => api.post(`/invoices/${id}/payments`, amount)
+}
+
+export const reportService = {
+  getRevenue: (params: { startDate?: string; endDate?: string }) => api.get<any>('/reports/revenue', { params }).then(r => r.data),
+  getUtilisation: () => api.get<ChartDataDto[]>('/reports/utilisation').then(r => r.data),
+  getMaintenanceCost: () => api.get<ChartDataDto[]>('/reports/maintenance-cost').then(r => r.data),
+  getPayroll: () => api.get<ChartDataDto[]>('/reports/payroll').then(r => r.data)
 }
 
 export const authService = {
@@ -104,3 +126,11 @@ export const authService = {
   refresh: () => api.post<AuthResponse>('/auth/refresh').then(r => r.data),
   logout: () => api.post('/auth/logout')
 }
+
+// Compatibility exports
+export const getAssetById = assetService.getById;
+export const getCustomerById = customerService.getById;
+export const getCustomers = customerService.getAll;
+export const getRentalById = rentalService.getById;
+export const login = authService.login;
+export const refresh = authService.refresh;

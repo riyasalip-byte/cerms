@@ -58,6 +58,14 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "Hangfire": {
+              "target": "Package",
+              "version": "[1.8.14, )"
+            },
+            "Hangfire.PostgreSql": {
+              "target": "Package",
+              "version": "[1.20.10, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[8.0.*, )"
@@ -65,6 +73,12 @@
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[8.0.11, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.0, )"
             },
             "Serilog.AspNetCore": {
               "target": "Package",
@@ -182,6 +196,10 @@
             "MediatR": {
               "target": "Package",
               "version": "[14.1.0, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.0.0, )"
             }
           },
           "imports": [
@@ -349,6 +367,10 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.1.0, )"
+            },
             "EFCore.NamingConventions": {
               "target": "Package",
               "version": "[8.0.*, )"
@@ -368,6 +390,10 @@
             "Npgsql.EntityFrameworkCore.PostgreSQL": {
               "target": "Package",
               "version": "[8.0.*, )"
+            },
+            "QuestPDF": {
+              "target": "Package",
+              "version": "[2026.2.4, )"
             },
             "System.IdentityModel.Tokens.Jwt": {
               "target": "Package",
@@ -400,6 +426,9 @@
             }
           ],
           "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }

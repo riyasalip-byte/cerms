@@ -6,7 +6,7 @@ import { getCustomers } from '@/api/services'
 export function CustomerList() {
   const [query, setQuery] = useState('')
   const {
-    data: customers = [],
+    data,
     isLoading,
     isError,
   } = useQuery({
@@ -14,11 +14,13 @@ export function CustomerList() {
     queryFn: getCustomers,
   })
 
+  const customers = data?.items || []
+
   const filteredCustomers = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return customers
 
-    return customers.filter((customer) =>
+    return customers.filter((customer: any) =>
       [customer.id, customer.name, customer.email, customer.company]
         .join(' ')
         .toLowerCase()

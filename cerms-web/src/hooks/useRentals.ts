@@ -48,15 +48,29 @@ export function useUpdateRentalStatus() {
   })
 }
 
+
 export function useCloseRental() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, actualEndDate }: { id: string; actualEndDate: string }) => rentalService.close(id, actualEndDate),
-    onSuccess: () => {
+    mutationFn: async ({ id, actualEndDate, currentOdometer }: { id: string; actualEndDate: string; currentOdometer: number }) => {
+      try {
+        return await rentalService.close(id, { actualEndDate, currentOdometer })
+      } catch (error) {
+        if (!navigator.onLine) {
+          toast.info('Offline: Bill will sync automatically when back online')
+          return { offline: true }
+        }
+        throw error
+      }
+    },
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['rentals'] })
       queryClient.invalidateQueries({ queryKey: ['invoices'] })
       queryClient.invalidateQueries({ queryKey: ['assets'] })
-      toast.success('Rental closed and invoice generated')
+      
+      if (!data?.offline) {
+        toast.success('Rental closed and invoice generated')
+      }
     },
     onError: (error: any) => {
       toast.error(error.response?.data || 'Failed to close rental')

@@ -1,7 +1,7 @@
 {
   "format": 1,
   "restore": {
-    "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj": {}
+    "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj": {}
   },
   "projects": {
     "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Application\\CERMS.Application.csproj": {
@@ -70,6 +70,10 @@
             "MediatR": {
               "target": "Package",
               "version": "[14.1.0, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.0.0, )"
             }
           },
           "imports": [
@@ -186,14 +190,14 @@
         }
       }
     },
-    "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj": {
+    "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj",
+        "projectUniqueName": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj",
         "projectName": "CERMS.Infrastructure",
-        "projectPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj",
+        "projectPath": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\riyas\\.nuget\\packages\\",
-        "outputPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\obj\\",
+        "outputPath": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -261,6 +265,10 @@
               "target": "Package",
               "version": "[8.0.*, )"
             },
+            "QuestPDF": {
+              "target": "Package",
+              "version": "[2026.2.4, )"
+            },
             "System.IdentityModel.Tokens.Jwt": {
               "target": "Package",
               "version": "[8.0.*, )"
@@ -292,6 +300,9 @@
             }
           ],
           "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }

@@ -1,4 +1,5 @@
 using CERMS.Domain.Common;
+using CERMS.Domain.Enums;
 
 namespace CERMS.Domain.Entities;
 
@@ -13,6 +14,8 @@ public class Invoice : BaseEntity
     public decimal BalanceDue => Total - AmountPaid;
     public InvoiceStatus Status { get; private set; }
     public DateTime IssuedDate { get; private set; }
+    public DateTime DueDate { get; private set; }
+    public string? PdfUrl { get; private set; }
     public ICollection<InvoiceLineItem> LineItems { get; private set; } = new List<InvoiceLineItem>();
 
     public Invoice(Guid bookingId, string invoiceNumber, decimal subtotal, decimal tax)
@@ -25,6 +28,7 @@ public class Invoice : BaseEntity
         AmountPaid = 0;
         Status = InvoiceStatus.Unpaid;
         IssuedDate = DateTime.UtcNow;
+        DueDate = IssuedDate.AddDays(14);
     }
 
     public void RecordPayment(decimal amount)
@@ -42,6 +46,12 @@ public class Invoice : BaseEntity
             Status = InvoiceStatus.Partial;
         }
         
+        Update();
+    }
+
+    public void SetPdfUrl(string url)
+    {
+        PdfUrl = url;
         Update();
     }
 }

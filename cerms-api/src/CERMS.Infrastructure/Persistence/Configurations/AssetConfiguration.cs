@@ -28,6 +28,9 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
 
         builder.Property(a => a.CurrentOdometer)
             .HasPrecision(18, 2);
+
+        builder.Property(a => a.MaintenanceCost)
+            .HasPrecision(18, 2);
             
         builder.HasIndex(a => a.AssetCode).IsUnique();
     }

@@ -10,13 +10,15 @@ public class Asset : BaseEntity
     public string AssetType { get; private set; }
     public AssetStatus Status { get; private set; }
     public decimal CurrentOdometer { get; private set; }
+    public decimal MaintenanceCost { get; private set; }
 
-    public Asset(string assetCode, string name, string assetType, decimal currentOdometer)
+    public Asset(string assetCode, string name, string assetType, decimal currentOdometer, decimal maintenanceCost = 0)
     {
         AssetCode = assetCode;
         Name = name;
         AssetType = assetType;
         CurrentOdometer = currentOdometer;
+        MaintenanceCost = maintenanceCost;
         Status = AssetStatus.Available;
     }
 
