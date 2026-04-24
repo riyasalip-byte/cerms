@@ -1,56 +1,24 @@
-import { useCallback, useMemo, useState } from 'react'
-import { Outlet } from 'react-router-dom'
-import { Sidebar } from './Sidebar'
-import { Topbar } from './Topbar'
-import { PWAPrompt } from './PWAPrompt'
-import { OfflineSyncManager } from './OfflineSyncManager'
+import { Outlet, useLocation } from "react-router-dom"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { AppSidebar } from "./AppSidebar"
+import { AppTopbar } from "./AppTopbar"
+import { MobileNav } from "./MobileNav"
 
-export type AppLayoutProps = {
-  defaultCollapsed?: boolean
-}
-
-export function AppLayout({ defaultCollapsed }: AppLayoutProps) {
-  const [collapsed, setCollapsed] = useState(Boolean(defaultCollapsed))
-  const [mobileOpen, setMobileOpen] = useState(false)
-
-  const onToggleCollapsed = useCallback(() => {
-    setCollapsed((v) => !v)
-  }, [])
-
-  const onOpenMobileSidebar = useCallback(() => {
-    setMobileOpen(true)
-  }, [])
-
-  const onCloseMobile = useCallback(() => {
-    setMobileOpen(false)
-  }, [])
-
-  const mainPadding = useMemo(() => {
-    return collapsed ? 'md:pl-16' : 'md:pl-64'
-  }, [collapsed])
+export function AppLayout() {
+  const location = useLocation()
+  
+  console.log(`[AppLayout] Rendering path: ${location.pathname}`)
 
   return (
-    <div className="min-h-dvh bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
-      <div className="md:fixed md:inset-y-0 md:left-0">
-        <Sidebar
-          collapsed={collapsed}
-          mobileOpen={mobileOpen}
-          onToggleCollapsed={onToggleCollapsed}
-          onCloseMobile={onCloseMobile}
-        />
-      </div>
-
-      <div className={mainPadding}>
-        <Topbar onOpenMobileSidebar={onOpenMobileSidebar} />
-        <main className="px-4 py-6">
-          <div className="mx-auto w-full max-w-6xl">
-            <Outlet />
-          </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <AppTopbar />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6 overflow-x-hidden relative">
+          <Outlet />
         </main>
-      </div>
-      <PWAPrompt />
-      <OfflineSyncManager />
-    </div>
+        <MobileNav />
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
-

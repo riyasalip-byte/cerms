@@ -1,122 +1,141 @@
-import { useAssets } from '@/hooks/useAssets'
-import { Link } from 'react-router-dom'
+import * as React from "react"
+import { useAssets } from "@/hooks/useAssets"
+import { Link, useNavigate } from "react-router-dom"
+import type { ColumnDef } from "@tanstack/react-table"
+import { Plus, Eye, Edit2, Package, Activity } from "lucide-react"
 
-const statusClassMap: Record<number, string> = {
-  0: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300', // Available
-  1: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300', // Rented
-  2: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300', // Maintenance
-  3: 'bg-slate-100 text-slate-700 dark:bg-slate-900/40 dark:text-slate-300', // Decommissioned
-}
+import { DataTable } from "@/components/shared/DataTable"
+import { Button } from "@/components/ui/button"
+import { ErrorState } from "@/components/shared/ErrorState"
+import { StatusBadge } from "@/components/shared/StatusBadge"
 
-const statusTextMap: Record<number, string> = {
-  0: 'Available',
-  1: 'Rented',
-  2: 'Maintenance',
-  3: 'Decommissioned',
+type AssetRecord = {
+  id: string
+  name: string
+  assetCode: string
+  assetType: string
+  currentOdometer: number
+  status: number
 }
 
 export function AssetList() {
-  const { data, isLoading, isError } = useAssets()
+  const navigate = useNavigate()
+  const { data, isLoading, isError, refetch } = useAssets()
   const assets = data?.items || []
 
+  const columns: ColumnDef<AssetRecord>[] = [
+    {
+      accessorKey: "name",
+      header: "Asset",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center border border-blue-100 dark:border-blue-800">
+            <Package className="size-5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-bold text-foreground">{row.original.name}</span>
+            <span className="text-xs text-muted-foreground font-medium uppercase tracking-tight">
+              {row.original.assetCode}
+            </span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "assetType",
+      header: "Type",
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="font-medium">
+          {row.original.assetType}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "currentOdometer",
+      header: "Odometer",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2 font-mono text-sm">
+          <Activity className="size-3.5 text-muted-foreground" />
+          {row.original.currentOdometer.toLocaleString()} units
+        </div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => <StatusBadge status={row.original.status} className="asset" />,
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="icon" asChild>
+            <Link to={`/assets/${row.original.id}`}>
+              <Eye className="size-4" />
+            </Link>
+          </Button>
+          <Button variant="ghost" size="icon" asChild>
+            <Link to={`/assets/${row.original.id}/edit`}>
+              <Edit2 className="size-4 text-primary" />
+            </Link>
+          </Button>
+        </div>
+      ),
+    },
+  ]
+
+  if (isError) {
+    return (
+      <ErrorState 
+        onRetry={refetch} 
+        message="We encountered an issue loading your fleet records." 
+      />
+    )
+  }
+
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Assets</h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Manage and monitor all registered assets.
+          <h1 className="text-3xl font-bold tracking-tight">Assets</h1>
+          <p className="text-muted-foreground">
+            Manage and monitor your equipment fleet in real-time.
           </p>
         </div>
-        <Link
-          to="/assets/new"
-          className="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+        <Button 
+          onClick={() => {
+            console.log("[AssetList] New Asset button clicked")
+            navigate("/assets/new")
+          }} 
+          className="shadow-lg shadow-primary/20"
         >
+          <Plus className="mr-2 size-4" />
           New Asset
-        </Link>
+        </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-        {isLoading && (
-          <div className="px-4 py-12 flex justify-center text-sm text-slate-600 dark:text-slate-300">
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></div>
-              Loading assets...
-            </div>
-          </div>
-        )}
-        {isError && (
-          <div className="px-4 py-6 text-sm text-rose-600 dark:text-rose-400 text-center">
-            Failed to load assets. Please try again.
-          </div>
-        )}
-        {!isLoading && !isError && (
-          <table className="min-w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400">
-                <th className="px-4 py-3 font-medium">Asset</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium">Odometer</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assets.map((asset) => (
-                <tr
-                  key={asset.id}
-                  className="border-b border-slate-100 last:border-0 dark:border-slate-800/70"
-                >
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-slate-900 dark:text-slate-100">
-                      {asset.name}
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {asset.assetCode}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">{asset.assetType}</td>
-                  <td className="px-4 py-3">{asset.currentOdometer.toLocaleString()} units</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={[
-                        'inline-flex rounded-full px-2.5 py-1 text-xs font-medium',
-                        statusClassMap[asset.status] || 'bg-slate-100 text-slate-700',
-                      ].join(' ')}
-                    >
-                      {statusTextMap[asset.status] || 'Unknown'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Link
-                        to={`/assets/${asset.id}`}
-                        className="text-sm font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
-                      >
-                        View
-                      </Link>
-                      <Link
-                        to={`/assets/${asset.id}/edit`}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                      >
-                        Edit
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {assets.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
-                    No assets found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </section>
+      <DataTable 
+        columns={columns} 
+        data={assets} 
+        isLoading={isLoading} 
+        searchKey="name"
+        tableId="assets-table"
+        onRowClick={(row) => {
+          console.log(`[AssetList] Row clicked: ${row.id}`)
+          navigate(`/assets/${row.id}`)
+        }}
+      />
+    </div>
   )
 }
 
+function Badge({ className, variant = "default", ...props }: any) {
+  const variants = {
+    default: "bg-primary text-primary-foreground",
+    secondary: "bg-muted text-muted-foreground",
+  }
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${variants[variant as keyof typeof variants]} ${className}`} {...props} />
+  )
+}

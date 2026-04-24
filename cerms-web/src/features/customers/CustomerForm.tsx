@@ -1,174 +1,266 @@
-import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { getCustomerById } from '@/api/services'
+import * as React from "react"
+import { useQuery } from "@tanstack/react-query"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Loader2, Save, UserPlus } from "lucide-react"
+import { getCustomerById } from "@/api/services"
 
-type CustomerFormValues = {
-  name: string
-  company: string
-  email: string
-  phone: string
-  status: 'active' | 'inactive'
-}
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
+const customerFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters."),
+  company: z.string().min(1, "Company name is required."),
+  email: z.string().email("Invalid email address."),
+  phone: z.string().min(5, "Phone number is required."),
+  status: z.enum(["active", "inactive"]),
+})
+
+type CustomerFormValues = z.infer<typeof customerFormSchema>
 
 export function CustomerForm() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const editCustomerId = searchParams.get('customerId')
+  const editCustomerId = searchParams.get("customerId")
+  const isEditMode = Boolean(editCustomerId)
+  const [showConfirm, setShowConfirm] = React.useState(false)
+  const [pendingData, setPendingData] = React.useState<CustomerFormValues | null>(null)
 
   const { data: existingCustomer, isLoading } = useQuery({
-    queryKey: ['customers', editCustomerId],
+    queryKey: ["customers", editCustomerId],
     queryFn: () => getCustomerById(editCustomerId!),
     enabled: !!editCustomerId,
   })
 
-  const [formValues, setFormValues] = useState<CustomerFormValues>({
-    name: '',
-    company: '',
-    email: '',
-    phone: '',
-    status: 'active',
+  const form = useForm<CustomerFormValues>({
+    resolver: zodResolver(customerFormSchema),
+    defaultValues: {
+      name: "",
+      company: "",
+      email: "",
+      phone: "",
+      status: "active",
+    },
   })
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (existingCustomer) {
-      setFormValues({
+      form.reset({
         name: existingCustomer.name,
-        company: existingCustomer.company || '',
+        company: existingCustomer.company || "",
         email: existingCustomer.email,
         phone: existingCustomer.phone,
-        status: (existingCustomer.status as any) || 'active',
+        status: (existingCustomer.status as any) || "active",
       })
     }
-  }, [existingCustomer])
+  }, [existingCustomer, form])
 
-  const isEditMode = Boolean(editCustomerId)
+  async function onSubmit(data: CustomerFormValues) {
+    setPendingData(data)
+    setShowConfirm(true)
+  }
 
-  if (editCustomerId && isLoading) {
+  async function handleConfirmSubmit() {
+    if (!pendingData) return
+    setShowConfirm(false)
+    // In a real app, you would call a mutation here
+    console.log("Submitting customer data:", pendingData)
+    navigate("/customers", { replace: true })
+  }
+
+  if (isEditMode && isLoading) {
     return (
-      <div className="px-4 py-6 text-sm text-slate-600 dark:text-slate-300">
-        Loading customer data...
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    navigate('/customers', { replace: true })
-  }
-
   return (
-    <section className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {isEditMode ? 'Edit Customer' : 'Create Customer'}
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isEditMode ? "Edit Customer" : "New Customer"}
           </h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Dummy form only. Submitted data is not persisted.
+          <p className="text-muted-foreground">
+            {isEditMode
+              ? "Update customer contact details and status."
+              : "Register a new customer or company."}
           </p>
         </div>
-        <Link
-          to="/customers"
-          className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
-        >
-          Back to customers
-        </Link>
+        <Button variant="ghost" asChild>
+          <Link to="/customers">Back to List</Link>
+        </Button>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/40"
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-1">
-            <span className="text-sm font-medium">Name</span>
-            <input
-              required
-              value={formValues.name}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, name: event.target.value }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-              placeholder="John Smith"
-            />
-          </label>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <Card className="overflow-hidden border-none shadow-md">
+            <CardHeader className="bg-muted/30">
+              <CardTitle>Contact Details</CardTitle>
+              <CardDescription>
+                Provide the primary contact information for this customer.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6 p-6 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="John Smith" autoFocus {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium">Email</span>
-            <input
-              required
-              type="email"
-              value={formValues.email}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, email: event.target.value }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-              placeholder="john@company.com"
-            />
-          </label>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="john@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium">Phone</span>
-            <input
-              required
-              value={formValues.phone}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, phone: event.target.value }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-              placeholder="+1 (555) 123-4567"
-            />
-          </label>
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="+1 (555) 000-0000" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium">Company</span>
-            <input
-              required
-              value={formValues.company}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, company: event.target.value }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-              placeholder="Acme Inc."
-            />
-          </label>
+              <FormField
+                control={form.control}
+                name="company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company Name <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="Acme Corporation" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium">Status</span>
-            <select
-              value={formValues.status}
-              onChange={(event) =>
-                setFormValues((prev) => ({
-                  ...prev,
-                  status: event.target.value as 'active' | 'inactive',
-                }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Account Status <span className="text-destructive">*</span></FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <div className="flex items-center justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate("/customers")}
+              disabled={form.formState.isSubmitting}
             >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </label>
-        </div>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={!form.formState.isValid || form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  {isEditMode ? <Save className="mr-2 size-4" /> : <UserPlus className="mr-2 size-4" />}
+                  {isEditMode ? "Save Changes" : "Create Customer"}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
 
-        <div className="mt-6 flex items-center gap-3">
-          <button
-            type="submit"
-            className="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
-          >
-            {isEditMode ? 'Save Changes' : 'Create Customer'}
-          </button>
-          <Link
-            to="/customers"
-            className="inline-flex items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
-          >
-            Cancel
-          </Link>
-        </div>
-      </form>
-    </section>
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Customer Registration</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to {isEditMode ? "update this customer" : "create this new customer"}? 
+              Please ensure the contact information is accurate.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Review</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSubmit}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   )
 }
-

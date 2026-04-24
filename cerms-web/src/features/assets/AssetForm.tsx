@@ -1,36 +1,90 @@
-import { useAsset, useCreateAsset, useUpdateAsset } from '@/hooks/useAssets'
-import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import * as React from "react"
+import { useAsset, useCreateAsset, useUpdateAsset } from "@/hooks/useAssets"
+import { Link, useNavigate, useParams } from "react-router-dom"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Loader2, Save, XCircle } from "lucide-react"
 
-type AssetFormValues = {
-  name: string
-  assetType: string
-  assetCode: string
-  currentOdometer: number
-  status: number
-}
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
+const assetFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters."),
+  assetType: z.string().min(1, "Asset type is required."),
+  assetCode: z.string().min(1, "Asset code is required."),
+  currentOdometer: z.coerce.number().min(0, "Odometer cannot be negative."),
+  status: z.coerce.number(),
+})
+
+type AssetFormValues = z.infer<typeof assetFormSchema>
 
 export function AssetForm() {
   const navigate = useNavigate()
   const { id } = useParams()
   const isEditMode = Boolean(id)
+  const [showConfirm, setShowConfirm] = React.useState(false)
+  const [pendingData, setPendingData] = React.useState<AssetFormValues | null>(null)
+
+  console.log("[AssetForm] Rendering, isEditMode:", isEditMode)
 
   const { data: existingAsset, isLoading } = useAsset(id!)
   const createAsset = useCreateAsset()
   const updateAsset = useUpdateAsset()
 
-  const [formValues, setFormValues] = useState<AssetFormValues>({
-    name: '',
-    assetType: '',
-    assetCode: '',
-    currentOdometer: 0,
-    status: 0,
+  const form = useForm<AssetFormValues>({
+    resolver: zodResolver(assetFormSchema),
+    defaultValues: {
+      name: "",
+      assetType: "",
+      assetCode: "",
+      currentOdometer: 0,
+      status: 0,
+    },
   })
 
-  useEffect(() => {
+  // Warn before leaving if form is dirty
+  React.useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (form.formState.isDirty) {
+        e.preventDefault()
+        e.returnValue = ""
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [form.formState.isDirty])
+
+  React.useEffect(() => {
     if (existingAsset) {
-      setFormValues({
+      form.reset({
         name: existingAsset.name,
         assetType: existingAsset.assetType,
         assetCode: existingAsset.assetCode,
@@ -38,159 +92,223 @@ export function AssetForm() {
         status: existingAsset.status,
       })
     }
-  }, [existingAsset])
+  }, [existingAsset, form])
+
+  async function onSubmit(data: AssetFormValues) {
+    setPendingData(data)
+    setShowConfirm(true)
+  }
+
+  async function handleConfirmSubmit() {
+    if (!pendingData) return
+    
+    setShowConfirm(false)
+    if (isEditMode) {
+      await updateAsset.mutateAsync({
+        id: id!,
+        data: {
+          id: id!,
+          status: pendingData.status,
+          currentOdometer: pendingData.currentOdometer,
+        },
+      })
+    } else {
+      await createAsset.mutateAsync(pendingData)
+    }
+    // Manually reset dirty state before navigating
+    form.reset(pendingData)
+    navigate("/assets")
+  }
 
   if (isEditMode && isLoading) {
     return (
-      <div className="px-4 py-12 flex justify-center text-sm text-slate-600 dark:text-slate-300">
-        <div className="flex items-center gap-2">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></div>
-          Loading asset data...
-        </div>
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    
-    if (isEditMode) {
-      await updateAsset.mutateAsync({ 
-        id: id!, 
-        data: { 
-          id: id!,
-          status: formValues.status, 
-          currentOdometer: formValues.currentOdometer 
-        } 
-      })
-    } else {
-      await createAsset.mutateAsync(formValues)
-    }
-    
-    navigate('/assets')
-  }
-
   return (
-    <section className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {isEditMode ? 'Edit Asset' : 'Create Asset'}
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isEditMode ? "Edit Asset" : "New Asset"}
           </h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            {isEditMode ? 'Update asset status and odometer.' : 'Register a new asset in the system.'}
+          <p className="text-muted-foreground">
+            {isEditMode
+              ? "Update asset details and operational status."
+              : "Register a new piece of equipment in the system."}
           </p>
         </div>
-        <Link
-          to="/assets"
-          className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
-        >
-          Back to assets
-        </Link>
+        <Button variant="ghost" asChild>
+          <Link to="/assets">Back to List</Link>
+        </Button>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/40"
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Name</span>
-            <input
-              required
-              disabled={isEditMode}
-              value={formValues.name}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, name: event.target.value }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
-              placeholder="Excavator EX-21"
-            />
-          </label>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <Card className="overflow-hidden border-none shadow-md">
+            <CardHeader className="bg-muted/30">
+              <CardTitle>Asset Information</CardTitle>
+              <CardDescription>
+                Basic identification and technical details of the equipment.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6 p-6 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Asset Name <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g. Caterpillar Excavator 320" 
+                        disabled={isEditMode}
+                        autoFocus
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      The common name used to identify this asset.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Asset Type</span>
-            <input
-              required
-              disabled={isEditMode}
-              value={formValues.assetType}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, assetType: event.target.value }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
-              placeholder="Heavy Equipment"
-            />
-          </label>
+              <FormField
+                control={form.control}
+                name="assetCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Asset Code <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g. CAT-EX-001" 
+                        disabled={isEditMode}
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Unique identifier for tracking and inventory.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Asset Code</span>
-            <input
-              required
-              disabled={isEditMode}
-              value={formValues.assetCode}
-              onChange={(event) =>
-                setFormValues((prev) => ({
-                  ...prev,
-                  assetCode: event.target.value,
-                }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
-              placeholder="EX21-AX-9901"
-            />
-          </label>
+              <FormField
+                control={form.control}
+                name="assetType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Equipment Category <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g. Excavators, Generators" 
+                        disabled={isEditMode}
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Current Odometer</span>
-            <input
-              required
-              min="0"
-              type="number"
-              value={formValues.currentOdometer}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, currentOdometer: Number(event.target.value) }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-              placeholder="0"
-            />
-          </label>
+              <FormField
+                control={form.control}
+                name="currentOdometer"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current Odometer / Hours <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Used for maintenance scheduling and billing.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Status</span>
-            <select
-              value={formValues.status}
-              onChange={(event) =>
-                setFormValues((prev) => ({
-                  ...prev,
-                  status: Number(event.target.value),
-                }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Operational Status <span className="text-destructive">*</span></FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="0">Available</SelectItem>
+                        <SelectItem value="1">Rented</SelectItem>
+                        <SelectItem value="2">Maintenance</SelectItem>
+                        <SelectItem value="3">Decommissioned</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <div className="flex items-center justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate("/assets")}
+              disabled={form.formState.isSubmitting}
             >
-              <option value={0}>Available</option>
-              <option value={1}>Rented</option>
-              <option value={2}>Maintenance</option>
-              <option value={3}>Decommissioned</option>
-            </select>
-          </label>
-        </div>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={!form.formState.isValid || form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 size-4" />
+                  {isEditMode ? "Update Asset" : "Create Asset"}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
 
-        <div className="mt-6 flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={createAsset.isPending || updateAsset.isPending}
-            className="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
-          >
-            {(createAsset.isPending || updateAsset.isPending) ? 'Saving...' : isEditMode ? 'Save Changes' : 'Create Asset'}
-          </button>
-          <Link
-            to="/assets"
-            className="inline-flex items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
-          >
-            Cancel
-          </Link>
-        </div>
-      </form>
-    </section>
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Action</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to {isEditMode ? "update this asset's details" : "create this new asset"}? 
+              This action will update the system records immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Review Form</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSubmit}>
+              Yes, Proceed
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   )
 }
-

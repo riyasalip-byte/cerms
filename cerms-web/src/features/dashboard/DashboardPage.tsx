@@ -1,155 +1,279 @@
+import * as React from "react"
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  Package, 
+  Key, 
+  DollarSign,
+  Clock,
+  CheckCircle2,
+  Calendar,
+  ArrowRight,
+  Activity,
+  AlertTriangle,
+  ChevronRight
+} from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
+
 const kpiCards = [
-  { label: 'Total Assets', value: '1,248', trend: '+3.2% vs last month' },
-  { label: 'Active Rentals', value: '312', trend: '+1.1% vs yesterday' },
-  { label: 'Revenue', value: '$84,560', trend: '+8.4% this month' },
+  { 
+    label: "Total Assets", 
+    value: "1,248", 
+    trend: "+3.2%", 
+    isUp: true, 
+    icon: Package,
+    color: "text-blue-600",
+    bg: "bg-blue-50 dark:bg-blue-900/20",
+    accent: "bg-blue-600"
+  },
+  { 
+    label: "Active Rentals", 
+    value: "312", 
+    trend: "+1.1%", 
+    isUp: true, 
+    icon: Key,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50 dark:bg-emerald-900/20",
+    accent: "bg-emerald-600"
+  },
+  { 
+    label: "Monthly Revenue", 
+    value: "$84,560", 
+    trend: "+8.4%", 
+    isUp: true, 
+    icon: DollarSign,
+    color: "text-amber-600",
+    bg: "bg-amber-50 dark:bg-amber-900/20",
+    accent: "bg-amber-600"
+  },
 ]
 
 const todaysAssignments = [
   {
-    id: 'ASG-1001',
-    assignee: 'Alex Carter',
-    asset: 'Excavator EX-21',
-    dueTime: '09:30 AM',
-    status: 'In Progress',
+    id: "ASG-1001",
+    asset: "Excavator EX-21",
+    client: "BuildCorp Asia",
+    dueTime: "09:30 AM",
+    status: "In Progress",
+    priority: "High"
   },
   {
-    id: 'ASG-1002',
-    assignee: 'Mia Johnson',
-    asset: 'Forklift FL-08',
-    dueTime: '11:00 AM',
-    status: 'Pending',
+    id: "ASG-1002",
+    asset: "Forklift FL-08",
+    client: "Logistics Hub",
+    dueTime: "11:00 AM",
+    status: "Pending",
+    priority: "Medium"
   },
   {
-    id: 'ASG-1003',
-    assignee: 'Noah Rivera',
-    asset: 'Generator GN-14',
-    dueTime: '02:15 PM',
-    status: 'Completed',
+    id: "ASG-1003",
+    asset: "Generator GN-14",
+    client: "Metro Construction",
+    dueTime: "02:15 PM",
+    status: "Completed",
+    priority: "Low"
   },
 ]
 
 const assetStatus = [
-  { label: 'Available', count: 684, color: 'bg-emerald-500' },
-  { label: 'Rented', count: 312, color: 'bg-blue-500' },
-  { label: 'Maintenance', count: 143, color: 'bg-amber-500' },
-  { label: 'Reserved', count: 109, color: 'bg-violet-500' },
+  { label: "Available", count: 684, color: "bg-emerald-500", icon: CheckCircle2, description: "Ready for rental" },
+  { label: "Rented", count: 312, color: "bg-blue-500", icon: Key, description: "Currently in field" },
+  { label: "Maintenance", count: 143, color: "bg-amber-500", icon: AlertTriangle, description: "In workshop" },
+  { label: "Decommissioned", count: 24, color: "bg-slate-500", icon: Activity, description: "Inactive" },
 ]
 
-const assignmentStatusClasses: Record<string, string> = {
-  Completed:
-    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-  'In Progress':
-    'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  Pending:
-    'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+// Container variants for staggered animation
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.3, ease: "easeOut" }
+  }
 }
 
 export function DashboardPage() {
-  const totalAssets = assetStatus.reduce((sum, item) => sum + item.count, 0)
-
   return (
-    <div className="space-y-6">
-      <section>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          Overview of assets, rentals, and daily assignments.
-        </p>
-      </section>
-
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {kpiCards.map((card) => (
-          <article
-            key={card.label}
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/40"
-          >
-            <p className="text-sm text-slate-500 dark:text-slate-400">{card.label}</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">{card.value}</p>
-            <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400">
-              {card.trend}
-            </p>
-          </article>
-        ))}
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-3">
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/40 xl:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold tracking-tight">Today's Assignments</h2>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {todaysAssignments.length} items
-            </span>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400">
-                  <th className="py-2 pr-4 font-medium">Assignment</th>
-                  <th className="py-2 pr-4 font-medium">Assignee</th>
-                  <th className="py-2 pr-4 font-medium">Asset</th>
-                  <th className="py-2 pr-4 font-medium">Due</th>
-                  <th className="py-2 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {todaysAssignments.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="border-b border-slate-100 last:border-0 dark:border-slate-800/70"
-                  >
-                    <td className="py-3 pr-4 font-medium text-slate-900 dark:text-slate-100">
-                      {item.id}
-                    </td>
-                    <td className="py-3 pr-4">{item.assignee}</td>
-                    <td className="py-3 pr-4">{item.asset}</td>
-                    <td className="py-3 pr-4">{item.dueTime}</td>
-                    <td className="py-3">
-                      <span
-                        className={[
-                          'inline-flex rounded-full px-2.5 py-1 text-xs font-medium',
-                          assignmentStatusClasses[item.status],
-                        ].join(' ')}
-                      >
-                        {item.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
-
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-          <h2 className="text-lg font-semibold tracking-tight">Asset Status</h2>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Total tracked assets: {totalAssets}
+    <div className="mx-auto max-w-7xl space-y-8">
+      {/* Header Section */}
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+      >
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Dashboard Overview
+          </h1>
+          <p className="text-muted-foreground flex items-center gap-2 mt-1">
+            <Calendar className="size-4" />
+            Friday, April 24, 2026
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="hidden sm:flex transition-transform hover:scale-105 active:scale-95">Export Report</Button>
+          <Button className="bg-primary shadow-lg shadow-primary/20 transition-transform hover:scale-105 active:scale-95">New Assignment</Button>
+        </div>
+      </motion.div>
 
-          <div className="mt-5 grid gap-3">
-            {assetStatus.map((item) => {
-              const percentage = Math.round((item.count / totalAssets) * 100)
-              return (
-                <div key={item.label} className="rounded-md border border-slate-200 p-3 dark:border-slate-800">
-                  <div className="mb-2 flex items-center justify-between text-sm">
-                    <span className="font-medium">{item.label}</span>
-                    <span className="text-slate-500 dark:text-slate-400">
-                      {item.count} ({percentage}%)
+      {/* KPI Cards Section */}
+      <motion.section 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        {kpiCards.map((card) => (
+          <motion.div key={card.label} variants={itemVariants}>
+            <Card className="relative overflow-hidden border-none shadow-xl transition-all hover:shadow-2xl">
+              <div className={cn("absolute top-0 left-0 h-1 w-full", card.accent)} />
+              <CardContent className="flex items-center gap-4 p-6">
+                <motion.div 
+                  whileHover={{ rotate: 15, scale: 1.1 }}
+                  className={cn("flex size-14 items-center justify-center rounded-2xl", card.bg)}
+                >
+                  <card.icon className={cn("size-7", card.color)} />
+                </motion.div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{card.label}</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold tracking-tight">{card.value}</span>
+                    <span className={cn(
+                      "flex items-center text-xs font-bold px-1.5 py-0.5 rounded-full",
+                      card.isUp ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30" : "bg-destructive/10 text-destructive"
+                    )}>
+                      {card.isUp ? <TrendingUp className="mr-1 size-3" /> : <TrendingDown className="mr-1 size-3" />}
+                      {card.trend}
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800">
-                    <div
-                      className={['h-2 rounded-full', item.color].join(' ')}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
                 </div>
-              )
-            })}
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </motion.section>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Today's Assignments Section */}
+        <motion.section 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="lg:col-span-2 flex flex-col gap-4"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold tracking-tight">Today's Assignments</h2>
+            <Button variant="ghost" size="sm" className="gap-1 font-semibold hover:bg-primary/5">
+              View all <ChevronRight className="size-4" />
+            </Button>
           </div>
-        </article>
-      </section>
+          <div className="grid gap-4">
+            {todaysAssignments.map((item) => (
+              <motion.div key={item.id} variants={itemVariants} whileHover={{ x: 5 }}>
+                <Card className="group overflow-hidden border-none shadow-md transition-all hover:shadow-lg">
+                  <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className={cn(
+                        "mt-1 size-3 rounded-full shrink-0",
+                        item.status === "In Progress" ? "bg-blue-500 animate-pulse" : 
+                        item.status === "Completed" ? "bg-emerald-500" : "bg-amber-500"
+                      )} />
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-lg group-hover:text-primary transition-colors">{item.asset}</span>
+                          <Badge variant="secondary" className="text-[10px] font-bold">
+                            {item.priority}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground font-medium">Client: {item.client}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-3 sm:pt-0">
+                      <div className="flex flex-col items-end">
+                        <span className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Due Time</span>
+                        <span className="text-sm font-bold flex items-center gap-1.5">
+                          <Clock className="size-3.5 text-primary" />
+                          {item.dueTime}
+                        </span>
+                      </div>
+                      <Button size="icon" variant="secondary" className="rounded-full shadow-inner group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <ArrowRight className="size-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.section>
+
+        {/* Asset Status Grid Section */}
+        <motion.section 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex flex-col gap-4"
+        >
+          <h2 className="text-xl font-bold tracking-tight">Asset Health</h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            {assetStatus.map((item) => (
+              <motion.div key={item.label} variants={itemVariants}>
+                <Card className="border-none shadow-md hover:bg-muted/30 transition-colors cursor-pointer group">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <motion.div 
+                      whileHover={{ scale: 1.2 }}
+                      className={cn("size-10 rounded-xl flex items-center justify-center transition-transform", item.color, "bg-opacity-10")}
+                    >
+                      <item.icon className={cn("size-5", item.text || "text-foreground")} />
+                    </motion.div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm">{item.label}</span>
+                        <span className="font-bold text-base">{item.count}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{item.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+          
+          <motion.div variants={itemVariants} whileHover={{ scale: 1.02 }}>
+            <Card className="bg-primary text-primary-foreground border-none shadow-xl overflow-hidden mt-2 relative">
+              <motion.div 
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  opacity: [0.1, 0.2, 0.1]
+                }}
+                transition={{ duration: 4, repeat: Infinity }}
+                className="absolute -right-8 -bottom-8 size-32 bg-white rounded-full blur-2xl" 
+              />
+              <CardHeader className="p-5">
+                <CardTitle className="text-lg">System Audit</CardTitle>
+                <CardDescription className="text-primary-foreground/70">Last check performed 2h ago</CardDescription>
+              </CardHeader>
+              <CardFooter className="p-5 pt-0">
+                <Button variant="secondary" className="w-full font-bold shadow-lg">Check Status</Button>
+              </CardFooter>
+            </Card>
+          </motion.div>
+        </motion.section>
+      </div>
     </div>
   )
 }
-

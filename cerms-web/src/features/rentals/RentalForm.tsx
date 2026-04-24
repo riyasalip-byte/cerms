@@ -1,19 +1,45 @@
-import { useRental, useCreateRental, useUpdateRentalStatus } from '@/hooks/useRentals'
-import { useAssets } from '@/hooks/useAssets'
-import { useCustomers } from '@/hooks/useCustomers'
-import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import * as React from "react"
+import { useRental, useCreateRental, useUpdateRentalStatus } from "@/hooks/useRentals"
+import { useAssets } from "@/hooks/useAssets"
+import { useCustomers } from "@/hooks/useCustomers"
+import { Link, useNavigate, useParams } from "react-router-dom"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Loader2, Save, Calendar as CalendarIcon, Key, User, DollarSign } from "lucide-react"
 
-type RentalFormValues = {
-  assetId: string
-  customerId: string
-  startDate: string
-  expectedEndDate: string
-  rentalRate: number
-  rateType: number
-  status: number
-}
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+
+const rentalFormSchema = z.object({
+  assetId: z.string().min(1, "Asset is required."),
+  customerId: z.string().min(1, "Customer is required."),
+  startDate: z.string().min(1, "Start date is required."),
+  expectedEndDate: z.string().min(1, "End date is required."),
+  rentalRate: z.coerce.number().min(0),
+  rateType: z.coerce.number(),
+  status: z.coerce.number(),
+})
+
+type RentalFormValues = z.infer<typeof rentalFormSchema>
 
 export function RentalForm() {
   const navigate = useNavigate()
@@ -27,226 +53,275 @@ export function RentalForm() {
   const createRental = useCreateRental()
   const updateStatus = useUpdateRentalStatus()
 
-  const [formValues, setFormValues] = useState<RentalFormValues>({
-    assetId: '',
-    customerId: '',
-    startDate: '',
-    expectedEndDate: '',
-    rentalRate: 0,
-    rateType: 0,
-    status: 0,
+  const form = useForm<RentalFormValues>({
+    resolver: zodResolver(rentalFormSchema),
+    defaultValues: {
+      assetId: "",
+      customerId: "",
+      startDate: "",
+      expectedEndDate: "",
+      rentalRate: 0,
+      rateType: 0,
+      status: 0,
+    },
   })
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (rentalData) {
-      setFormValues({
+      form.reset({
         assetId: rentalData.assetId,
         customerId: rentalData.customerId,
-        startDate: rentalData.startDate.split('T')[0],
-        expectedEndDate: rentalData.expectedEndDate.split('T')[0],
+        startDate: rentalData.startDate.split("T")[0],
+        expectedEndDate: rentalData.expectedEndDate.split("T")[0],
         rentalRate: rentalData.rentalRate,
         rateType: rentalData.rateType,
         status: rentalData.status,
       })
     }
-  }, [rentalData])
+  }, [rentalData, form])
+
+  async function onSubmit(data: RentalFormValues) {
+    if (isEditMode) {
+      await updateStatus.mutateAsync({ id: id!, status: data.status })
+    } else {
+      await createRental.mutateAsync(data)
+    }
+    navigate("/rentals")
+  }
 
   if (isEditMode && isRentalLoading) {
     return (
-      <div className="px-4 py-12 flex justify-center text-sm text-slate-600 dark:text-slate-300">
-        <div className="flex items-center gap-2">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></div>
-          Loading rental data...
-        </div>
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    
-    if (isEditMode) {
-      await updateStatus.mutateAsync({ id: id!, status: formValues.status })
-    } else {
-      await createRental.mutateAsync(formValues)
-    }
-    
-    navigate('/rentals')
-  }
-
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="relative pb-24 md:pb-0">
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {isEditMode ? 'Manage Rental' : 'Create Rental'}
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isEditMode ? "Manage Rental" : "New Rental"}
           </h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            {isEditMode ? 'Update rental status or record extensions.' : 'Setup a new rental agreement.'}
+          <p className="text-muted-foreground">
+            {isEditMode ? "Update agreement terms and status." : "Start a new equipment rental agreement."}
           </p>
         </div>
-        <Link
-          to="/rentals"
-          className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
-        >
-          Back to rentals
-        </Link>
+        <Button variant="ghost" className="hidden md:flex" asChild>
+          <Link to="/rentals">Cancel</Link>
+        </Button>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/40"
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Asset</span>
-            <select
-              disabled={isEditMode}
-              value={formValues.assetId}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, assetId: event.target.value }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
-              required
-            >
-               <option value="">Select an asset</option>
-               {assetsData?.items.map((asset) => (
-                 <option key={asset.id} value={asset.id}>
-                   {asset.name} ({asset.assetCode})
-                 </option>
-               ))}
-            </select>
-          </label>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card className="border-none shadow-md overflow-hidden">
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <Key className="size-5 text-primary" />
+                Agreement Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 p-6 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="assetId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Equipment <span className="text-destructive">*</span></FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={isEditMode}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-12 text-base">
+                          <SelectValue placeholder="Select an asset" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {assetsData?.items.map((asset) => (
+                          <SelectItem key={asset.id} value={asset.id}>
+                            {asset.name} ({asset.assetCode})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Customer</span>
-            <select
-              disabled={isEditMode}
-              value={formValues.customerId}
-              onChange={(event) =>
-                setFormValues((prev) => ({
-                  ...prev,
-                  customerId: event.target.value,
-                }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
-              required
-            >
-               <option value="">Select a customer</option>
-               {customersData?.items.map((customer) => (
-                 <option key={customer.id} value={customer.id}>
-                   {customer.name}
-                 </option>
-               ))}
-            </select>
-          </label>
+              <FormField
+                control={form.control}
+                name="customerId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Customer <span className="text-destructive">*</span></FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={isEditMode}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-12 text-base">
+                          <SelectValue placeholder="Select a customer" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {customersData?.items.map((customer) => (
+                          <SelectItem key={customer.id} value={customer.id}>
+                            {customer.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Start Date</span>
-            <input
-              disabled={isEditMode}
-              type="date"
-              value={formValues.startDate}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, startDate: event.target.value }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
-              required
-            />
-          </label>
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Date <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="date" 
+                        disabled={isEditMode} 
+                        className="h-12 text-base"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Expected End Date</span>
-            <input
-              disabled={isEditMode}
-              type="date"
-              value={formValues.expectedEndDate}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, expectedEndDate: event.target.value }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
-              required
-            />
-          </label>
+              <FormField
+                control={form.control}
+                name="expectedEndDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Expected End Date <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="date" 
+                        disabled={isEditMode} 
+                        className="h-12 text-base"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Rental Rate</span>
-            <input
-              disabled={isEditMode}
-              type="number"
-              min="0"
-              value={formValues.rentalRate}
-              onChange={(event) =>
-                setFormValues((prev) => ({
-                  ...prev,
-                  rentalRate: Number(event.target.value),
-                }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
-              required
-              placeholder="500"
-            />
-          </label>
+              <FormField
+                control={form.control}
+                name="rentalRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rental Rate <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-3.5 size-5 text-muted-foreground" />
+                        <Input 
+                          type="number" 
+                          disabled={isEditMode} 
+                          className="h-12 pl-10 text-base"
+                          {...field} 
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <label className="space-y-1">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Rate Type</span>
-            <select
-              disabled={isEditMode}
-              value={formValues.rateType}
-              onChange={(event) =>
-                setFormValues((prev) => ({
-                  ...prev,
-                  rateType: Number(event.target.value),
-                }))
-              }
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:disabled:bg-slate-800/50"
-            >
-              <option value={0}>Hourly</option>
-              <option value={1}>Daily</option>
-              <option value={2}>Weekly</option>
-              <option value={3}>Monthly</option>
-            </select>
-          </label>
+              <FormField
+                control={form.control}
+                name="rateType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rate Cycle <span className="text-destructive">*</span></FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value.toString()}
+                      disabled={isEditMode}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-12 text-base">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="0">Hourly</SelectItem>
+                        <SelectItem value="1">Daily</SelectItem>
+                        <SelectItem value="2">Weekly</SelectItem>
+                        <SelectItem value="3">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          {isEditMode && (
-            <label className="space-y-1">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Status</span>
-              <select
-                value={formValues.status}
-                onChange={(event) =>
-                  setFormValues((prev) => ({
-                    ...prev,
-                    status: Number(event.target.value),
-                  }))
-                }
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+              {isEditMode && (
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>Current Status <span className="text-destructive">*</span></FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-14 text-lg font-semibold border-primary/50 bg-primary/5">
+                            <SelectValue placeholder="Update status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="0">Draft</SelectItem>
+                          <SelectItem value="1">Confirmed</SelectItem>
+                          <SelectItem value="2">Active / In Field</SelectItem>
+                          <SelectItem value="3">Closed / Returned</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Changing status may trigger billing or asset state updates.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Sticky Bottom Bar for Mobile */}
+          <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/80 p-4 backdrop-blur md:static md:bg-transparent md:p-0">
+            <div className="mx-auto max-w-lg md:max-w-none">
+              <Button 
+                type="submit" 
+                className="w-full h-14 text-lg font-bold shadow-lg md:w-auto md:px-12"
+                disabled={form.formState.isSubmitting}
               >
-                <option value={0}>Draft</option>
-                <option value={1}>Confirmed</option>
-                <option value={2}>Active</option>
-                <option value={3}>Closed</option>
-              </select>
-            </label>
-          )}
-        </div>
-
-        <div className="mt-6 flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={createRental.isPending || updateStatus.isPending}
-            className="inline-flex items-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
-          >
-            {(createRental.isPending || updateStatus.isPending) ? 'Saving...' : isEditMode ? 'Update Status' : 'Create Rental'}
-          </button>
-          <Link
-            to="/rentals"
-            className="inline-flex items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
-          >
-            Cancel
-          </Link>
-        </div>
-      </form>
-    </section>
+                {form.formState.isSubmitting ? (
+                  <Loader2 className="mr-2 size-5 animate-spin" />
+                ) : (
+                  <Save className="mr-2 size-5" />
+                )}
+                {isEditMode ? "Update Rental" : "Confirm Agreement"}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Form>
+    </div>
   )
 }
-
