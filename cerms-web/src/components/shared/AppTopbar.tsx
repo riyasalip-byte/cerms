@@ -1,6 +1,9 @@
 import * as React from "react"
 import { Bell, Search, User, LogOut, Settings } from "lucide-react"
-import { useLocation, Link } from "react-router-dom"
+import { useLocation, Link, useNavigate } from "react-router-dom"
+import { authService } from "@/api/services"
+import { useAuthStore } from "@/stores/authStore"
+import { toast } from "sonner"
 
 import {
   Breadcrumb,
@@ -26,11 +29,27 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 
 export function AppTopbar() {
-  const location = useLocation()
+  const navigate = useNavigate()
+  const { user, logout: logoutStore } = useAuthStore()
   const pathnames = location.pathname.split("/").filter((x) => x)
 
   const handleNavClick = (path: string) => {
     console.log(`[Navigation] Navigating to: ${path}`)
+  }
+
+  const handleLogout = async () => {
+    try {
+      console.log("[Auth] Logging out...")
+      await authService.logout()
+      logoutStore()
+      toast.success("Logged out successfully")
+      navigate("/login")
+    } catch (error) {
+      console.error("[Auth] Logout failed:", error)
+      // Even if API fails, we clear local state
+      logoutStore()
+      navigate("/login")
+    }
   }
 
   return (
@@ -103,9 +122,9 @@ export function AppTopbar() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Jane Doe</p>
+                <p className="text-sm font-medium leading-none">{user?.username || "User"}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  jane@cerms.com
+                  {user?.email || "user@cerms.com"}
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -125,7 +144,7 @@ export function AppTopbar() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem className="text-destructive cursor-pointer" onClick={handleLogout}>
               <LogOut className="mr-2 size-4" />
               <span>Log out</span>
             </DropdownMenuItem>

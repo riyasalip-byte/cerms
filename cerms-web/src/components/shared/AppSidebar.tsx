@@ -9,7 +9,12 @@ import {
   ShieldCheck,
   Settings,
   Command,
+  LogOut,
 } from "lucide-react"
+import { useAuthStore } from "@/stores/authStore"
+import { authService } from "@/api/services"
+import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 
 import {
   Sidebar,
@@ -45,6 +50,7 @@ const menuGroups = [
     label: "Admin",
     items: [
       { label: "Staff", to: "/staff", icon: ShieldCheck },
+      { label: "Users", to: "/settings/users", icon: Users },
       { label: "Settings", to: "/settings/general", icon: Settings },
     ],
   },
@@ -52,9 +58,25 @@ const menuGroups = [
 
 export function AppSidebar() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { logout: logoutStore } = useAuthStore()
 
   const handleNavClick = (path: string) => {
     console.log(`[Sidebar] Navigating to: ${path}`)
+  }
+
+  const handleLogout = async () => {
+    try {
+      console.log("[Auth] Logging out from sidebar...")
+      await authService.logout()
+      logoutStore()
+      toast.success("Logged out successfully")
+      navigate("/login")
+    } catch (error) {
+      console.error("[Auth] Logout failed:", error)
+      logoutStore()
+      navigate("/login")
+    }
   }
 
   return (
@@ -112,9 +134,19 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="sm">
               <Link to="/settings/general" onClick={() => handleNavClick("/settings/general")}>
-                <Settings />
+                <Settings className="size-4" />
                 <span>Quick Settings</span>
               </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              size="sm" 
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={handleLogout}
+            >
+              <LogOut className="size-4" />
+              <span>Log out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

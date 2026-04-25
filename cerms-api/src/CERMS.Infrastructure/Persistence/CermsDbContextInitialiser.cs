@@ -71,5 +71,22 @@ public class CermsDbContextInitialiser
             await _context.SaveChangesAsync();
             _logger.LogInformation("Seeded default admin user: {Email}", adminEmail);
         }
+
+        // Seed Assets if none exist
+        if (!await _context.Assets.IgnoreQueryFilters().AnyAsync())
+        {
+            var assets = new List<Asset>
+            {
+                new Asset("EX-320", "Caterpillar Excavator 320", "Excavator", 1250, 0) { CompanyId = companyId, BranchId = branchId },
+                new Asset("GEN-50", "Cummins 50kVA Generator", "Generator", 450, 0) { CompanyId = companyId, BranchId = branchId },
+                new Asset("FL-25", "Toyota Forklift 2.5T", "Forklift", 890, 0) { CompanyId = companyId, BranchId = branchId },
+                new Asset("CM-10", "Putzmeister Concrete Pump", "Construction", 210, 0) { CompanyId = companyId, BranchId = branchId },
+                new Asset("SL-12", "JLG Scissor Lift 12m", "Lifting", 155, 0) { CompanyId = companyId, BranchId = branchId }
+            };
+
+            _context.Assets.AddRange(assets);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} assets.", assets.Count);
+        }
     }
 }

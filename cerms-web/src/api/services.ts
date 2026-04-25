@@ -121,6 +121,11 @@ export const reportService = {
   getPayroll: () => api.get<ChartDataDto[]>('/reports/payroll').then(r => r.data)
 }
 
+export const userService = {
+  getAll: (params?: any) => api.get<PaginatedList<User>>('/users', { params }).then(r => r.data),
+  invite: (data: any) => api.post('/users/invite', data).then(r => r.data),
+}
+
 export const authService = {
   login: (credentials: any) => api.post<AuthResponse>('/auth/login', credentials).then(r => r.data),
   refresh: () => api.post<AuthResponse>('/auth/refresh').then(r => r.data),

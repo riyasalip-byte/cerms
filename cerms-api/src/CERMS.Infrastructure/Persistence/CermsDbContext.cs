@@ -64,8 +64,8 @@ public class CermsDbContext : DbContext
             nameof(ICurrentTenantService.CompanyId));
             
         var companyIdFilter = System.Linq.Expressions.Expression.Equal(
-            companyIdProperty, 
-            System.Linq.Expressions.Expression.Property(currentCompanyIdProperty, "Value"));
+            System.Linq.Expressions.Expression.Convert(companyIdProperty, typeof(Guid?)), 
+            currentCompanyIdProperty);
 
         var combinedFilter = System.Linq.Expressions.Expression.AndAlso(isNotDeleted, companyIdFilter);
 

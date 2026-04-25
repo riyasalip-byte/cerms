@@ -20,7 +20,7 @@ public class JwtService : IJwtService
 
     public string GenerateAccessToken(User user)
     {
-        var secretKey = _configuration["Jwt:Secret"] ?? "a_very_long_and_secure_secret_key_1234567890";
+        var secretKey = _configuration["Jwt:Secret"] ?? "a_very_long_and_secure_secret_key_1234567890_extended_for_security_reasons";
         var issuer = _configuration["Jwt:Issuer"] ?? "CERMS";
         var audience = _configuration["Jwt:Audience"] ?? "CERMS_Users";
         var expiryMinutes = int.Parse(_configuration["Jwt:ExpiryMinutes"] ?? "15");

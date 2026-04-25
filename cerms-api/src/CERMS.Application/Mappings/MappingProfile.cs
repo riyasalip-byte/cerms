@@ -12,5 +12,6 @@ public class MappingProfile : Profile
         CreateMap<RentalBooking, RentalDto>().ReverseMap();
         CreateMap<Invoice, InvoiceDto>().ReverseMap();
         CreateMap<InvoiceLineItem, InvoiceLineItemDto>().ReverseMap();
+        CreateMap<User, UserDto>().ReverseMap();
     }
 }

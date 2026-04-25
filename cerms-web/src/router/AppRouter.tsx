@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Command } from "lucide-react"
+import { Command, AlertCircle } from "lucide-react"
 
 // Lazy load feature pages
 const AssetDetail = lazy(() => import("@/features/assets/AssetDetail").then(m => ({ default: m.AssetDetail })))
@@ -57,71 +57,100 @@ function LoginPage() {
     setIsLoading(true)
     setError(null)
 
-    // Bypass real login for now as requested
-    setTimeout(() => {
-      const dummyUser = { 
-        id: "1", 
-        username: "demouser",
-        email: email || "demo@example.com",
-        role: "Admin",
-        companyId: "comp-1",
-        branchId: "br-1"
-      }
-      const dummyToken = "dummy-jwt-token"
-      login(dummyUser, dummyToken)
+    const payload = {
+      email: email.trim(),
+      password: password.trim()
+    };
+
+    console.log("[Login] Attempting sign-in with:", payload.email);
+
+    try {
+      const response = await loginService(payload)
+      console.log("[Login] Success:", response.user.email);
+      login(response.user, response.accessToken)
       
       const redirectPath = (location.state as any)?.from?.pathname
       navigate(redirectPath || "/dashboard", { replace: true })
+    } catch (err: any) {
+      console.error("[Login] Authentication failed. Status:", err.response?.status);
+      console.error("[Login] Error data:", err.response?.data);
+      
+      const apiMessage = err.response?.data?.message || err.response?.data?.title || err.response?.data;
+      setError(typeof apiMessage === 'string' ? apiMessage : "Invalid email or password. Please check your credentials.");
+    } finally {
       setIsLoading(false)
-    }, 500)
+    }
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 px-4">
-      <Card className="w-full max-w-md border-none shadow-2xl">
-        <CardHeader className="space-y-1 text-center">
+      <Card className="w-full max-w-md border-none shadow-2xl overflow-hidden">
+        <div className="h-2 bg-primary w-full" />
+        <CardHeader className="space-y-1 text-center pt-8">
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
             <Command className="size-6" />
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">System Login</CardTitle>
           <CardDescription>
-            Enter any credentials to access your CERMS dashboard (Temporary).
+            Access the CERMS Management Dashboard
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="admin@cerms.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-11"
+                className="h-11 focus-visible:ring-primary/20"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <button type="button" className="text-xs font-medium text-primary hover:underline">
+                  Forgot password?
+                </button>
+              </div>
               <Input
                 id="password"
                 type="password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-11"
+                className="h-11 focus-visible:ring-primary/20"
               />
             </div>
+            
             {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-xs font-medium text-destructive">
-                {error}
+              <div className="flex items-center gap-2 rounded-xl bg-destructive/10 p-4 text-sm font-medium text-destructive animate-in fade-in slide-in-from-top-1">
+                <AlertCircle className="size-4 shrink-0" />
+                <p>{error}</p>
               </div>
             )}
-            <Button type="submit" className="w-full h-11 text-base font-bold" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign In"}
+            
+            <Button type="submit" className="w-full h-11 text-base font-bold shadow-lg shadow-primary/20" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  Authenticating...
+                </div>
+              ) : (
+                "Sign In"
+              )}
             </Button>
           </form>
+          
+          <div className="mt-8 text-center">
+            <p className="text-xs text-muted-foreground italic">
+              Authorized personnel only. All access attempts are logged.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

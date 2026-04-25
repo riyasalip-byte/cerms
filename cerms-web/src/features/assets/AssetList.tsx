@@ -21,7 +21,14 @@ type AssetRecord = {
 export function AssetList() {
   const navigate = useNavigate()
   const { data, isLoading, isError, refetch } = useAssets()
-  const assets = data?.items || []
+  
+  // Defensive check for capitalized Items (common with C# backends)
+  const assets = React.useMemo(() => {
+    if (!data) return [];
+    const items = (data as any).items || (data as any).Items || [];
+    console.log("[AssetList] Fetched items:", items.length, items);
+    return items;
+  }, [data])
 
   const columns: ColumnDef<AssetRecord>[] = [
     {

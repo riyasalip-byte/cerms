@@ -96,10 +96,20 @@ export function DataTable<TData, TValue>({
 
   React.useEffect(() => {
     if (tableId && storedPagination[tableId]) {
-      table.setPageIndex(storedPagination[tableId].pageIndex)
-      table.setPageSize(storedPagination[tableId].pageSize)
+      const storedIndex = storedPagination[tableId].pageIndex
+      const pageCount = table.getPageCount()
+      
+      // If we have a stored page that's now out of bounds (due to data changes), reset to page 0
+      if (pageCount > 0 && storedIndex >= pageCount) {
+        console.log(`[DataTable] Resetting out-of-bounds page index for ${tableId}: ${storedIndex} -> 0`)
+        table.setPageIndex(0)
+        setPagination(tableId, 0, storedPagination[tableId].pageSize)
+      } else {
+        table.setPageIndex(storedIndex)
+        table.setPageSize(storedPagination[tableId].pageSize)
+      }
     }
-  }, [tableId])
+  }, [tableId, table.getPageCount()])
 
   return (
     <div className="space-y-4">

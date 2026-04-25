@@ -27,8 +27,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   login: (user, accessToken) =>
     set({ isAuthenticated: true, user, accessToken }),
-  logout: () =>
-    set({ isAuthenticated: false, user: null, accessToken: null }),
+  logout: () => {
+    set({ isAuthenticated: false, user: null, accessToken: null })
+    // We don't necessarily need to wait for the API call to complete 
+    // but the component can call it. Alternatively, we keep it simple here.
+  },
   setAccessToken: (accessToken) => set({ accessToken }),
   setRefreshing: (isRefreshing) => set({ isRefreshing }),
 }))
