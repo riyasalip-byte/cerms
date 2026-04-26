@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CERMS.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8c94241f78216962a2c414a796c3b3225164e4d9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f4d1f609b8de9e75b76c9f98da9aebc0d6dbad1e")]
 [assembly: System.Reflection.AssemblyProductAttribute("CERMS.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CERMS.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

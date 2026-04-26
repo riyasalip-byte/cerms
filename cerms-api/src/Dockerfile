@@ -19,5 +19,6 @@ RUN dotnet publish "CERMS.Api.csproj" -c Release -o /app/publish /p:UseAppHost=f
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENV ASPNETCORE_URLS=http://+:5000
+ENV ASPNETCORE_URLS=http://+:$PORT
+EXPOSE 10000
 ENTRYPOINT ["dotnet", "CERMS.Api.dll"]
