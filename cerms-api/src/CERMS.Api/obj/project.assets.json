@@ -4456,11 +4456,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\CERMS.Api.csproj",
+      "projectUniqueName": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\CERMS.Api.csproj",
       "projectName": "CERMS.Api",
-      "projectPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\CERMS.Api.csproj",
+      "projectPath": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\CERMS.Api.csproj",
       "packagesPath": "C:\\Users\\riyas\\.nuget\\packages\\",
-      "outputPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\obj\\",
+      "outputPath": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -4482,11 +4482,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Application\\CERMS.Application.csproj": {
-              "projectPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Application\\CERMS.Application.csproj"
+            "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Application\\CERMS.Application.csproj": {
+              "projectPath": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Application\\CERMS.Application.csproj"
             },
-            "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj": {
-              "projectPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj"
+            "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj": {
+              "projectPath": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj"
             }
           }
         }

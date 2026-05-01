@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Loader2, Save, XCircle } from "lucide-react"
+import { Loader2, Save } from "lucide-react"
 
 import {
   Form,
@@ -42,6 +42,7 @@ const assetFormSchema = z.object({
   assetCode: z.string().min(1, "Asset code is required."),
   currentOdometer: z.coerce.number().min(0, "Odometer cannot be negative."),
   status: z.coerce.number(),
+  purchaseDate: z.string().optional(),
 })
 
 type AssetFormValues = z.infer<typeof assetFormSchema>
@@ -52,8 +53,6 @@ export function AssetForm() {
   const isEditMode = Boolean(id)
   const [showConfirm, setShowConfirm] = React.useState(false)
   const [pendingData, setPendingData] = React.useState<AssetFormValues | null>(null)
-
-  console.log("[AssetForm] Rendering, isEditMode:", isEditMode)
 
   const { data: existingAsset, isLoading } = useAsset(id!)
   const createAsset = useCreateAsset()
@@ -67,6 +66,7 @@ export function AssetForm() {
       assetCode: "",
       currentOdometer: 0,
       status: 0,
+      purchaseDate: new Date().toISOString().split('T')[0],
     },
   })
 
@@ -90,6 +90,7 @@ export function AssetForm() {
         assetCode: existingAsset.assetCode,
         currentOdometer: existingAsset.currentOdometer,
         status: existingAsset.status,
+        purchaseDate: existingAsset.purchaseDate ? new Date(existingAsset.purchaseDate).toISOString().split('T')[0] : "",
       })
     }
   }, [existingAsset, form])
@@ -108,12 +109,20 @@ export function AssetForm() {
         id: id!,
         data: {
           id: id!,
+          name: pendingData.name,
+          assetType: pendingData.assetType,
           status: pendingData.status,
           currentOdometer: pendingData.currentOdometer,
         },
       })
     } else {
-      await createAsset.mutateAsync(pendingData)
+      await createAsset.mutateAsync({
+        name: pendingData.name,
+        assetType: pendingData.assetType,
+        assetCode: pendingData.assetCode,
+        currentOdometer: pendingData.currentOdometer,
+        purchaseDate: pendingData.purchaseDate ? new Date(pendingData.purchaseDate).toISOString() : undefined,
+      })
     }
     // Manually reset dirty state before navigating
     form.reset(pendingData)
@@ -165,7 +174,6 @@ export function AssetForm() {
                     <FormControl>
                       <Input 
                         placeholder="e.g. Caterpillar Excavator 320" 
-                        disabled={isEditMode}
                         autoFocus
                         {...field} 
                       />
@@ -208,7 +216,6 @@ export function AssetForm() {
                     <FormControl>
                       <Input 
                         placeholder="e.g. Excavators, Generators" 
-                        disabled={isEditMode}
                         {...field} 
                       />
                     </FormControl>
@@ -236,30 +243,49 @@ export function AssetForm() {
 
               <FormField
                 control={form.control}
-                name="status"
+                name="purchaseDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Operational Status <span className="text-destructive">*</span></FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="0">Available</SelectItem>
-                        <SelectItem value="1">Rented</SelectItem>
-                        <SelectItem value="2">Maintenance</SelectItem>
-                        <SelectItem value="3">Decommissioned</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Purchase Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" disabled={isEditMode} {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Date when the asset was acquired.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {isEditMode && (
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Operational Status <span className="text-destructive">*</span></FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="0">Available</SelectItem>
+                          <SelectItem value="1">Rented</SelectItem>
+                          <SelectItem value="2">Maintenance</SelectItem>
+                          <SelectItem value="3">Decommissioned</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </CardContent>
           </Card>
 

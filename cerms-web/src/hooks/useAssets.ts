@@ -1,18 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { assetService } from '@/api/services'
+import * as assetsApi from '@/api/assets'
 import { toast } from 'sonner'
 
 export function useAssets(params?: any) {
   return useQuery({
     queryKey: ['assets', params],
-    queryFn: () => assetService.getAll(params)
+    queryFn: () => assetsApi.getAssets(params)
   })
 }
 
 export function useAsset(id: string) {
   return useQuery({
     queryKey: ['assets', id],
-    queryFn: () => assetService.getById(id),
+    queryFn: () => assetsApi.getAssetById(id),
     enabled: !!id
   })
 }
@@ -20,13 +20,13 @@ export function useAsset(id: string) {
 export function useCreateAsset() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: assetService.create,
+    mutationFn: assetsApi.createAsset,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] })
       toast.success('Asset created successfully')
     },
     onError: (error: any) => {
-      toast.error(error.response?.data || 'Failed to create asset')
+      toast.error(error.response?.data?.errors?.[0] || 'Failed to create asset')
     }
   })
 }
@@ -34,14 +34,45 @@ export function useCreateAsset() {
 export function useUpdateAsset() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => assetService.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) => assetsApi.updateAsset(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['assets'] })
       queryClient.invalidateQueries({ queryKey: ['assets', variables.id] })
       toast.success('Asset updated successfully')
     },
     onError: (error: any) => {
-      toast.error(error.response?.data || 'Failed to update asset')
+      toast.error(error.response?.data?.errors?.[0] || 'Failed to update asset')
+    }
+  })
+}
+
+export function useAddMaintenance() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => assetsApi.addMaintenance(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] })
+      queryClient.invalidateQueries({ queryKey: ['assets', variables.id] })
+      toast.success('Maintenance record added successfully')
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.errors?.[0] || 'Failed to add maintenance record')
+    }
+  })
+}
+
+export function useCompleteMaintenance() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: { id: string; maintenanceId: string; finalCost: number; notes?: string }) => 
+      assetsApi.completeMaintenance(payload.id, payload.maintenanceId, payload.finalCost, payload.notes),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] })
+      queryClient.invalidateQueries({ queryKey: ['assets', variables.id] })
+      toast.success('Maintenance completed successfully')
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.errors?.[0] || 'Failed to complete maintenance')
     }
   })
 }
@@ -49,13 +80,13 @@ export function useUpdateAsset() {
 export function useDeleteAsset() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: assetService.delete,
+    mutationFn: (id: string) => assetsApi.deleteAsset(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] })
       toast.success('Asset deleted successfully')
     },
     onError: (error: any) => {
-      toast.error(error.response?.data || 'Failed to delete asset')
+      toast.error(error.response?.data?.errors?.[0] || 'Failed to delete asset')
     }
   })
 }

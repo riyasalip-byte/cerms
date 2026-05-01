@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj": {}
+    "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj": {}
   },
   "projects": {
-    "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj": {
+    "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj",
+        "projectUniqueName": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj",
         "projectName": "CERMS.Domain",
-        "projectPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj",
+        "projectPath": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj",
         "packagesPath": "C:\\Users\\riyas\\.nuget\\packages\\",
-        "outputPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\obj\\",
+        "outputPath": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

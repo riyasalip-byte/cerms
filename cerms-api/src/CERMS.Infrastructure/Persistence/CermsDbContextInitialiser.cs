@@ -75,13 +75,14 @@ public class CermsDbContextInitialiser
         // Seed Assets if none exist
         if (!await _context.Assets.IgnoreQueryFilters().AnyAsync())
         {
+            var purchaseDate = DateTime.UtcNow.AddYears(-1);
             var assets = new List<Asset>
             {
-                new Asset("EX-320", "Caterpillar Excavator 320", "Excavator", 1250, 0) { CompanyId = companyId, BranchId = branchId },
-                new Asset("GEN-50", "Cummins 50kVA Generator", "Generator", 450, 0) { CompanyId = companyId, BranchId = branchId },
-                new Asset("FL-25", "Toyota Forklift 2.5T", "Forklift", 890, 0) { CompanyId = companyId, BranchId = branchId },
-                new Asset("CM-10", "Putzmeister Concrete Pump", "Construction", 210, 0) { CompanyId = companyId, BranchId = branchId },
-                new Asset("SL-12", "JLG Scissor Lift 12m", "Lifting", 155, 0) { CompanyId = companyId, BranchId = branchId }
+                new Asset("EX-320", "Caterpillar Excavator 320", "Excavator", 1250m, purchaseDate, 10000m) { CompanyId = companyId, BranchId = branchId },
+                new Asset("GEN-50", "Cummins 50kVA Generator", "Generator", 450m, purchaseDate, 5000m) { CompanyId = companyId, BranchId = branchId },
+                new Asset("FL-25", "Toyota Forklift 2.5T", "Forklift", 890m, purchaseDate, 5000m) { CompanyId = companyId, BranchId = branchId },
+                new Asset("CM-10", "Putzmeister Concrete Pump", "Construction", 210m, purchaseDate, 10000m) { CompanyId = companyId, BranchId = branchId },
+                new Asset("SL-12", "JLG Scissor Lift 12m", "Lifting", 155m, purchaseDate, 5000m) { CompanyId = companyId, BranchId = branchId }
             };
 
             _context.Assets.AddRange(assets);

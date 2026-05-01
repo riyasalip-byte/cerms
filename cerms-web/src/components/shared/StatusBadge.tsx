@@ -7,6 +7,7 @@ export type StatusType =
   | "available" 
   | "rented" 
   | "maintenance" 
+  | "decommissioned"
   | "overdue" 
   | "draft"
   | "active"
@@ -33,6 +34,10 @@ const statusMap: Record<string, { label: string; className: string }> = {
   maintenance: { 
     label: "Maintenance", 
     className: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800" 
+  },
+  decommissioned: { 
+    label: "Decommissioned", 
+    className: "bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" 
   },
   overdue: { 
     label: "Overdue", 
@@ -73,6 +78,7 @@ const numericStatusMap: Record<number, StatusType> = {
   0: "available",
   1: "rented",
   2: "maintenance",
+  3: "decommissioned",
 }
 
 const rentalNumericStatusMap: Record<number, StatusType> = {
@@ -93,7 +99,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   
   // Handle numeric status conversion
   if (typeof status === "number") {
-    if (status >= 0 && status <= 2 && className === "asset") {
+    if (status >= 0 && status <= 3 && className === "asset") {
        normalizedStatus = numericStatusMap[status] || normalizedStatus
     } 
     else if (status >= 0 && status <= 3 && className === "rental") {

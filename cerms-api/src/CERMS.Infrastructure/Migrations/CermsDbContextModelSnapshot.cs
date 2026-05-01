@@ -58,9 +58,20 @@ namespace CERMS.Infrastructure.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("current_odometer");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")
                         .HasColumnName("is_deleted");
+
+                    b.Property<decimal>("LastServiceOdometer")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("last_service_odometer");
 
                     b.Property<decimal>("MaintenanceCost")
                         .HasPrecision(18, 2)
@@ -72,6 +83,19 @@ namespace CERMS.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
+
+                    b.Property<DateTime?>("NextServiceDueDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_service_due_date");
+
+                    b.Property<DateTime>("PurchaseDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("purchase_date");
+
+                    b.Property<decimal>("ServiceIntervalKm")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("service_interval_km");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -289,6 +313,82 @@ namespace CERMS.Infrastructure.Migrations
                         .HasDatabaseName("ix_invoice_line_items_invoice_id");
 
                     b.ToTable("invoice_line_items", (string)null);
+                });
+
+            modelBuilder.Entity("CERMS.Domain.Entities.MaintenanceRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("asset_id");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<decimal>("Cost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("cost");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<decimal?>("FinalCost")
+                        .HasColumnType("numeric")
+                        .HasColumnName("final_cost");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateTime?>("NextServiceDueDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_service_due_date");
+
+                    b.Property<decimal>("Odometer")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("odometer");
+
+                    b.Property<DateTime>("ServiceDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("service_date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_maintenance_records");
+
+                    b.HasIndex("AssetId")
+                        .HasDatabaseName("ix_maintenance_records_asset_id");
+
+                    b.ToTable("maintenance_records", (string)null);
                 });
 
             modelBuilder.Entity("CERMS.Domain.Entities.RefreshToken", b =>
@@ -691,6 +791,18 @@ namespace CERMS.Infrastructure.Migrations
                         .HasConstraintName("fk_invoice_line_items_invoices_invoice_id");
                 });
 
+            modelBuilder.Entity("CERMS.Domain.Entities.MaintenanceRecord", b =>
+                {
+                    b.HasOne("CERMS.Domain.Entities.Asset", "Asset")
+                        .WithMany("MaintenanceRecords")
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_maintenance_records_assets_asset_id");
+
+                    b.Navigation("Asset");
+                });
+
             modelBuilder.Entity("CERMS.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("CERMS.Domain.Entities.User", "User")
@@ -727,6 +839,11 @@ namespace CERMS.Infrastructure.Migrations
                         .HasForeignKey("CERMS.Domain.Entities.StaffMember", "UserId")
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_staff_members_users_user_id");
+                });
+
+            modelBuilder.Entity("CERMS.Domain.Entities.Asset", b =>
+                {
+                    b.Navigation("MaintenanceRecords");
                 });
 
             modelBuilder.Entity("CERMS.Domain.Entities.Invoice", b =>

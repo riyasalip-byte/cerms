@@ -141,8 +141,8 @@ export function RentalForm() {
                       </FormControl>
                       <SelectContent>
                         {assetsData?.items.map((asset) => (
-                          <SelectItem key={asset.id} value={asset.id}>
-                            {asset.name} ({asset.assetCode})
+                          <SelectItem key={asset.id} value={asset.id} disabled={asset.status !== 0}>
+                            {asset.name} ({asset.assetCode}) {asset.status !== 0 ? "- Unavailable" : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>

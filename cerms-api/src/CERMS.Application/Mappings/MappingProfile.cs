@@ -9,6 +9,8 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         CreateMap<Asset, AssetDto>().ReverseMap();
+        CreateMap<Asset, AssetDetailDto>().ReverseMap();
+        CreateMap<MaintenanceRecord, MaintenanceRecordDto>().ReverseMap();
         CreateMap<RentalBooking, RentalDto>().ReverseMap();
         CreateMap<Invoice, InvoiceDto>().ReverseMap();
         CreateMap<InvoiceLineItem, InvoiceLineItemDto>().ReverseMap();

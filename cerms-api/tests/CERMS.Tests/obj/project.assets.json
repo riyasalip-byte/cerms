@@ -2179,11 +2179,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "R:\\Projects\\cerms\\cerms-api\\tests\\CERMS.Tests\\CERMS.Tests.csproj",
+      "projectUniqueName": "r:\\Projects\\cerms\\cerms-api\\tests\\CERMS.Tests\\CERMS.Tests.csproj",
       "projectName": "CERMS.Tests",
-      "projectPath": "R:\\Projects\\cerms\\cerms-api\\tests\\CERMS.Tests\\CERMS.Tests.csproj",
+      "projectPath": "r:\\Projects\\cerms\\cerms-api\\tests\\CERMS.Tests\\CERMS.Tests.csproj",
       "packagesPath": "C:\\Users\\riyas\\.nuget\\packages\\",
-      "outputPath": "R:\\Projects\\cerms\\cerms-api\\tests\\CERMS.Tests\\obj\\",
+      "outputPath": "r:\\Projects\\cerms\\cerms-api\\tests\\CERMS.Tests\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -2205,11 +2205,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Application\\CERMS.Application.csproj": {
-              "projectPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Application\\CERMS.Application.csproj"
+            "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Application\\CERMS.Application.csproj": {
+              "projectPath": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Application\\CERMS.Application.csproj"
             },
-            "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj": {
-              "projectPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj"
+            "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj": {
+              "projectPath": "r:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj"
             }
           }
         }

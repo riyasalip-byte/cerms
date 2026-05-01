@@ -1,64 +1,65 @@
 using CERMS.Application.Features.Assets.Commands;
 using CERMS.Application.Features.Assets.Queries;
 using CERMS.Domain.Enums;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CERMS.Api.Controllers;
 
-[ApiController]
-[Route("api/v1/assets")]
-public class AssetsController : ControllerBase
+public class AssetsController : ApiControllerBase
 {
-    private readonly IMediator _mediator;
-
-    public AssetsController(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-
     [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] AssetStatus? status = null, [FromQuery] string? type = null)
+    public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchTerm = null, [FromQuery] AssetStatus? status = null, [FromQuery] string? type = null)
     {
         var query = new GetAssetsQuery
         {
             PageNumber = pageNumber,
             PageSize = pageSize,
+            SearchTerm = searchTerm,
             Status = status,
             AssetType = type
         };
-        var result = await _mediator.Send(query);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return HandleResult(await Mediator.Send(query));
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var result = await _mediator.Send(new GetAssetByIdQuery(id));
-        return result.IsSuccess ? Ok(result.Value) : NotFound(result.Error);
+        return HandleResult(await Mediator.Send(new GetAssetByIdQuery(id)));
     }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAssetCommand command)
     {
-        var result = await _mediator.Send(command);
-        return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value }, result.Value) : BadRequest(result.Error);
+        return HandleResult(await Mediator.Send(command));
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAssetCommand command)
     {
         if (id != command.Id)
-            return BadRequest("ID mismatch");
+            return BadRequest(new ApiResponse<object> { Success = false, Errors = new[] { "ID mismatch" } });
 
-        var result = await _mediator.Send(command);
-        return result.IsSuccess ? NoContent() : BadRequest(result.Error);
+        return HandleResult(await Mediator.Send(command));
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var result = await _mediator.Send(new DeleteAssetCommand(id));
-        return result.IsSuccess ? NoContent() : BadRequest(result.Error);
+        return HandleResult(await Mediator.Send(new DeleteAssetCommand(id)));
+    }
+
+    [HttpPost("{id}/maintenance")]
+    public async Task<IActionResult> AddMaintenance(Guid id, [FromBody] AddMaintenanceCommand command)
+    {
+        if (id != command.AssetId)
+            return BadRequest(new ApiResponse<object> { Success = false, Errors = new[] { "ID mismatch" } });
+
+        return HandleResult(await Mediator.Send(command));
+    }
+
+    [HttpPost("{id}/maintenance/complete")]
+    public async Task<IActionResult> CompleteMaintenance(Guid id, [FromBody] CERMS.Application.DTOs.CompleteMaintenanceDto dto)
+    {
+        return HandleResult(await Mediator.Send(new CompleteMaintenanceCommand(id, dto.MaintenanceId, dto.FinalCost, dto.Notes, dto.ServiceDate)));
     }
 }

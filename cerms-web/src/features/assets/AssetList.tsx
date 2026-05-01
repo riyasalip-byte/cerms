@@ -8,6 +8,14 @@ import { DataTable } from "@/components/shared/DataTable"
 import { Button } from "@/components/ui/button"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { StatusBadge } from "@/components/shared/StatusBadge"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 type AssetRecord = {
   id: string
@@ -20,14 +28,26 @@ type AssetRecord = {
 
 export function AssetList() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, refetch } = useAssets()
   
-  // Defensive check for capitalized Items (common with C# backends)
+  const [searchTerm, setSearchTerm] = React.useState("")
+  const [debouncedSearch, setDebouncedSearch] = React.useState("")
+  const [statusFilter, setStatusFilter] = React.useState<string>("all")
+
+  // Debounce search term to prevent excessive API calls
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 400)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  const { data, isLoading, isError, refetch } = useAssets({
+    searchTerm: debouncedSearch || undefined,
+    status: statusFilter !== "all" ? Number(statusFilter) : undefined,
+    pageSize: 100 // Fetch a larger set to let DataTable handle local pagination
+  })
+  
   const assets = React.useMemo(() => {
     if (!data) return [];
-    const items = (data as any).items || (data as any).Items || [];
-    console.log("[AssetList] Fetched items:", items.length, items);
-    return items;
+    return (data as any).items || (data as any).Items || [];
   }, [data])
 
   const columns: ColumnDef<AssetRecord>[] = [
@@ -103,7 +123,7 @@ export function AssetList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Assets</h1>
           <p className="text-muted-foreground">
@@ -111,10 +131,7 @@ export function AssetList() {
           </p>
         </div>
         <Button 
-          onClick={() => {
-            console.log("[AssetList] New Asset button clicked")
-            navigate("/assets/new")
-          }} 
+          onClick={() => navigate("/assets/new")} 
           className="shadow-lg shadow-primary/20"
         >
           <Plus className="mr-2 size-4" />
@@ -122,16 +139,33 @@ export function AssetList() {
         </Button>
       </div>
 
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center mb-6 mt-4 p-4 bg-card rounded-xl border border-muted/60 shadow-sm">
+        <Input
+          placeholder="Search by name or code..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm h-10 transition-shadow focus:shadow-md"
+        />
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-[200px] h-10">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="1">Available</SelectItem>
+            <SelectItem value="2">Rented</SelectItem>
+            <SelectItem value="3">Maintenance</SelectItem>
+            <SelectItem value="4">Decommissioned</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <DataTable 
         columns={columns} 
         data={assets} 
         isLoading={isLoading} 
-        searchKey="name"
         tableId="assets-table"
-        onRowClick={(row) => {
-          console.log(`[AssetList] Row clicked: ${row.id}`)
-          navigate(`/assets/${row.id}`)
-        }}
+        onRowClick={(row) => navigate(`/assets/${row.id}`)}
       />
     </div>
   )

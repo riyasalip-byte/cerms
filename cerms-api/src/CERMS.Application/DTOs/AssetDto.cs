@@ -10,4 +10,10 @@ public class AssetDto
     public string AssetType { get; set; } = string.Empty;
     public AssetStatus Status { get; set; }
     public decimal CurrentOdometer { get; set; }
+    public decimal LastServiceOdometer { get; set; }
+    public DateTime PurchaseDate { get; set; }
+    public bool IsActive { get; set; }
+    public decimal MaintenanceCost { get; set; }
+    public DateTime? NextServiceDueDate { get; set; }
+    public decimal ServiceIntervalKm { get; set; }
 }
