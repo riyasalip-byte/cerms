@@ -4,6 +4,7 @@ import { useLocation, Link, useNavigate } from "react-router-dom"
 import { authService } from "@/api/services"
 import { useAuthStore } from "@/stores/authStore"
 import { toast } from "sonner"
+import { ThemeToggle } from "@/components/shared/ThemeToggle"
 
 import {
   Breadcrumb,
@@ -104,6 +105,8 @@ export function AppTopbar() {
           />
         </form>
 
+        <ThemeToggle />
+
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="size-5" />
           <span className="absolute right-2 top-2 flex size-2 rounded-full bg-destructive"></span>
@@ -119,7 +122,7 @@ export function AppTopbar() {
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuContent className="w-56" align="end">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{user?.username || "User"}</p>

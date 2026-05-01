@@ -1,6 +1,6 @@
 import { AppRouter } from '@/router/AppRouter'
 import { Toaster } from '@/components/ui/sonner'
-import { ThemeProvider } from 'next-themes'
+import { ThemeProvider } from '@/providers/ThemeProvider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 
