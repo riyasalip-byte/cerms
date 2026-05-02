@@ -30,7 +30,7 @@ public class UpdateRentalHandler : IRequestHandler<UpdateRentalCommand, Result>
                     rental.Confirm();
                     break;
                 case RentalStatus.Active:
-                    rental.Activate();
+                    rental.Activate(null);
                     // When active, mark asset as Rented
                     var asset = await _unitOfWork.Repository<Asset>().GetByIdAsync(rental.AssetId);
                     asset?.UpdateStatus(AssetStatus.Rented);

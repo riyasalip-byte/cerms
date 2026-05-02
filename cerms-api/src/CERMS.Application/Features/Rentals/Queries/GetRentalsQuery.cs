@@ -24,15 +24,38 @@ public class GetRentalsHandler : IRequestHandler<GetRentalsQuery, Result<Paginat
 
     public async Task<Result<PaginatedList<RentalDto>>> Handle(GetRentalsQuery request, CancellationToken cancellationToken)
     {
-        var query = _unitOfWork.Repository<RentalBooking>().Entities;
+        var rentalsQuery = _unitOfWork.Repository<RentalBooking>().Entities;
+        var assetsQuery = _unitOfWork.Repository<Asset>().Entities;
+        var customersQuery = _unitOfWork.Repository<Customer>().Entities;
 
-        var count = await query.CountAsync(cancellationToken);
+        var count = await rentalsQuery.CountAsync(cancellationToken);
+        
+        var query = from r in rentalsQuery
+                    join a in assetsQuery on r.AssetId equals a.Id
+                    join c in customersQuery on r.CustomerId equals c.Id
+                    orderby r.StartDateTime descending
+                    select new RentalDto
+                    {
+                        Id = r.Id,
+                        AssetId = r.AssetId,
+                        AssetName = a.Name,
+                        CustomerId = r.CustomerId,
+                        CustomerName = c.Name,
+                        Status = r.Status,
+                        StartDateTime = r.StartDateTime,
+                        ExpectedEndDateTime = r.ExpectedEndDateTime,
+                        ActualEndDateTime = r.ActualEndDateTime,
+                        RateType = r.RateType,
+                        RateAmount = r.RateAmount,
+                        StartOdometer = r.StartOdometer,
+                        EndOdometer = r.EndOdometer,
+                        TotalAmount = r.TotalAmount,
+                        IsInvoiced = r.IsInvoiced
+                    };
+
         var items = await query
-            .Include(r => r.AssetId) // Not really how Include works for IDs, I need the entities
-            .OrderByDescending(r => r.BookingDate)
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .ProjectTo<RentalDto>(_mapper.ConfigurationProvider)
             .ToListAsync(cancellationToken);
 
         var paginatedList = new PaginatedList<RentalDto>(items, count, request.PageNumber, request.PageSize);
@@ -55,11 +78,35 @@ public class GetRentalByIdHandler : IRequestHandler<GetRentalByIdQuery, Result<R
 
     public async Task<Result<RentalDto>> Handle(GetRentalByIdQuery request, CancellationToken cancellationToken)
     {
-        var rental = await _unitOfWork.Repository<RentalBooking>().Entities
-            .FirstOrDefaultAsync(r => r.Id == request.Id, cancellationToken);
+        var rentalsQuery = _unitOfWork.Repository<RentalBooking>().Entities;
+        var assetsQuery = _unitOfWork.Repository<Asset>().Entities;
+        var customersQuery = _unitOfWork.Repository<Customer>().Entities;
 
-        if (rental == null) return Result<RentalDto>.Failure("Rental not found.");
+        var rentalDto = await (from r in rentalsQuery
+                               join a in assetsQuery on r.AssetId equals a.Id
+                               join c in customersQuery on r.CustomerId equals c.Id
+                               where r.Id == request.Id
+                               select new RentalDto
+                               {
+                                   Id = r.Id,
+                                   AssetId = r.AssetId,
+                                   AssetName = a.Name,
+                                   CustomerId = r.CustomerId,
+                                   CustomerName = c.Name,
+                                   Status = r.Status,
+                                   StartDateTime = r.StartDateTime,
+                                   ExpectedEndDateTime = r.ExpectedEndDateTime,
+                                   ActualEndDateTime = r.ActualEndDateTime,
+                                   RateType = r.RateType,
+                                   RateAmount = r.RateAmount,
+                                   StartOdometer = r.StartOdometer,
+                                   EndOdometer = r.EndOdometer,
+                                   TotalAmount = r.TotalAmount,
+                                   IsInvoiced = r.IsInvoiced
+                               }).FirstOrDefaultAsync(cancellationToken);
 
-        return Result<RentalDto>.Success(_mapper.Map<RentalDto>(rental));
+        if (rentalDto == null) return Result<RentalDto>.Failure("Rental not found.");
+
+        return Result<RentalDto>.Success(rentalDto);
     }
 }

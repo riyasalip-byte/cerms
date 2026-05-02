@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useRental, useCreateRental, useUpdateRentalStatus } from "@/hooks/useRentals"
+import { useRental, useCreateRental } from "@/hooks/useRentals"
 import { useAssets } from "@/hooks/useAssets"
 import { useCustomers } from "@/hooks/useCustomers"
 import { Link, useNavigate, useParams } from "react-router-dom"
@@ -26,17 +26,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
 const rentalFormSchema = z.object({
   assetId: z.string().min(1, "Asset is required."),
   customerId: z.string().min(1, "Customer is required."),
-  startDate: z.string().min(1, "Start date is required."),
-  expectedEndDate: z.string().min(1, "End date is required."),
-  rentalRate: z.coerce.number().min(0),
+  startDateTime: z.string().min(1, "Start date is required."),
+  expectedEndDateTime: z.string().min(1, "End date is required."),
+  rateAmount: z.coerce.number().min(0, "Rate must be positive."),
   rateType: z.coerce.number(),
-  status: z.coerce.number(),
 })
 
 type RentalFormValues = z.infer<typeof rentalFormSchema>
@@ -51,18 +50,16 @@ export function RentalForm() {
   const { data: customersData } = useCustomers({ pageSize: 100 })
   
   const createRental = useCreateRental()
-  const updateStatus = useUpdateRentalStatus()
 
   const form = useForm<RentalFormValues>({
     resolver: zodResolver(rentalFormSchema),
     defaultValues: {
       assetId: "",
       customerId: "",
-      startDate: "",
-      expectedEndDate: "",
-      rentalRate: 0,
+      startDateTime: "",
+      expectedEndDateTime: "",
+      rateAmount: 0,
       rateType: 0,
-      status: 0,
     },
   })
 
@@ -71,18 +68,19 @@ export function RentalForm() {
       form.reset({
         assetId: rentalData.assetId,
         customerId: rentalData.customerId,
-        startDate: rentalData.startDate.split("T")[0],
-        expectedEndDate: rentalData.expectedEndDate.split("T")[0],
-        rentalRate: rentalData.rentalRate,
-        rateType: rentalData.rateType,
-        status: rentalData.status,
+        startDateTime: rentalData.startDateTime?.split("T")[0] || "",
+        expectedEndDateTime: rentalData.expectedEndDateTime?.split("T")[0] || "",
+        rateAmount: rentalData.rateAmount || 0,
+        rateType: rentalData.rateType || 0,
       })
     }
   }, [rentalData, form])
 
   async function onSubmit(data: RentalFormValues) {
     if (isEditMode) {
-      await updateStatus.mutateAsync({ id: id!, status: data.status })
+      // In a real app, you'd have an update API if editing was allowed.
+      // But typically, rentals are managed via status transitions (confirm, start, close).
+      console.warn("Edit mode submit not implemented for base details.")
     } else {
       await createRental.mutateAsync(data)
     }
@@ -102,10 +100,10 @@ export function RentalForm() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            {isEditMode ? "Manage Rental" : "New Rental"}
+            {isEditMode ? "View Rental" : "New Rental"}
           </h1>
           <p className="text-muted-foreground">
-            {isEditMode ? "Update agreement terms and status." : "Start a new equipment rental agreement."}
+            {isEditMode ? "Rental agreement details." : "Start a new equipment rental agreement."}
           </p>
         </div>
         <Button variant="ghost" className="hidden md:flex" asChild>
@@ -115,7 +113,7 @@ export function RentalForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Card className="border-none shadow-md overflow-hidden">
+          <Card className="border-none shadow-md overflow-hidden bg-card/60 backdrop-blur-sm">
             <CardHeader className="bg-muted/30">
               <CardTitle className="flex items-center gap-2">
                 <Key className="size-5 text-primary" />
@@ -183,7 +181,7 @@ export function RentalForm() {
 
               <FormField
                 control={form.control}
-                name="startDate"
+                name="startDateTime"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Start Date <span className="text-destructive">*</span></FormLabel>
@@ -202,7 +200,7 @@ export function RentalForm() {
 
               <FormField
                 control={form.control}
-                name="expectedEndDate"
+                name="expectedEndDateTime"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Expected End Date <span className="text-destructive">*</span></FormLabel>
@@ -221,7 +219,7 @@ export function RentalForm() {
 
               <FormField
                 control={form.control}
-                name="rentalRate"
+                name="rateAmount"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Rental Rate <span className="text-destructive">*</span></FormLabel>
@@ -268,58 +266,28 @@ export function RentalForm() {
                   </FormItem>
                 )}
               />
-
-              {isEditMode && (
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem className="sm:col-span-2">
-                      <FormLabel>Current Status <span className="text-destructive">*</span></FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-14 text-lg font-semibold border-primary/50 bg-primary/5">
-                            <SelectValue placeholder="Update status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="0">Draft</SelectItem>
-                          <SelectItem value="1">Confirmed</SelectItem>
-                          <SelectItem value="2">Active / In Field</SelectItem>
-                          <SelectItem value="3">Closed / Returned</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Changing status may trigger billing or asset state updates.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
             </CardContent>
           </Card>
 
           {/* Sticky Bottom Bar for Mobile */}
-          <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/80 p-4 backdrop-blur md:static md:bg-transparent md:p-0">
-            <div className="mx-auto max-w-lg md:max-w-none">
-              <Button 
-                type="submit" 
-                className="w-full h-14 text-lg font-bold shadow-lg md:w-auto md:px-12"
-                disabled={form.formState.isSubmitting}
-              >
-                {form.formState.isSubmitting ? (
-                  <Loader2 className="mr-2 size-5 animate-spin" />
-                ) : (
-                  <Save className="mr-2 size-5" />
-                )}
-                {isEditMode ? "Update Rental" : "Confirm Agreement"}
-              </Button>
+          {!isEditMode && (
+            <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/80 p-4 backdrop-blur md:static md:bg-transparent md:p-0">
+              <div className="mx-auto max-w-lg md:max-w-none">
+                <Button 
+                  type="submit" 
+                  className="w-full h-14 text-lg font-bold shadow-lg md:w-auto md:px-12"
+                  disabled={form.formState.isSubmitting}
+                >
+                  {form.formState.isSubmitting ? (
+                    <Loader2 className="mr-2 size-5 animate-spin" />
+                  ) : (
+                    <Save className="mr-2 size-5" />
+                  )}
+                  Create Rental Agreement
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </form>
       </Form>
     </div>

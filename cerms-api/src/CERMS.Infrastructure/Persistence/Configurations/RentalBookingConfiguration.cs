@@ -8,12 +8,27 @@ public class RentalBookingConfiguration : IEntityTypeConfiguration<RentalBooking
 {
     public void Configure(EntityTypeBuilder<RentalBooking> builder)
     {
+        builder.ToTable("rental_bookings");
+
         builder.HasKey(r => r.Id);
 
-        builder.Property(r => r.RentalRate)
+        builder.Property(r => r.RateAmount)
+            .HasPrecision(18, 2);
+            
+        builder.Property(r => r.TotalAmount)
+            .HasPrecision(18, 2);
+            
+        builder.Property(r => r.StartOdometer)
+            .HasPrecision(18, 2);
+            
+        builder.Property(r => r.EndOdometer)
             .HasPrecision(18, 2);
 
         builder.Property(r => r.RateType)
+            .IsRequired()
+            .HasConversion<string>();
+
+        builder.Property(r => r.Status)
             .IsRequired()
             .HasConversion<string>();
 
@@ -26,5 +41,8 @@ public class RentalBookingConfiguration : IEntityTypeConfiguration<RentalBooking
             .WithMany()
             .HasForeignKey(r => r.CustomerId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(r => r.AssetId);
+        builder.HasIndex(r => r.Status);
     }
 }

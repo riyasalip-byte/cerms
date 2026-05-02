@@ -1,4 +1,5 @@
 using CERMS.Application.Common;
+using CERMS.Application.DTOs;
 using CERMS.Application.Interfaces;
 using CERMS.Domain.Entities;
 using CERMS.Domain.Enums;
@@ -7,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CERMS.Application.Features.Rentals.Commands.CloseRental;
 
-public record CloseRentalCommand(Guid Id, DateTime ActualEndDate, decimal? CurrentOdometer = null) : IRequest<Result<Guid>>;
+public record CloseRentalCommand(Guid RentalId, decimal EndOdometer, DateTime ActualEndDateTime) : IRequest<Result<BillingResultDto>>;
 
-public class CloseRentalHandler : IRequestHandler<CloseRentalCommand, Result<Guid>>
+public class CloseRentalHandler : IRequestHandler<CloseRentalCommand, Result<BillingResultDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IBillingCalculatorService _billingService;
@@ -20,67 +21,47 @@ public class CloseRentalHandler : IRequestHandler<CloseRentalCommand, Result<Gui
         _billingService = billingService;
     }
 
-    public async Task<Result<Guid>> Handle(CloseRentalCommand request, CancellationToken cancellationToken)
+    public async Task<Result<BillingResultDto>> Handle(CloseRentalCommand request, CancellationToken cancellationToken)
     {
-        var rental = await _unitOfWork.Repository<RentalBooking>().GetByIdAsync(request.Id);
-        if (rental == null) return Result<Guid>.Failure("Rental not found.");
+        var rental = await _unitOfWork.Repository<RentalBooking>().GetByIdAsync(request.RentalId);
+        if (rental == null) return Result<BillingResultDto>.Failure("Rental not found.");
+
+        if (rental.Status != RentalStatus.Active)
+            return Result<BillingResultDto>.Failure("Only active rentals can be closed.");
+
+        var asset = await _unitOfWork.Repository<Asset>().GetByIdAsync(rental.AssetId);
+        if (asset == null) return Result<BillingResultDto>.Failure("Asset not found.");
+
+        if (rental.StartOdometer.HasValue && request.EndOdometer < rental.StartOdometer.Value)
+            return Result<BillingResultDto>.Failure("End odometer cannot be less than start odometer.");
+
+        if (request.ActualEndDateTime < rental.StartDateTime)
+            return Result<BillingResultDto>.Failure("End date cannot be before start date.");
+
+        // Calculate billing
+        var billingResult = _billingService.Calculate(
+            rental.StartDateTime, 
+            request.ActualEndDateTime, 
+            rental.RateAmount, 
+            rental.RateType);
 
         try
         {
-            // Close the rental
-            rental.Close(request.ActualEndDate);
+            // Close Rental
+            rental.Close(request.ActualEndDateTime, request.EndOdometer, billingResult.TotalAmount);
 
-            // Update asset status to Available and update odometer
-            var asset = await _unitOfWork.Repository<Asset>().GetByIdAsync(rental.AssetId);
-            if (asset != null)
-            {
-                asset.UpdateStatus(AssetStatus.Available);
-                if (request.CurrentOdometer.HasValue)
-                {
-                    asset.UpdateOdometer(request.CurrentOdometer.Value);
-                }
-            }
+            // Update Asset
+            asset.ReturnFromRent(request.EndOdometer);
 
-            // Trigger billing calculation
-            var billingResult = _billingService.Calculate(
-                rental.StartDate, 
-                rental.ActualEndDate.Value, 
-                rental.RentalRate, 
-                rental.RateType);
-
-            var subtotal = billingResult.TotalAmount;
-            var tax = subtotal * 0.10m; // 10% tax
-
-            // Create Invoice
-            var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
-            var invoice = new Invoice(
-                rental.Id,
-                invoiceNumber,
-                subtotal,
-                tax
-            );
-            invoice.CompanyId = rental.CompanyId;
-            invoice.BranchId = rental.BranchId;
-
-            // Create Line Item
-            var lineItem = new InvoiceLineItem(
-                invoice.Id,
-                billingResult.BreakdownText,
-                billingResult.Quantity,
-                billingResult.UnitRate
-            );
-            lineItem.CompanyId = rental.CompanyId;
-            lineItem.BranchId = rental.BranchId;
-
-            await _unitOfWork.Repository<Invoice>().AddAsync(invoice);
-            await _unitOfWork.Repository<InvoiceLineItem>().AddAsync(lineItem);
+            _unitOfWork.Repository<RentalBooking>().Update(rental);
+            _unitOfWork.Repository<Asset>().Update(asset);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result<Guid>.Success(invoice.Id);
+            return Result<BillingResultDto>.Success(billingResult);
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
-            return Result<Guid>.Failure(ex.Message);
+            return Result<BillingResultDto>.Failure(ex.Message);
         }
     }
 }

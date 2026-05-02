@@ -7,24 +7,37 @@ public class RentalBooking : BaseEntity
 {
     public Guid AssetId { get; private set; }
     public Guid CustomerId { get; private set; }
-    public DateTime BookingDate { get; private set; }
-    public DateTime StartDate { get; private set; }
-    public DateTime ExpectedEndDate { get; private set; }
-    public DateTime? ActualEndDate { get; private set; }
-    public RateType RateType { get; private set; }
-    public decimal RentalRate { get; private set; }
     public RentalStatus Status { get; private set; }
 
-    public RentalBooking(Guid assetId, Guid customerId, DateTime startDate, DateTime expectedEndDate, RateType rateType, decimal rentalRate)
+    public DateTime StartDateTime { get; private set; }
+    public DateTime ExpectedEndDateTime { get; private set; }
+    public DateTime? ActualEndDateTime { get; private set; }
+
+    public RateType RateType { get; private set; }
+    public decimal RateAmount { get; private set; }
+
+    public decimal? StartOdometer { get; private set; }
+    public decimal? EndOdometer { get; private set; }
+
+    public decimal? TotalAmount { get; private set; }
+    public bool IsInvoiced { get; private set; }
+
+    private RentalBooking() { }
+
+    public RentalBooking(Guid assetId, Guid customerId, DateTime startDateTime, DateTime expectedEndDateTime, RateType rateType, decimal rateAmount, decimal? startOdometer = null)
     {
+        if (assetId == Guid.Empty) throw new ArgumentException("AssetId is required", nameof(assetId));
+        if (customerId == Guid.Empty) throw new ArgumentException("CustomerId is required", nameof(customerId));
+
         AssetId = assetId;
         CustomerId = customerId;
-        BookingDate = DateTime.UtcNow;
-        StartDate = startDate;
-        ExpectedEndDate = expectedEndDate;
+        StartDateTime = startDateTime;
+        ExpectedEndDateTime = expectedEndDateTime;
         RateType = rateType;
-        RentalRate = rentalRate;
+        RateAmount = rateAmount;
+        StartOdometer = startOdometer;
         Status = RentalStatus.Draft;
+        IsInvoiced = false;
     }
 
     public void Confirm()
@@ -35,28 +48,39 @@ public class RentalBooking : BaseEntity
         Update();
     }
 
-    public void Activate()
+    public void Activate(decimal? startOdometer)
     {
         if (Status != RentalStatus.Confirmed)
             throw new InvalidOperationException("Can only activate from confirmed status.");
+        
+        StartOdometer = startOdometer ?? StartOdometer;
         Status = RentalStatus.Active;
         Update();
     }
 
-    public void Close(DateTime actualEndDate)
+    public void Close(DateTime actualEndDateTime, decimal? endOdometer, decimal? totalAmount)
     {
         if (Status != RentalStatus.Active)
             throw new InvalidOperationException("Can only close from active status.");
-        ActualEndDate = actualEndDate;
+        
+        ActualEndDateTime = actualEndDateTime;
+        EndOdometer = endOdometer;
+        TotalAmount = totalAmount;
         Status = RentalStatus.Closed;
         Update();
     }
 
-    public void Extend(DateTime newExpectedEndDate)
+    public void Extend(DateTime newExpectedEndDateTime)
     {
-        if (newExpectedEndDate <= ExpectedEndDate)
+        if (newExpectedEndDateTime <= ExpectedEndDateTime)
             throw new ArgumentException("New end date must be after current end date.");
-        ExpectedEndDate = newExpectedEndDate;
+        ExpectedEndDateTime = newExpectedEndDateTime;
+        Update();
+    }
+
+    public void MarkAsInvoiced()
+    {
+        IsInvoiced = true;
         Update();
     }
 }

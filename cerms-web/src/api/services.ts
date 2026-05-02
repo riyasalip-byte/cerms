@@ -99,12 +99,12 @@ export const assetService = {
 }
 
 export const rentalService = {
-  getAll: (params: any) => api.get<PaginatedList<Rental>>('/rentals', { params }).then(r => r.data),
-  getById: (id: string) => api.get<Rental>(`/rentals/${id}`).then(r => r.data),
-  create: (data: any) => api.post<string>('/rentals', data).then(r => r.data),
-  updateStatus: (id: string, status: number) => api.put(`/rentals/${id}/status`, status),
-  close: (id: string, data: { actualEndDate: string; currentOdometer: number }) => api.post<{ invoiceId: string }>(`/rentals/${id}/close`, data).then(r => r.data),
-  extend: (id: string, newExpectedEndDate: string) => api.post(`/rentals/${id}/extend`, newExpectedEndDate)
+  getRentals: (params?: any) => api.get<PaginatedList<Rental>>('/rentals', { params }).then(r => r.data),
+  getRentalById: (id: string) => api.get<Rental>(`/rentals/${id}`).then(r => r.data),
+  createRental: (data: any) => api.post<string>('/rentals', data).then(r => r.data),
+  confirmRental: (id: string) => api.post(`/rentals/${id}/confirm`).then(r => r.data),
+  startRental: (id: string, data: { startOdometer: number }) => api.post(`/rentals/${id}/start`, data).then(r => r.data),
+  closeRental: (id: string, data: { actualEndDateTime: string; endOdometer: number }) => api.post<any>(`/rentals/${id}/close`, data).then(r => r.data),
 }
 
 export const invoiceService = {

@@ -509,17 +509,13 @@ namespace CERMS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<DateTime?>("ActualEndDate")
+                    b.Property<DateTime?>("ActualEndDateTime")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("actual_end_date");
+                        .HasColumnName("actual_end_date_time");
 
                     b.Property<Guid>("AssetId")
                         .HasColumnType("uuid")
                         .HasColumnName("asset_id");
-
-                    b.Property<DateTime>("BookingDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("booking_date");
 
                     b.Property<Guid>("BranchId")
                         .HasColumnType("uuid")
@@ -537,31 +533,51 @@ namespace CERMS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("customer_id");
 
-                    b.Property<DateTime>("ExpectedEndDate")
+                    b.Property<decimal?>("EndOdometer")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("end_odometer");
+
+                    b.Property<DateTime>("ExpectedEndDateTime")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expected_end_date");
+                        .HasColumnName("expected_end_date_time");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")
                         .HasColumnName("is_deleted");
+
+                    b.Property<bool>("IsInvoiced")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_invoiced");
+
+                    b.Property<decimal>("RateAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("rate_amount");
 
                     b.Property<string>("RateType")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("rate_type");
 
-                    b.Property<decimal>("RentalRate")
+                    b.Property<DateTime>("StartDateTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("start_date_time");
+
+                    b.Property<decimal?>("StartOdometer")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
-                        .HasColumnName("rental_rate");
+                        .HasColumnName("start_odometer");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("start_date");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
                         .HasColumnName("status");
+
+                    b.Property<decimal?>("TotalAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_amount");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -575,6 +591,9 @@ namespace CERMS.Infrastructure.Migrations
 
                     b.HasIndex("CustomerId")
                         .HasDatabaseName("ix_rental_bookings_customer_id");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_rental_bookings_status");
 
                     b.ToTable("rental_bookings", (string)null);
                 });

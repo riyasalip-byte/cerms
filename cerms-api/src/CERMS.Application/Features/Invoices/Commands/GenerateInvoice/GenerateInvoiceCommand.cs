@@ -37,12 +37,12 @@ public class GenerateInvoiceCommandHandler : IRequestHandler<GenerateInvoiceComm
             throw new Exception($"Booking {request.BookingId} not found.");
         }
 
-        var endDate = booking.ActualEndDate ?? booking.ExpectedEndDate;
+        var endDate = booking.ActualEndDateTime ?? booking.ExpectedEndDateTime;
         
         var billingResult = _billingService.Calculate(
-            booking.StartDate, 
+            booking.StartDateTime, 
             endDate, 
-            booking.RentalRate, 
+            booking.RateAmount, 
             booking.RateType);
 
         var subtotal = billingResult.TotalAmount;

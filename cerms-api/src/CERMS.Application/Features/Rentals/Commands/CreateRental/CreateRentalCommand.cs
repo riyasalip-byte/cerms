@@ -1,4 +1,5 @@
 using CERMS.Application.Common;
+using CERMS.Application.DTOs;
 using CERMS.Application.Interfaces;
 using CERMS.Domain.Entities;
 using CERMS.Domain.Enums;
@@ -10,12 +11,13 @@ namespace CERMS.Application.Features.Rentals.Commands.CreateRental;
 public record CreateRentalCommand(
     Guid AssetId,
     Guid CustomerId,
-    DateTime StartDate,
-    DateTime ExpectedEndDate,
+    DateTime StartDateTime,
+    DateTime ExpectedEndDateTime,
     RateType RateType,
-    decimal RentalRate) : IRequest<Result<Guid>>;
+    decimal RateAmount,
+    decimal? StartOdometer = null) : IRequest<Result<RentalDto>>;
 
-public class CreateRentalHandler : IRequestHandler<CreateRentalCommand, Result<Guid>>
+public class CreateRentalHandler : IRequestHandler<CreateRentalCommand, Result<RentalDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
 
@@ -24,28 +26,47 @@ public class CreateRentalHandler : IRequestHandler<CreateRentalCommand, Result<G
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<Guid>> Handle(CreateRentalCommand request, CancellationToken cancellationToken)
+    public async Task<Result<RentalDto>> Handle(CreateRentalCommand request, CancellationToken cancellationToken)
     {
         var asset = await _unitOfWork.Repository<Asset>().GetByIdAsync(request.AssetId);
-        if (asset == null) return Result<Guid>.Failure("Asset not found.");
-        if (asset.Status != AssetStatus.Available) return Result<Guid>.Failure("Asset is not available.");
+        if (asset == null) return Result<RentalDto>.Failure("Asset not found.");
+        if (asset.Status != AssetStatus.Available) return Result<RentalDto>.Failure("Asset is not available.");
 
-        var customerExists = await _unitOfWork.Repository<Customer>().Entities
-            .AnyAsync(c => c.Id == request.CustomerId, cancellationToken);
-        if (!customerExists) return Result<Guid>.Failure("Customer not found.");
+        var customer = await _unitOfWork.Repository<Customer>().GetByIdAsync(request.CustomerId);
+        if (customer == null) return Result<RentalDto>.Failure("Customer not found.");
 
         var rental = new RentalBooking(
             request.AssetId,
             request.CustomerId,
-            request.StartDate,
-            request.ExpectedEndDate,
+            request.StartDateTime,
+            request.ExpectedEndDateTime,
             request.RateType,
-            request.RentalRate
+            request.RateAmount,
+            request.StartOdometer
         );
 
         await _unitOfWork.Repository<RentalBooking>().AddAsync(rental);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result<Guid>.Success(rental.Id);
+        var rentalDto = new RentalDto
+        {
+            Id = rental.Id,
+            AssetId = rental.AssetId,
+            AssetName = asset.Name,
+            CustomerId = rental.CustomerId,
+            CustomerName = customer.Name,
+            StartDateTime = rental.StartDateTime,
+            ExpectedEndDateTime = rental.ExpectedEndDateTime,
+            ActualEndDateTime = rental.ActualEndDateTime,
+            Status = rental.Status,
+            RateType = rental.RateType,
+            RateAmount = rental.RateAmount,
+            StartOdometer = rental.StartOdometer,
+            EndOdometer = rental.EndOdometer,
+            TotalAmount = rental.TotalAmount,
+            IsInvoiced = rental.IsInvoiced
+        };
+
+        return Result<RentalDto>.Success(rentalDto);
     }
 }
