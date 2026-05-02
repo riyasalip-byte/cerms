@@ -1,4 +1,3 @@
-import * as React from "react"
 import { useEffect, useState, lazy, Suspense } from "react"
 import type { FormEvent } from "react"
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom"
@@ -17,9 +16,9 @@ import { Command, AlertCircle } from "lucide-react"
 const AssetDetail = lazy(() => import("@/features/assets/AssetDetail").then(m => ({ default: m.AssetDetail })))
 const AssetForm = lazy(() => import("@/features/assets/AssetForm").then(m => ({ default: m.AssetForm })))
 const AssetList = lazy(() => import("@/features/assets/AssetList").then(m => ({ default: m.AssetList })))
-const CustomerDetail = lazy(() => import("@/features/customers/CustomerDetail").then(m => ({ default: m.CustomerDetail })))
+const CustomerDetailPage = lazy(() => import("@/features/customers/CustomerDetailPage").then(m => ({ default: m.CustomerDetailPage })))
 const CustomerForm = lazy(() => import("@/features/customers/CustomerForm").then(m => ({ default: m.CustomerForm })))
-const CustomerList = lazy(() => import("@/features/customers/CustomerList").then(m => ({ default: m.CustomerList })))
+const CustomerListPage = lazy(() => import("@/features/customers/CustomerListPage").then(m => ({ default: m.CustomerListPage })))
 const DashboardPage = lazy(() => import("@/features/dashboard/DashboardPage").then(m => ({ default: m.DashboardPage })))
 const InvoiceDetail = lazy(() => import("@/features/invoices/InvoiceDetail").then(m => ({ default: m.InvoiceDetail })))
 const InvoiceList = lazy(() => import("@/features/invoices/InvoiceList").then(m => ({ default: m.InvoiceList })))
@@ -200,9 +199,9 @@ export function AppRouter() {
             <Route path="/assets/:id" element={<AssetDetail />} />
             <Route path="/assets/:id/edit" element={<AssetForm />} />
 
-            <Route path="/customers" element={<CustomerList />} />
+            <Route path="/customers" element={<CustomerListPage />} />
             <Route path="/customers/new" element={<CustomerForm />} />
-            <Route path="/customers/:id" element={<CustomerDetail />} />
+            <Route path="/customers/:id" element={<CustomerDetailPage />} />
             <Route path="/customers/:id/edit" element={<CustomerForm />} />
 
             <Route path="/rentals" element={<RentalList />} />

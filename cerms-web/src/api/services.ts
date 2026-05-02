@@ -1,5 +1,6 @@
 import { api } from '@/lib/axios'
 import type { User } from '@/stores/authStore'
+import * as customersApi from './customers'
 
 export type AuthResponse = {
   accessToken: string
@@ -86,8 +87,11 @@ export type Customer = {
 }
 
 export const customerService = {
-  getAll: (params?: any) => api.get<PaginatedList<Customer>>('/customers', { params }).then(r => r.data),
-  getById: (id: string) => api.get<Customer>(`/customers/${id}`).then(r => r.data)
+  getAll: customersApi.getCustomers,
+  getById: customersApi.getCustomerById,
+  create: customersApi.createCustomer,
+  update: customersApi.updateCustomer,
+  deactivate: customersApi.deactivateCustomer
 }
 
 export const assetService = {
@@ -105,6 +109,8 @@ export const rentalService = {
   confirmRental: (id: string) => api.post(`/rentals/${id}/confirm`).then(r => r.data),
   startRental: (id: string, data: { startOdometer: number }) => api.post(`/rentals/${id}/start`, data).then(r => r.data),
   closeRental: (id: string, data: { actualEndDateTime: string; endOdometer: number }) => api.post<any>(`/rentals/${id}/close`, data).then(r => r.data),
+  getById: (id: string) => api.get<Rental>(`/rentals/${id}`).then(r => r.data),
+  close: (id: string, data: any) => api.post<any>(`/rentals/${id}/close`, data).then(r => r.data),
 }
 
 export const invoiceService = {
@@ -135,7 +141,10 @@ export const authService = {
 // Compatibility exports
 export const getAssetById = assetService.getById;
 export const getCustomerById = customerService.getById;
-export const getCustomers = customerService.getAll;
+export const getCustomers = () => customerService.getAll();
+export const createCustomer = customerService.create;
+export const updateCustomer = customerService.update;
+export const deactivateCustomer = customerService.deactivate;
 export const getRentalById = rentalService.getById;
 export const login = authService.login;
 export const refresh = authService.refresh;

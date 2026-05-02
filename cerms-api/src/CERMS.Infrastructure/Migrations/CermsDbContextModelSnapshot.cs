@@ -123,6 +123,11 @@ namespace CERMS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("address");
+
                     b.Property<Guid>("BranchId")
                         .HasColumnType("uuid")
                         .HasColumnName("branch_id");
@@ -131,15 +136,36 @@ namespace CERMS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("company_id");
 
+                    b.Property<string>("CompanyName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("company_name");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Email")
+                    b.Property<string>("CustomerCode")
                         .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("customer_code");
+
+                    b.Property<string>("Email")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("email");
+
+                    b.Property<string>("IDProofNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("id_proof_number");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")
@@ -153,8 +179,8 @@ namespace CERMS.Infrastructure.Migrations
 
                     b.Property<string>("Phone")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("phone");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -163,6 +189,10 @@ namespace CERMS.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_customers");
+
+                    b.HasIndex("CustomerCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_customers_customer_code");
 
                     b.HasIndex("Email")
                         .IsUnique()

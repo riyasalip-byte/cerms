@@ -15,5 +15,6 @@ public class MappingProfile : Profile
         CreateMap<Invoice, InvoiceDto>().ReverseMap();
         CreateMap<InvoiceLineItem, InvoiceLineItemDto>().ReverseMap();
         CreateMap<User, UserDto>().ReverseMap();
+        CreateMap<Customer, CustomerDto>().ReverseMap();
     }
 }
