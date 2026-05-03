@@ -51,9 +51,5 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Metadata.FindNavigation(nameof(Customer.RentalBookings))
             ?.SetPropertyAccessMode(PropertyAccessMode.Field);
 
-        builder.HasMany(c => c.RentalBookings)
-            .WithOne()
-            .HasForeignKey(r => r.CustomerId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }

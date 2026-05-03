@@ -13,8 +13,8 @@ public class RentalBooking : BaseEntity
     public DateTime ExpectedEndDateTime { get; private set; }
     public DateTime? ActualEndDateTime { get; private set; }
 
-    public RateType RateType { get; private set; }
-    public decimal RateAmount { get; private set; }
+    public RateType? RateType { get; private set; }
+    public decimal? RateAmount { get; private set; }
 
     public decimal? StartOdometer { get; private set; }
     public decimal? EndOdometer { get; private set; }
@@ -24,7 +24,7 @@ public class RentalBooking : BaseEntity
 
     private RentalBooking() { }
 
-    public RentalBooking(Guid assetId, Guid customerId, DateTime startDateTime, DateTime expectedEndDateTime, RateType rateType, decimal rateAmount, decimal? startOdometer = null)
+    public RentalBooking(Guid assetId, Guid customerId, DateTime startDateTime, DateTime expectedEndDateTime, RateType? rateType = null, decimal? rateAmount = null, decimal? startOdometer = null)
     {
         if (assetId == Guid.Empty) throw new ArgumentException("AssetId is required", nameof(assetId));
         if (customerId == Guid.Empty) throw new ArgumentException("CustomerId is required", nameof(customerId));

@@ -3,6 +3,7 @@ using CERMS.Application.Features.Rentals.Commands.ConfirmRental;
 using CERMS.Application.Features.Rentals.Commands.CreateRental;
 using CERMS.Application.Features.Rentals.Commands.StartRental;
 using CERMS.Application.Features.Rentals.Queries;
+using CERMS.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -59,7 +60,15 @@ public class RentalsController : ControllerBase
     [HttpPost("{id}/close")]
     public async Task<IActionResult> Close(Guid id, [FromBody] CloseRentalRequest request)
     {
-        var result = await _mediator.Send(new CloseRentalCommand(id, request.EndOdometer, request.ActualEndDateTime));
+        var result = await _mediator.Send(new CloseRentalCommand(
+            id,
+            request.EndOdometer,
+            request.ActualEndDateTime,
+            request.BillingMode,
+            request.RateType,
+            request.RateAmount,
+            request.OverrideTotalAmount));
+
         return result.IsSuccess ? Ok(result.Value) : BadRequest(new { error = result.Error });
     }
 
@@ -72,5 +81,9 @@ public class RentalsController : ControllerBase
     {
         public decimal EndOdometer { get; set; }
         public DateTime ActualEndDateTime { get; set; }
+        public BillingMode BillingMode { get; set; } = BillingMode.Auto;
+        public RateType? RateType { get; set; }
+        public decimal? RateAmount { get; set; }
+        public decimal? OverrideTotalAmount { get; set; }
     }
 }

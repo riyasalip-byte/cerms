@@ -13,8 +13,8 @@ public record CreateRentalCommand(
     Guid CustomerId,
     DateTime StartDateTime,
     DateTime ExpectedEndDateTime,
-    RateType RateType,
-    decimal RateAmount,
+    RateType? RateType = null,
+    decimal? RateAmount = null,
     decimal? StartOdometer = null) : IRequest<Result<RentalDto>>;
 
 public class CreateRentalHandler : IRequestHandler<CreateRentalCommand, Result<RentalDto>>

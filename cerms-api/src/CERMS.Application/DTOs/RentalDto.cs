@@ -15,8 +15,8 @@ public class RentalDto
     public DateTime ExpectedEndDateTime { get; set; }
     public DateTime? ActualEndDateTime { get; set; }
 
-    public RateType RateType { get; set; }
-    public decimal RateAmount { get; set; }
+    public RateType? RateType { get; set; }
+    public decimal? RateAmount { get; set; }
 
     public decimal? StartOdometer { get; set; }
     public decimal? EndOdometer { get; set; }

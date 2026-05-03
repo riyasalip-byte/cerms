@@ -1,3 +1,4 @@
+using CERMS.Application.DTOs;
 using CERMS.Application.Interfaces;
 using CERMS.Domain.Entities;
 using MediatR;
@@ -39,11 +40,20 @@ public class GenerateInvoiceCommandHandler : IRequestHandler<GenerateInvoiceComm
 
         var endDate = booking.ActualEndDateTime ?? booking.ExpectedEndDateTime;
         
-        var billingResult = _billingService.Calculate(
-            booking.StartDateTime, 
-            endDate, 
-            booking.RateAmount, 
-            booking.RateType);
+        var billingResult = booking.RateAmount.HasValue && booking.RateType.HasValue
+            ? _billingService.Calculate(
+                booking.StartDateTime,
+                endDate,
+                booking.RateAmount.Value,
+                booking.RateType.Value)
+            : new BillingResultDto
+            {
+                TotalAmount = booking.TotalAmount ?? 0,
+                Quantity = 0,
+                UnitRate = 0,
+                IsRateFinalized = false,
+                BreakdownText = "Pending Calculation: rate amount is not set; automatic billing was skipped."
+            };
 
         var subtotal = billingResult.TotalAmount;
         var tax = subtotal * 0.10m; // 10% tax

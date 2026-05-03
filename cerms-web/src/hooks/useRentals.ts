@@ -1,6 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { rentalService } from '@/api/services'
+import { rentalService, type CloseRentalPayload } from '@/api/services'
 import { toast } from 'sonner'
+
+function getErrorMessage(error: any, fallback: string) {
+  const data = error.response?.data
+
+  if (typeof data === 'string') return data
+  if (Array.isArray(data?.errors)) return data.errors.join(', ')
+  if (data?.errors && typeof data.errors === 'object') {
+    const messages = Object.values(data.errors).flat()
+    if (messages.length) return messages.join(', ')
+  }
+
+  return data?.error || data?.detail || error.message || data?.title || fallback
+}
 
 export function useRentals(params?: any) {
   return useQuery({
@@ -27,7 +40,7 @@ export function useCreateRental() {
       toast.success('Rental created successfully')
     },
     onError: (error: any) => {
-      toast.error(error.response?.data || 'Failed to create rental')
+      toast.error(getErrorMessage(error, 'Failed to create rental'))
     }
   })
 }
@@ -43,7 +56,7 @@ export function useConfirmRental() {
       toast.success('Rental confirmed')
     },
     onError: (error: any) => {
-      toast.error(error.response?.data || 'Failed to confirm rental')
+      toast.error(getErrorMessage(error, 'Failed to confirm rental'))
     }
   })
 }
@@ -59,7 +72,7 @@ export function useStartRental() {
       toast.success('Rental started successfully')
     },
     onError: (error: any) => {
-      toast.error(error.response?.data || 'Failed to start rental')
+      toast.error(getErrorMessage(error, 'Failed to start rental'))
     }
   })
 }
@@ -67,9 +80,9 @@ export function useStartRental() {
 export function useCloseRental() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, actualEndDateTime, endOdometer }: { id: string; actualEndDateTime: string; endOdometer: number }) => {
+    mutationFn: async ({ id, ...data }: { id: string } & CloseRentalPayload) => {
       try {
-        return await rentalService.closeRental(id, { actualEndDateTime, endOdometer })
+        return await rentalService.closeRental(id, data)
       } catch (error) {
         if (!navigator.onLine) {
           toast.info('Offline: Close will sync automatically when back online')
@@ -88,7 +101,7 @@ export function useCloseRental() {
       }
     },
     onError: (error: any) => {
-      toast.error(error.response?.data || 'Failed to close rental')
+      toast.error(getErrorMessage(error, 'Failed to close rental'))
     }
   })
 }

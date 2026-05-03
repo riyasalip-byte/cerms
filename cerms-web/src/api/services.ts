@@ -38,14 +38,29 @@ export type Rental = {
   customerId: string
   customerName: string
   startDate: string
+  startDateTime: string
   expectedEndDate: string
+  expectedEndDateTime: string
   endDate?: string
   actualEndDate?: string
+  actualEndDateTime?: string
   status: number
   rentalRate: number
+  rateAmount?: number
   rateType: number
+  startOdometer?: number
+  endOdometer?: number
   totalAmount?: number
   currentOdometer?: number
+}
+
+export type CloseRentalPayload = {
+  actualEndDateTime: string
+  endOdometer: number
+  billingMode?: 0 | 1 | 2 | "Auto" | "ManualRate" | "OverrideTotal"
+  rateType?: number
+  rateAmount?: number
+  overrideTotalAmount?: number
 }
 
 // Invoice types
@@ -108,7 +123,7 @@ export const rentalService = {
   createRental: (data: any) => api.post<string>('/rentals', data).then(r => r.data),
   confirmRental: (id: string) => api.post(`/rentals/${id}/confirm`).then(r => r.data),
   startRental: (id: string, data: { startOdometer: number }) => api.post(`/rentals/${id}/start`, data).then(r => r.data),
-  closeRental: (id: string, data: { actualEndDateTime: string; endOdometer: number }) => api.post<any>(`/rentals/${id}/close`, data).then(r => r.data),
+  closeRental: (id: string, data: CloseRentalPayload) => api.post<any>(`/rentals/${id}/close`, data).then(r => r.data),
   getById: (id: string) => api.get<Rental>(`/rentals/${id}`).then(r => r.data),
   close: (id: string, data: any) => api.post<any>(`/rentals/${id}/close`, data).then(r => r.data),
 }

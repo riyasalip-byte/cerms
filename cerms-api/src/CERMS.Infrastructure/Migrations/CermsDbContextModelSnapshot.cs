@@ -580,13 +580,12 @@ namespace CERMS.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_invoiced");
 
-                    b.Property<decimal>("RateAmount")
+                    b.Property<decimal?>("RateAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("rate_amount");
 
                     b.Property<string>("RateType")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("rate_type");
 
@@ -873,12 +872,12 @@ namespace CERMS.Infrastructure.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_rental_bookings_assets_asset_id");
 
-                    b.HasOne("CERMS.Domain.Entities.Customer", null)
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_rental_bookings_customers_customer_id");
+                      b.HasOne("CERMS.Domain.Entities.Customer", null)
+                          .WithMany("RentalBookings")
+                          .HasForeignKey("CustomerId")
+                          .OnDelete(DeleteBehavior.Restrict)
+                          .IsRequired()
+                          .HasConstraintName("fk_rental_bookings_customers_customer_id");
                 });
 
             modelBuilder.Entity("CERMS.Domain.Entities.StaffMember", b =>
@@ -895,13 +894,18 @@ namespace CERMS.Infrastructure.Migrations
                     b.Navigation("MaintenanceRecords");
                 });
 
-            modelBuilder.Entity("CERMS.Domain.Entities.Invoice", b =>
-                {
-                    b.Navigation("LineItems");
-                });
+              modelBuilder.Entity("CERMS.Domain.Entities.Invoice", b =>
+                  {
+                      b.Navigation("LineItems");
+                  });
 
-            modelBuilder.Entity("CERMS.Domain.Entities.User", b =>
-                {
+              modelBuilder.Entity("CERMS.Domain.Entities.Customer", b =>
+                  {
+                      b.Navigation("RentalBookings");
+                  });
+  
+              modelBuilder.Entity("CERMS.Domain.Entities.User", b =>
+                  {
                     b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618

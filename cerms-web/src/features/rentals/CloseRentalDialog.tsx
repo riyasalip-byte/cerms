@@ -33,7 +33,7 @@ export function CloseRentalDialog({ rentalId, startOdometer, isOpen, onOpenChang
     try {
       const response = await closeRental.mutateAsync({
         id: rentalId,
-        actualEndDateTime: actualEndDate,
+        actualEndDateTime: new Date(actualEndDate).toISOString(),
         endOdometer: Number(endOdometer)
       })
       // backend returns the billing result payload

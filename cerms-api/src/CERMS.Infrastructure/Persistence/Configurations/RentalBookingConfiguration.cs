@@ -13,6 +13,7 @@ public class RentalBookingConfiguration : IEntityTypeConfiguration<RentalBooking
         builder.HasKey(r => r.Id);
 
         builder.Property(r => r.RateAmount)
+            .IsRequired(false)
             .HasPrecision(18, 2);
             
         builder.Property(r => r.TotalAmount)
@@ -25,7 +26,7 @@ public class RentalBookingConfiguration : IEntityTypeConfiguration<RentalBooking
             .HasPrecision(18, 2);
 
         builder.Property(r => r.RateType)
-            .IsRequired()
+            .IsRequired(false)
             .HasConversion<string>();
 
         builder.Property(r => r.Status)
@@ -38,7 +39,7 @@ public class RentalBookingConfiguration : IEntityTypeConfiguration<RentalBooking
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<Customer>()
-            .WithMany()
+            .WithMany(c => c.RentalBookings)
             .HasForeignKey(r => r.CustomerId)
             .OnDelete(DeleteBehavior.Restrict);
 

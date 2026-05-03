@@ -26,6 +26,7 @@ public class CermsDbContextInitialiser
             if (_context.Database.IsNpgsql())
             {
                 await _context.Database.MigrateAsync();
+                await EnsureRentalRateColumnsAreNullableAsync();
             }
         }
         catch (Exception ex)
@@ -33,6 +34,14 @@ public class CermsDbContextInitialiser
             _logger.LogError(ex, "An error occurred while initialising the database.");
             throw;
         }
+    }
+
+    private async Task EnsureRentalRateColumnsAreNullableAsync()
+    {
+        await _context.Database.ExecuteSqlRawAsync(
+            "ALTER TABLE rental_bookings ALTER COLUMN rate_type DROP NOT NULL;");
+        await _context.Database.ExecuteSqlRawAsync(
+            "ALTER TABLE rental_bookings ALTER COLUMN rate_amount DROP NOT NULL;");
     }
 
     public async Task SeedAsync()

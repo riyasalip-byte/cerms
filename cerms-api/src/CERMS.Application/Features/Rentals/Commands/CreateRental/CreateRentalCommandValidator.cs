@@ -17,12 +17,12 @@ public class CreateRentalCommandValidator : AbstractValidator<CreateRentalComman
 
         RuleFor(v => v.ExpectedEndDateTime)
             .NotEmpty().WithMessage("ExpectedEndDateTime is required.")
-            .GreaterThan(v => v.StartDateTime).WithMessage("ExpectedEndDateTime must be after StartDateTime.");
+            .GreaterThanOrEqualTo(v => v.StartDateTime).WithMessage("End date should be greater than or equal to start date.");
 
         RuleFor(v => v.RateType)
-            .IsInEnum().WithMessage("Invalid RateType.");
+            .IsInEnum().When(v => v.RateType.HasValue).WithMessage("Invalid RateType.");
 
         RuleFor(v => v.RateAmount)
-            .GreaterThan(0).WithMessage("RateAmount must be greater than zero.");
+            .GreaterThanOrEqualTo(0).When(v => v.RateAmount.HasValue).WithMessage("RateAmount cannot be negative.");
     }
 }

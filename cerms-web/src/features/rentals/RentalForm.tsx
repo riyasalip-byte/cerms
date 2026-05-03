@@ -6,7 +6,7 @@ import { Link, useNavigate, useParams } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Loader2, Save, Calendar as CalendarIcon, Key, User, DollarSign } from "lucide-react"
+import { Loader2, Save, Key, DollarSign } from "lucide-react"
 
 import {
   Form,
@@ -27,18 +27,31 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
+
+const optionalNumber = z.union([
+  z.literal("").transform(() => undefined),
+  z.literal("null").transform(() => undefined),
+  z.number(),
+  z.string().trim().regex(/^-?\d+(\.\d+)?$/, "Enter a valid number.").transform(Number),
+]).optional()
 
 const rentalFormSchema = z.object({
   assetId: z.string().min(1, "Asset is required."),
   customerId: z.string().min(1, "Customer is required."),
   startDateTime: z.string().min(1, "Start date is required."),
   expectedEndDateTime: z.string().min(1, "End date is required."),
-  rateAmount: z.coerce.number().min(0, "Rate must be positive."),
-  rateType: z.coerce.number(),
-})
+  rateAmount: optionalNumber,
+  rateType: optionalNumber,
+}).refine(
+  (data) => !data.startDateTime || !data.expectedEndDateTime || data.expectedEndDateTime >= data.startDateTime,
+  {
+    message: "End date should be greater than or equal to start date.",
+    path: ["expectedEndDateTime"],
+  }
+)
 
-type RentalFormValues = z.infer<typeof rentalFormSchema>
+type RentalFormInput = z.input<typeof rentalFormSchema>
+type RentalFormValues = z.output<typeof rentalFormSchema>
 
 export function RentalForm() {
   const navigate = useNavigate()
@@ -51,17 +64,18 @@ export function RentalForm() {
   
   const createRental = useCreateRental()
 
-  const form = useForm<RentalFormValues>({
+  const form = useForm<RentalFormInput, undefined, RentalFormValues>({
     resolver: zodResolver(rentalFormSchema),
     defaultValues: {
       assetId: "",
       customerId: "",
       startDateTime: "",
       expectedEndDateTime: "",
-      rateAmount: 0,
-      rateType: 0,
+      rateAmount: "",
+      rateType: "",
     },
   })
+  const startDateTime = form.watch("startDateTime")
 
   React.useEffect(() => {
     if (rentalData) {
@@ -70,19 +84,22 @@ export function RentalForm() {
         customerId: rentalData.customerId,
         startDateTime: rentalData.startDateTime?.split("T")[0] || "",
         expectedEndDateTime: rentalData.expectedEndDateTime?.split("T")[0] || "",
-        rateAmount: rentalData.rateAmount || 0,
-        rateType: rentalData.rateType || 0,
+        rateAmount: rentalData.rateAmount ?? "",
+        rateType: rentalData.rateType ?? "",
       })
     }
   }, [rentalData, form])
 
   async function onSubmit(data: RentalFormValues) {
     if (isEditMode) {
-      // In a real app, you'd have an update API if editing was allowed.
-      // But typically, rentals are managed via status transitions (confirm, start, close).
       console.warn("Edit mode submit not implemented for base details.")
     } else {
-      await createRental.mutateAsync(data)
+      const payload = {
+        ...data,
+        startDateTime: new Date(data.startDateTime).toISOString(),
+        expectedEndDateTime: new Date(data.expectedEndDateTime).toISOString()
+      }
+      await createRental.mutateAsync(payload)
     }
     navigate("/rentals")
   }
@@ -190,7 +207,13 @@ export function RentalForm() {
                         type="date" 
                         disabled={isEditMode} 
                         className="h-12 text-base"
-                        {...field} 
+                        {...field}
+                        onChange={(event) => {
+                          field.onChange(event)
+                          if (form.getValues("expectedEndDateTime")) {
+                            form.trigger("expectedEndDateTime")
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -207,6 +230,7 @@ export function RentalForm() {
                     <FormControl>
                       <Input 
                         type="date" 
+                        min={startDateTime || undefined}
                         disabled={isEditMode} 
                         className="h-12 text-base"
                         {...field} 
@@ -222,18 +246,26 @@ export function RentalForm() {
                 name="rateAmount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Rental Rate <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>
+                      Rental Rate <span className="text-muted-foreground font-normal">(Optional)</span>
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-3.5 size-5 text-muted-foreground" />
                         <Input 
                           type="number" 
+                          min="0"
+                          step="0.01"
                           disabled={isEditMode} 
                           className="h-12 pl-10 text-base"
+                          placeholder="Leave blank if rate is not final"
                           {...field} 
                         />
                       </div>
                     </FormControl>
+                    <FormDescription>
+                      You can calculate or update rate when closing rental.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -244,24 +276,30 @@ export function RentalForm() {
                 name="rateType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Rate Cycle <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>
+                      Rate Cycle <span className="text-muted-foreground font-normal">(Optional)</span>
+                    </FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      value={field.value.toString()}
+                      value={field.value?.toString() ?? "null"}
                       disabled={isEditMode}
                     >
                       <FormControl>
                         <SelectTrigger className="h-12 text-base">
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue placeholder="Choose when rate is known" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="null">Not decided yet</SelectItem>
                         <SelectItem value="0">Hourly</SelectItem>
                         <SelectItem value="1">Daily</SelectItem>
                         <SelectItem value="2">Weekly</SelectItem>
                         <SelectItem value="3">Monthly</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormDescription>
+                      Leave blank if billing will be finalized at rental close.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
