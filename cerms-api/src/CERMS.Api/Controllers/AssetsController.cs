@@ -68,6 +68,6 @@ public class AssetsController : ApiControllerBase
     [HttpPost("{id}/maintenance/complete")]
     public async Task<IActionResult> CompleteMaintenance(Guid id, [FromBody] CERMS.Application.DTOs.CompleteMaintenanceDto dto)
     {
-        return HandleResult(await Mediator.Send(new CompleteMaintenanceCommand(id, dto.MaintenanceId, dto.FinalCost, dto.Notes, dto.ServiceDate)));
+        return HandleResult(await Mediator.Send(new CompleteMaintenanceCommand(id, dto.MaintenanceId, dto.SparePartsCost, dto.LabourCost, dto.Notes, dto.ServiceDate, dto.NextServiceDueDate, dto.NextServiceOdometer)));
     }
 }

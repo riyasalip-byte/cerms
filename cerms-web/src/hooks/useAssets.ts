@@ -44,6 +44,13 @@ export function useAssetCategories() {
   })
 }
 
+export function useMaintenanceTypes() {
+  return useQuery({
+    queryKey: ['maintenance-types'],
+    queryFn: assetsApi.getMaintenanceTypes
+  })
+}
+
 export function useCreateAsset() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -91,8 +98,8 @@ export function useAddMaintenance() {
 export function useCompleteMaintenance() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payload: { id: string; maintenanceId: string; finalCost: number; notes?: string; serviceDate?: string; nextServiceDueDate?: string; nextServiceOdometer?: number }) => 
-      assetsApi.completeMaintenance(payload.id, payload.maintenanceId, payload.finalCost, payload.notes, payload.serviceDate, payload.nextServiceDueDate, payload.nextServiceOdometer),
+    mutationFn: (payload: { id: string; maintenanceId: string; sparePartsCost: number; labourCost: number; notes?: string; serviceDate?: string; nextServiceDueDate?: string; nextServiceOdometer?: number }) => 
+      assetsApi.completeMaintenance(payload.id, payload.maintenanceId, payload.sparePartsCost, payload.labourCost, payload.notes, payload.serviceDate, payload.nextServiceDueDate, payload.nextServiceOdometer),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['assets'] })
       queryClient.invalidateQueries({ queryKey: ['assets', variables.id] })

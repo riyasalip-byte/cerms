@@ -122,6 +122,36 @@ public class CermsDbContextInitialiser
         lightTipperCatId = existingCategories.FirstOrDefault(c => c.Name == "Light/Medium Duty Tipper")?.Id ?? lightTipperCatId;
         heavyTipperCatId = existingCategories.FirstOrDefault(c => c.Name == "Heavy Duty Tipper")?.Id ?? heavyTipperCatId;
 
+        var defaultMaintenanceTypes = new List<MaintenanceType>
+        {
+            new(Guid.Parse("00000000-0000-0000-0000-000000000201"), "Preventive Maintenance", "Scheduled preventive maintenance.", true) { CompanyId = companyId, BranchId = branchId },
+            new(Guid.Parse("00000000-0000-0000-0000-000000000202"), "Breakdown Maintenance", "Unplanned maintenance after failure.", false) { CompanyId = companyId, BranchId = branchId },
+            new(Guid.Parse("00000000-0000-0000-0000-000000000203"), "Periodic Service", "Routine periodic service.", true) { CompanyId = companyId, BranchId = branchId },
+            new(Guid.Parse("00000000-0000-0000-0000-000000000204"), "Major Repair", "Major repair work.", false) { CompanyId = companyId, BranchId = branchId },
+            new(Guid.Parse("00000000-0000-0000-0000-000000000205"), "Tyre Replacement", "Tyre replacement or repair.", false) { CompanyId = companyId, BranchId = branchId },
+            new(Guid.Parse("00000000-0000-0000-0000-000000000206"), "Hydraulic Work", "Hydraulic system work.", false) { CompanyId = companyId, BranchId = branchId },
+            new(Guid.Parse("00000000-0000-0000-0000-000000000207"), "Electrical Work", "Electrical system work.", false) { CompanyId = companyId, BranchId = branchId },
+            new(Guid.Parse("00000000-0000-0000-0000-000000000208"), "Engine Work", "Engine diagnostics or repair.", false) { CompanyId = companyId, BranchId = branchId },
+            new(Guid.Parse("00000000-0000-0000-0000-000000000209"), "Accident Repair", "Accident repair work.", false) { CompanyId = companyId, BranchId = branchId },
+            new(Guid.Parse("00000000-0000-0000-0000-000000000210"), "Other", "Other maintenance activity.", false) { CompanyId = companyId, BranchId = branchId }
+        };
+
+        var existingMaintenanceTypes = await _context.MaintenanceTypes.IgnoreQueryFilters().ToListAsync();
+        var existingMaintenanceTypeNames = existingMaintenanceTypes
+            .Select(t => t.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var missingMaintenanceTypes = defaultMaintenanceTypes
+            .Where(t => !existingMaintenanceTypeNames.Contains(t.Name))
+            .ToList();
+
+        if (missingMaintenanceTypes.Count > 0)
+        {
+            _context.MaintenanceTypes.AddRange(missingMaintenanceTypes);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} missing maintenance types.", missingMaintenanceTypes.Count);
+        }
+
         // Seed Assets if none exist
         if (!await _context.Assets.IgnoreQueryFilters().AnyAsync())
         {

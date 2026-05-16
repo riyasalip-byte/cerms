@@ -13,6 +13,7 @@ namespace CERMS.Tests.Features.Assets.Commands;
 public class CompleteMaintenanceHandlerTests
 {
     private static readonly Guid ExcavatorCategoryId = Guid.Parse("00000000-0000-0000-0000-000000000101");
+    private static readonly Guid PreventiveMaintenanceTypeId = Guid.Parse("00000000-0000-0000-0000-000000000201");
     private readonly Mock<IAssetRepository> _assetRepoMock;
     private readonly Mock<IUnitOfWork> _uowMock;
     private readonly Mock<IMapper> _mapperMock;
@@ -38,7 +39,7 @@ public class CompleteMaintenanceHandlerTests
         // Force status to Maintenance via valid methods
         asset.SendToMaintenance();
 
-        var record = new MaintenanceRecord(assetId, "Oil Change", 500, DateTime.UtcNow, 1200);
+        var record = CreateMaintenanceRecord(assetId);
 
         var command = new CompleteMaintenanceCommand(assetId, maintenanceId, 600, "Extra parts", DateTime.UtcNow);
 
@@ -49,7 +50,7 @@ public class CompleteMaintenanceHandlerTests
         maintRepoMock.Setup(repo => repo.GetByIdAsync(maintenanceId)).ReturnsAsync(record);
         _uowMock.Setup(u => u.Repository<MaintenanceRecord>()).Returns(maintRepoMock.Object);
 
-        var dto = new MaintenanceRecordDto { Id = maintenanceId, FinalCost = 600 };
+        var dto = new MaintenanceRecordDto { Id = maintenanceId, TotalCost = 600, Status = MaintenanceStatus.Completed };
         _mapperMock.Setup(m => m.Map<MaintenanceRecordDto>(It.IsAny<MaintenanceRecord>())).Returns(dto);
 
         // Act
@@ -94,7 +95,7 @@ public class CompleteMaintenanceHandlerTests
         var asset = CreateAsset();
         // Asset starts as Available
 
-        var record = new MaintenanceRecord(assetId, "Oil Change", 500, DateTime.UtcNow, 1200);
+        var record = CreateMaintenanceRecord(assetId);
 
         var command = new CompleteMaintenanceCommand(assetId, maintenanceId, 100);
 
@@ -125,4 +126,17 @@ public class CompleteMaintenanceHandlerTests
         DateTime.UtcNow.AddYears(1),
         DateTime.UtcNow.AddMonths(6),
         DateTime.UtcNow);
+
+    private static MaintenanceRecord CreateMaintenanceRecord(Guid assetId) => new(
+        assetId,
+        PreventiveMaintenanceTypeId,
+        "Oil Change",
+        1200,
+        400,
+        100,
+        "Vendor A",
+        DateTime.UtcNow,
+        DateTime.UtcNow.AddMonths(6),
+        null,
+        null);
 }

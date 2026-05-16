@@ -13,7 +13,10 @@ public class CompleteMaintenanceCommandValidator : AbstractValidator<CompleteMai
         RuleFor(v => v.MaintenanceId)
             .NotEmpty().WithMessage("Maintenance ID is required.");
 
-        RuleFor(v => v.FinalCost)
-            .GreaterThanOrEqualTo(0).WithMessage("Final cost cannot be negative.");
+        RuleFor(v => v.SparePartsCost)
+            .GreaterThanOrEqualTo(0).WithMessage("Spare parts cost cannot be negative.");
+
+        RuleFor(v => v.LabourCost)
+            .GreaterThanOrEqualTo(0).WithMessage("Labour cost cannot be negative.");
     }
 }

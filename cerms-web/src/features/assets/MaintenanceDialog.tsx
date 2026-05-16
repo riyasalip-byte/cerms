@@ -1,9 +1,11 @@
 import * as React from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
+import type { Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useAddMaintenance } from "@/hooks/useAssets"
+import { Loader2 } from "lucide-react"
 
+import { useAddMaintenance, useMaintenanceTypes } from "@/hooks/useAssets"
 import { Button } from "@/components/ui/button"
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -12,165 +14,205 @@ import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
 const maintenanceSchema = z.object({
-  description: z.string().min(2, "Description is required"),
-  cost: z.coerce.number().min(0, "Cost cannot be negative"),
+  maintenanceTypeId: z.string().min(1, "Maintenance type is required"),
+  description: z.string().min(2, "Description is required").max(500),
+  odoMeterReading: z.coerce.number().min(0, "Odometer cannot be negative"),
+  estimatedCost: z.coerce.number().min(0, "Estimated cost cannot be negative").optional(),
   serviceDate: z.string().min(1, "Service date is required"),
-  odometer: z.coerce.number().min(0, "Odometer cannot be negative"),
-  nextServiceDueDate: z.string().optional(),
-  nextServiceOdometer: z.string().optional(),
-}).refine(data => !data.nextServiceOdometer || Number(data.nextServiceOdometer) > data.odometer, {
-  message: "Must be greater than service odometer",
-  path: ["nextServiceOdometer"],
+  serviceVendor: z.string().optional(),
 })
 
 type MaintenanceFormValues = z.infer<typeof maintenanceSchema>
+const maintenanceResolver = zodResolver(maintenanceSchema) as unknown as Resolver<MaintenanceFormValues>
 
 interface MaintenanceDialogProps {
   assetId: string
+  assetName: string
   currentOdometer: number
   isOpen: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function MaintenanceDialog({ assetId, currentOdometer, isOpen, onOpenChange }: MaintenanceDialogProps) {
+export function MaintenanceDialog({ assetId, assetName, currentOdometer, isOpen, onOpenChange }: MaintenanceDialogProps) {
   const addMaintenance = useAddMaintenance()
+  const { data: maintenanceTypes = [], isLoading: isLoadingTypes } = useMaintenanceTypes()
 
   const form = useForm<MaintenanceFormValues>({
-    resolver: zodResolver(maintenanceSchema) as any,
+    resolver: maintenanceResolver,
+    mode: "onChange",
     defaultValues: {
+      maintenanceTypeId: "",
       description: "",
-      cost: 0,
-      serviceDate: new Date().toISOString().split('T')[0],
-      odometer: currentOdometer,
-      nextServiceDueDate: "",
-      nextServiceOdometer: "",
+      odoMeterReading: currentOdometer,
+      estimatedCost: undefined,
+      serviceDate: new Date().toISOString().split("T")[0],
+      serviceVendor: "",
     },
   })
 
+  const selectedTypeId = useWatch({ control: form.control, name: "maintenanceTypeId" })
   React.useEffect(() => {
     if (isOpen) {
-      form.setValue("odometer", currentOdometer)
+      form.setValue("odoMeterReading", currentOdometer)
     }
   }, [isOpen, currentOdometer, form])
 
   const onSubmit = async (data: MaintenanceFormValues) => {
+
     await addMaintenance.mutateAsync({
       id: assetId,
       data: {
-        assetId: assetId,
+        assetId,
+        maintenanceTypeId: data.maintenanceTypeId,
         description: data.description,
-        cost: data.cost,
+        odoMeterReading: data.odoMeterReading,
+        estimatedCost: data.estimatedCost,
+        serviceVendor: data.serviceVendor || undefined,
         serviceDate: new Date(data.serviceDate).toISOString(),
-        odometer: data.odometer,
-        nextServiceDueDate: data.nextServiceDueDate ? new Date(data.nextServiceDueDate).toISOString() : undefined,
-        nextServiceOdometer: data.nextServiceOdometer ? Number(data.nextServiceOdometer) : undefined,
-      }
+      },
     })
+
     onOpenChange(false)
     form.reset()
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-[760px]">
         <DialogHeader>
-          <DialogTitle>Add Maintenance Record</DialogTitle>
+          <DialogTitle>Add Maintenance - {assetName}</DialogTitle>
           <DialogDescription>
-            Log a completed maintenance service. This will update the asset's current odometer, total maintenance cost, and set its status to Maintenance.
+            Record maintenance work, cost, vendor, and next-service planning for this asset.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Routine Oil Change and Filter Replacement" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <FormField
+                  control={form.control}
+                  name="maintenanceTypeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Maintenance Type</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange} disabled={isLoadingTypes || addMaintenance.isPending}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={isLoadingTypes ? "Loading..." : "Select type"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {maintenanceTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id}>
+                              {type.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="odoMeterReading"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Odometer Reading</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={0} disabled={addMaintenance.isPending} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="serviceDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Service Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" max={new Date().toISOString().split("T")[0]} disabled={addMaintenance.isPending} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
-                name="cost"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cost ($) <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="odometer"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Service Odometer <span className="text-destructive">*</span></FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
+                      <Textarea placeholder="Work performed or issue reported" disabled={addMaintenance.isPending} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+
+            <div className="space-y-4">
               <FormField
                 control={form.control}
-                name="serviceDate"
+                name="serviceVendor"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Service Date <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>Service Vendor</FormLabel>
                     <FormControl>
-                      <Input type="date" max={new Date().toISOString().split('T')[0]} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="nextServiceDueDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Next Service Due</FormLabel>
-                    <FormControl>
-                      <Input type="date" min={new Date().toISOString().split('T')[0]} {...field} />
+                      <Input placeholder="Workshop, mechanic, or vendor name" disabled={addMaintenance.isPending} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="nextServiceOdometer"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Next Service Odometer</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="Optional" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <FormField
+                  control={form.control}
+                  name="estimatedCost"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estimated Amount</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={0} step="0.01" disabled={addMaintenance.isPending} {...field} value={field.value ?? ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={addMaintenance.isPending}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={addMaintenance.isPending}>
-                {addMaintenance.isPending ? "Saving..." : "Log Maintenance"}
+              <Button type="submit" disabled={addMaintenance.isPending || isLoadingTypes}>
+                {addMaintenance.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Maintenance"
+                )}
               </Button>
             </DialogFooter>
           </form>

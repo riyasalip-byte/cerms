@@ -1,18 +1,19 @@
 using CERMS.Application.Common;
 using CERMS.Application.Interfaces;
 using CERMS.Domain.Entities;
+using CERMS.Domain.Enums;
 using MediatR;
 
 namespace CERMS.Application.Features.Assets.Commands;
 
 public record AddMaintenanceCommand(
     Guid AssetId,
+    Guid MaintenanceTypeId,
     string Description,
-    decimal Cost,
-    DateTime ServiceDate,
-    decimal Odometer,
-    DateTime? NextServiceDueDate,
-    decimal? NextServiceOdometer
+    decimal OdoMeterReading,
+    decimal? EstimatedCost,
+    string? ServiceVendor,
+    DateTime ServiceDate
 ) : IRequest<Result<Guid>>;
 
 public class AddMaintenanceHandler : IRequestHandler<AddMaintenanceCommand, Result<Guid>>
@@ -32,24 +33,32 @@ public class AddMaintenanceHandler : IRequestHandler<AddMaintenanceCommand, Resu
         if (asset == null)
             return Result<Guid>.Failure("Asset not found.");
 
-        if (asset.Status == CERMS.Domain.Enums.AssetStatus.Maintenance)
+        if (asset.Status == AssetStatus.Maintenance)
             return Result<Guid>.Failure("Asset is already in maintenance. Complete the current maintenance before adding a new one.");
+
+        var maintenanceType = await _unitOfWork.Repository<MaintenanceType>().GetByIdAsync(request.MaintenanceTypeId);
+
+        if (maintenanceType is not { IsActive: true })
+            return Result<Guid>.Failure("Maintenance type not found.");
 
         try
         {
             var record = new MaintenanceRecord(
                 request.AssetId,
+                request.MaintenanceTypeId,
                 request.Description,
-                request.Cost,
-                request.ServiceDate,
-                request.Odometer,
-                request.NextServiceDueDate,
-                request.NextServiceOdometer
-            );
+                request.OdoMeterReading,
+                request.EstimatedCost,
+                request.ServiceVendor,
+                request.ServiceDate);
 
             await _unitOfWork.Repository<MaintenanceRecord>().AddAsync(record);
 
-            asset.RecordService(request.Odometer, request.Cost, request.NextServiceDueDate, request.NextServiceOdometer);
+            asset.RecordService(
+                record.OdoMeterReading,
+                record.TotalCost,
+                null,
+                null);
             asset.SendToMaintenance();
 
             _assetRepository.Update(asset);

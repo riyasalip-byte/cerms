@@ -14,7 +14,9 @@ public class MappingProfile : Profile
         CreateMap<Asset, AssetDetailDto>()
             .ForMember(dest => dest.AssetCategoryName, opt => opt.MapFrom(src => src.AssetCategory != null ? src.AssetCategory.Name : string.Empty))
             .ReverseMap();
-        CreateMap<MaintenanceRecord, MaintenanceRecordDto>().ReverseMap();
+        CreateMap<MaintenanceRecord, MaintenanceRecordDto>()
+            .ForMember(dest => dest.MaintenanceTypeName, opt => opt.MapFrom(src => src.MaintenanceType != null ? src.MaintenanceType.Name : string.Empty))
+            .ReverseMap();
         CreateMap<RentalBooking, RentalDto>().ReverseMap();
         CreateMap<Invoice, InvoiceDto>().ReverseMap();
         CreateMap<InvoiceLineItem, InvoiceLineItemDto>().ReverseMap();

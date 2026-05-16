@@ -9,9 +9,10 @@ using MediatR;
 namespace CERMS.Application.Features.Assets.Commands;
 
 public record CompleteMaintenanceCommand(
-    Guid AssetId, 
+    Guid AssetId,
     Guid MaintenanceId, 
-    decimal FinalCost, 
+    decimal SparePartsCost,
+    decimal LabourCost,
     string? Notes = null, 
     DateTime? ServiceDate = null,
     DateTime? NextServiceDueDate = null,
@@ -51,12 +52,10 @@ public class CompleteMaintenanceHandler : IRequestHandler<CompleteMaintenanceCom
 
         try
         {
-            var costDifference = request.FinalCost - maintenance.Cost;
-            
-            maintenance.UpdateDetails(request.FinalCost, request.Notes, request.ServiceDate, request.NextServiceDueDate, request.NextServiceOdometer);
+            maintenance.Complete(request.SparePartsCost, request.LabourCost, request.ServiceDate, request.Notes, request.NextServiceDueDate, request.NextServiceOdometer);
             maintenanceRepo.Update(maintenance);
 
-            asset.CompleteMaintenance(costDifference, maintenance.Odometer, maintenance.NextServiceDueDate, maintenance.NextServiceOdometer);
+            asset.CompleteMaintenance(0, maintenance.OdoMeterReading, maintenance.NextServiceDate, maintenance.NextServiceOdoMeterReading);
             
             _assetRepository.Update(asset);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

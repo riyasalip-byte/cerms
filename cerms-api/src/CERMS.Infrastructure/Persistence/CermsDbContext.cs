@@ -27,6 +27,7 @@ public class CermsDbContext : DbContext
     public DbSet<SalaryAdvance> SalaryAdvances => Set<SalaryAdvance>();
     public DbSet<MaintenanceRecord> MaintenanceRecords => Set<MaintenanceRecord>();
     public DbSet<AssetCategory> AssetCategories => Set<AssetCategory>();
+    public DbSet<MaintenanceType> MaintenanceTypes => Set<MaintenanceType>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

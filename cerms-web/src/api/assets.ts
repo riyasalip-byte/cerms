@@ -41,15 +41,33 @@ export type AssetCategoryDto = {
 export type MaintenanceRecordDto = {
   id: string
   assetId: string
+  maintenanceTypeId: string
+  maintenanceTypeName: string
   description: string
-  cost: number
-  finalCost?: number
+  odoMeterReading: number
+  sparePartsCost: number
+  labourCost: number
+  totalCost: number
+  serviceVendor?: string
   serviceDate: string
-  odometer: number
-  nextServiceDueDate?: string
-  nextServiceOdometer?: number
+  nextServiceDate?: string
+  nextServiceOdoMeterReading?: number
+  serviceRemarks?: string
   status?: number | string
   completedAt?: string
+  cost?: number
+  estimatedCost?: number
+  finalCost?: number
+  odometer?: number
+  nextServiceDueDate?: string
+  nextServiceOdometer?: number
+}
+
+export type MaintenanceTypeDto = {
+  id: string
+  name: string
+  description?: string
+  isPreventiveMaintenance: boolean
 }
 
 export type AssetDetailDto = AssetDto & {
@@ -104,12 +122,12 @@ export type UpdateAssetPayload = AssetPayload & {
 
 export type AddMaintenancePayload = {
   assetId: string
+  maintenanceTypeId: string
   description: string
-  cost: number
+  odoMeterReading: number
+  estimatedCost?: number
+  serviceVendor?: string
   serviceDate: string
-  odometer: number
-  nextServiceDueDate?: string
-  nextServiceOdometer?: number
 }
 
 // Backend ApiResponse wrapper
@@ -120,6 +138,7 @@ type ApiResponse<T> = {
 }
 
 type AssetCategoriesResponse = AssetCategoryDto[] | ApiResponse<AssetCategoryDto[]>
+type MaintenanceTypesResponse = MaintenanceTypeDto[] | ApiResponse<MaintenanceTypeDto[]>
 
 export const getAssets = async (params?: AssetQueryParams) => {
   const { data } = await api.get<ApiResponse<PaginatedList<AssetDto>>>('/assets', { params })
@@ -143,6 +162,11 @@ export const getAssetCategories = async () => {
   return Array.isArray(data) ? data : data.data
 }
 
+export const getMaintenanceTypes = async () => {
+  const { data } = await api.get<MaintenanceTypesResponse>('/maintenance-types')
+  return Array.isArray(data) ? data : data.data
+}
+
 export const createAsset = async (assetData: AssetPayload) => {
   const { data } = await api.post<ApiResponse<AssetDto>>('/assets', assetData)
   return data.data
@@ -158,8 +182,8 @@ export const addMaintenance = async (id: string, maintenanceData: AddMaintenance
   return data.data
 }
 
-export const completeMaintenance = async (id: string, maintenanceId: string, finalCost: number, notes?: string, serviceDate?: string, nextServiceDueDate?: string, nextServiceOdometer?: number) => {
-  const { data } = await api.post<ApiResponse<MaintenanceRecordDto>>(`/assets/${id}/maintenance/complete`, { maintenanceId, finalCost, notes, serviceDate, nextServiceDueDate, nextServiceOdometer })
+export const completeMaintenance = async (id: string, maintenanceId: string, sparePartsCost: number, labourCost: number, notes?: string, serviceDate?: string, nextServiceDueDate?: string, nextServiceOdometer?: number) => {
+  const { data } = await api.post<ApiResponse<MaintenanceRecordDto>>(`/assets/${id}/maintenance/complete`, { maintenanceId, sparePartsCost, labourCost, notes, serviceDate, nextServiceDueDate, nextServiceOdometer })
   return data.data
 }
 

@@ -3,6 +3,7 @@ using System;
 using CERMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CERMS.Infrastructure.Migrations
 {
     [DbContext(typeof(CermsDbContext))]
-    partial class CermsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260516155838_AddEstimatedCostToMaintenanceRecord")]
+    partial class AddEstimatedCostToMaintenanceRecord
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

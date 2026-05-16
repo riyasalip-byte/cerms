@@ -163,6 +163,12 @@ export function AssetDetail() {
 
   const deleteAsset = useDeleteAsset()
   const completeMaintenance = useCompleteMaintenance()
+  const sortedMaintenanceRecords = React.useMemo(
+    () => (asset?.maintenanceRecords ?? [])
+      .slice()
+      .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime()),
+    [asset?.maintenanceRecords]
+  )
 
   if (isLoading) {
     return (
@@ -186,6 +192,12 @@ export function AssetDetail() {
 
   const isAssetInMaintenance = String(asset.status).toLowerCase() === "maintenance" || asset.status === 2;
   const activeMaintenanceRecord = asset.maintenanceRecords?.find(r => r.status === 0 || r.status === "Pending") || null;
+  const lastMaintenance = sortedMaintenanceRecords[0]
+  const nextServiceDue = sortedMaintenanceRecords.find((record) => record.nextServiceDate || record.nextServiceDueDate)
+  const totalMaintenanceCost = sortedMaintenanceRecords.reduce(
+    (sum, record) => sum + Number(record.totalCost ?? record.finalCost ?? record.cost ?? 0),
+    0
+  )
 
   const handleDelete = async () => {
     if (confirm("Are you sure you want to delete this asset?")) {
@@ -284,8 +296,10 @@ export function AssetDetail() {
         <CardContent className="grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-4">
           <InfoItem label="Category" value={asset.assetCategoryName || "-"} icon={ClipboardCheck} />
           <InfoItem label="Current Meter" value={`${formatNumber(asset.currentMeterReading)} units`} icon={Activity} />
-          <InfoItem label="Service Interval" value={`${formatNumber(asset.serviceIntervalKm)} km`} icon={Wrench} />
-          <InfoItem label="Maintenance Cost" value={currencyFormatter.format(asset.maintenanceCost ?? 0)} icon={History} />
+          <InfoItem label="Last Maintenance" value={lastMaintenance?.maintenanceTypeName || "-"} icon={Wrench} />
+          <InfoItem label="Last Service Date" value={formatDate(lastMaintenance?.serviceDate)} icon={Calendar} />
+          <InfoItem label="Next Service Due" value={formatDate(nextServiceDue?.nextServiceDate ?? nextServiceDue?.nextServiceDueDate)} icon={History} />
+          <InfoItem label="Maintenance Cost" value={currencyFormatter.format(totalMaintenanceCost || asset.maintenanceCost || 0)} icon={History} />
         </CardContent>
       </Card>
 
@@ -398,57 +412,77 @@ export function AssetDetail() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
-                  <TableHead>Description</TableHead>
+                  <TableHead>Maintenance Type</TableHead>
+                  <TableHead>Vendor</TableHead>
                   <TableHead>Odometer</TableHead>
-                  <TableHead className="text-right">Cost</TableHead>
+                  <TableHead className="text-right">Total Cost</TableHead>
                   <TableHead className="text-right">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {asset.maintenanceRecords
-                  .slice()
-                  .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime())
-                  .map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell className="font-medium">{formatDate(record.serviceDate)}</TableCell>
-                      <TableCell className="max-w-[360px]">
-                        <p className="font-semibold">{record.description}</p>
-                        {(record.nextServiceDueDate || record.nextServiceOdometer) && (
-                          <p className="text-xs text-muted-foreground">
-                            Next service: {[
-                              record.nextServiceDueDate && formatDate(record.nextServiceDueDate),
-                              record.nextServiceOdometer && `${formatNumber(record.nextServiceOdometer)} units`
-                            ].filter(Boolean).join(" | ")}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-mono">{formatNumber(record.odometer)}</TableCell>
-                      <TableCell className="text-right font-mono">
-                        {currencyFormatter.format(record.finalCost ?? record.cost ?? 0)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {record.status === 0 || record.status === "Pending" ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedMaintenance(record)
-                              setIsMaintenanceCloseDialogOpen(true)
-                            }}
-                            disabled={completeMaintenance.isPending}
-                          >
-                            <CheckCircle className="mr-2 size-3" />
-                            Complete
-                          </Button>
-                        ) : (
-                          <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-                            <FileCheck2 className="mr-1 size-3" />
-                            Completed
-                          </Badge>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                {sortedMaintenanceRecords.map((record) => {
+                  const nextServiceDate = record.nextServiceDate ?? record.nextServiceDueDate
+                  const nextServiceOdometer = record.nextServiceOdoMeterReading ?? record.nextServiceOdometer
+                  const odometer = record.odoMeterReading ?? record.odometer
+                  const totalCost = record.totalCost ?? record.finalCost ?? record.cost ?? 0
+                  const isPending = record.status === 0 || record.status === "Pending"
+
+                  return (
+                    <React.Fragment key={record.id}>
+                      <TableRow>
+                        <TableCell className="font-medium">{formatDate(record.serviceDate)}</TableCell>
+                        <TableCell>
+                          <div className="font-semibold">{record.maintenanceTypeName || "-"}</div>
+                          {(nextServiceDate || nextServiceOdometer) && (
+                            <div className="text-xs text-muted-foreground">
+                              Next: {[nextServiceDate && formatDate(nextServiceDate), nextServiceOdometer && `${formatNumber(nextServiceOdometer)} units`].filter(Boolean).join(" | ")}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>{record.serviceVendor || "-"}</TableCell>
+                        <TableCell className="font-mono">{formatNumber(odometer)}</TableCell>
+                        <TableCell className="text-right font-mono">{currencyFormatter.format(totalCost)}</TableCell>
+                        <TableCell className="text-right">
+                          {isPending ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedMaintenance(record)
+                                setIsMaintenanceCloseDialogOpen(true)
+                              }}
+                              disabled={completeMaintenance.isPending}
+                            >
+                              <CheckCircle className="mr-2 size-3" />
+                              Complete
+                            </Button>
+                          ) : (
+                            <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                              <FileCheck2 className="mr-1 size-3" />
+                              Completed
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                      {(record.description || record.serviceRemarks) && (
+                        <TableRow className="bg-muted/20">
+                          <TableCell colSpan={6}>
+                            <div className="grid gap-2 text-sm md:grid-cols-2">
+                              <div>
+                                <span className="font-semibold">Description: </span>
+                                <span className="text-muted-foreground">{record.description || "-"}</span>
+                              </div>
+                              <div>
+                                <span className="font-semibold">Remarks: </span>
+                                <span className="text-muted-foreground">{record.serviceRemarks || "-"}</span>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  )
+                })}
               </TableBody>
             </Table>
           ) : (
@@ -479,12 +513,14 @@ export function AssetDetail() {
 
       <MaintenanceDialog
         assetId={id!}
+        assetName={asset.assetName}
         currentOdometer={asset.currentMeterReading || 0}
         isOpen={isMaintenanceDialogOpen}
         onOpenChange={setIsMaintenanceDialogOpen}
       />
       <MaintenanceCloseDialog
         assetId={id!}
+        assetName={asset.assetName}
         activeMaintenance={selectedMaintenance}
         isOpen={isMaintenanceCloseDialogOpen}
         onOpenChange={(open) => {
