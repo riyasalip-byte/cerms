@@ -3,14 +3,14 @@ using CERMS.Application.Common;
 using CERMS.Application.DTOs;
 using CERMS.Application.Interfaces;
 using CERMS.Domain.Entities;
-using CERMS.Domain.Enums;
+
 using MediatR;
 
 namespace CERMS.Application.Features.Assets.Commands;
 
 public record CreateAssetCommand(
     string AssetName,
-    AssetCategory? AssetCategory,
+    Guid? AssetCategoryId,
     DateTime? PurchaseDate,
     decimal? CurrentMeterReading,
     int? MakeYear,
@@ -52,7 +52,7 @@ public class CreateAssetHandler : IRequestHandler<CreateAssetCommand, Result<Ass
         var asset = new Asset(
             assetCode,
             request.AssetName,
-            request.AssetCategory!.Value,
+            request.AssetCategoryId!.Value,
             request.CurrentMeterReading!.Value,
             request.RegisterNo,
             request.FitnessExpiryDate,

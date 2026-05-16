@@ -20,9 +20,13 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(a => a.AssetCategory)
-            .IsRequired()
-            .HasConversion<string>();
+        builder.Property(a => a.AssetCategoryId)
+            .IsRequired();
+            
+        builder.HasOne(a => a.AssetCategory)
+            .WithMany(c => c.Assets)
+            .HasForeignKey(a => a.AssetCategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(a => a.Status)
             .IsRequired()

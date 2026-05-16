@@ -16,7 +16,7 @@ public record GetAssetsQuery : IRequest<Result<PagedResult<AssetDto>>>
     public int PageSize { get; init; } = 10;
     public string? SearchTerm { get; init; }
     public AssetStatus? Status { get; init; }
-    public AssetCategory? AssetCategory { get; init; }
+    public Guid? AssetCategoryId { get; init; }
 }
 
 public class GetAssetsHandler : IRequestHandler<GetAssetsQuery, Result<PagedResult<AssetDto>>>
@@ -45,9 +45,9 @@ public class GetAssetsHandler : IRequestHandler<GetAssetsQuery, Result<PagedResu
             query = query.Where(x => x.Status == request.Status);
         }
 
-        if (request.AssetCategory.HasValue)
+        if (request.AssetCategoryId.HasValue)
         {
-            query = query.Where(x => x.AssetCategory == request.AssetCategory);
+            query = query.Where(x => x.AssetCategoryId == request.AssetCategoryId);
         }
 
         var count = await query.CountAsync(cancellationToken);

@@ -1,6 +1,7 @@
 using CERMS.Application.Interfaces;
 using CERMS.Domain.Entities;
 using CERMS.Domain.Enums;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -81,17 +82,57 @@ public class CermsDbContextInitialiser
             _logger.LogInformation("Seeded default admin user: {Email}", adminEmail);
         }
 
+        // Seed Asset Categories
+        Guid excavatorCatId = Guid.Parse("00000000-0000-0000-0000-000000000101");
+        Guid miniExcavatorCatId = Guid.Parse("00000000-0000-0000-0000-000000000102");
+        Guid backhoeLoaderCatId = Guid.Parse("00000000-0000-0000-0000-000000000103");
+        Guid lightTipperCatId = Guid.Parse("00000000-0000-0000-0000-000000000104");
+        Guid heavyTipperCatId = Guid.Parse("00000000-0000-0000-0000-000000000105");
+
+        var defaultCategories = new List<AssetCategory>
+        {
+            new AssetCategory(excavatorCatId, "Excavator", null, true) { CompanyId = companyId, BranchId = branchId },
+            new AssetCategory(miniExcavatorCatId, "Mini Excavator", null, true) { CompanyId = companyId, BranchId = branchId },
+            new AssetCategory(backhoeLoaderCatId, "Backhoe Loader", null, true) { CompanyId = companyId, BranchId = branchId },
+            new AssetCategory(lightTipperCatId, "Light/Medium Duty Tipper", null, false) { CompanyId = companyId, BranchId = branchId },
+            new AssetCategory(heavyTipperCatId, "Heavy Duty Tipper", null, false) { CompanyId = companyId, BranchId = branchId }
+        };
+
+        var existingCategories = await _context.AssetCategories.IgnoreQueryFilters().ToListAsync();
+        var existingCategoryNames = existingCategories
+            .Select(c => c.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var missingCategories = defaultCategories
+            .Where(c => !existingCategoryNames.Contains(c.Name))
+            .ToList();
+
+        if (missingCategories.Count > 0)
+        {
+            _context.AssetCategories.AddRange(missingCategories);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} missing asset categories.", missingCategories.Count);
+
+            existingCategories.AddRange(missingCategories);
+        }
+
+        excavatorCatId = existingCategories.FirstOrDefault(c => c.Name == "Excavator")?.Id ?? excavatorCatId;
+        miniExcavatorCatId = existingCategories.FirstOrDefault(c => c.Name == "Mini Excavator")?.Id ?? miniExcavatorCatId;
+        backhoeLoaderCatId = existingCategories.FirstOrDefault(c => c.Name == "Backhoe Loader")?.Id ?? backhoeLoaderCatId;
+        lightTipperCatId = existingCategories.FirstOrDefault(c => c.Name == "Light/Medium Duty Tipper")?.Id ?? lightTipperCatId;
+        heavyTipperCatId = existingCategories.FirstOrDefault(c => c.Name == "Heavy Duty Tipper")?.Id ?? heavyTipperCatId;
+
         // Seed Assets if none exist
         if (!await _context.Assets.IgnoreQueryFilters().AnyAsync())
         {
             var purchaseDate = DateTime.UtcNow.AddYears(-1);
             var assets = new List<Asset>
             {
-                new Asset("AST-0001", "Caterpillar Excavator 320", AssetCategory.Excavator, 1250m, "KL-01-EX-320", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 10000m) { CompanyId = companyId, BranchId = branchId },
-                new Asset("AST-0002", "Mini Excavator 35", AssetCategory.MiniExcavator, 450m, "KL-01-ME-035", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 5000m) { CompanyId = companyId, BranchId = branchId },
-                new Asset("AST-0003", "Backhoe Loader 3DX", AssetCategory.BackhoeLoader, 890m, "KL-01-BL-3DX", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 5000m) { CompanyId = companyId, BranchId = branchId },
-                new Asset("AST-0004", "Light Medium Duty Tipper", AssetCategory.LightMediumDutyTipper, 210m, "KL-01-LT-010", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 10000m) { CompanyId = companyId, BranchId = branchId },
-                new Asset("AST-0005", "Heavy Duty Tipper", AssetCategory.HeavyDutyTipper, 155m, "KL-01-HT-012", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 5000m) { CompanyId = companyId, BranchId = branchId }
+                new Asset("AST-0001", "Caterpillar Excavator 320", excavatorCatId, 1250m, "KL-01-EX-320", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 10000m) { CompanyId = companyId, BranchId = branchId },
+                new Asset("AST-0002", "Mini Excavator 35", miniExcavatorCatId, 450m, "KL-01-ME-035", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 5000m) { CompanyId = companyId, BranchId = branchId },
+                new Asset("AST-0003", "Backhoe Loader 3DX", backhoeLoaderCatId, 890m, "KL-01-BL-3DX", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 5000m) { CompanyId = companyId, BranchId = branchId },
+                new Asset("AST-0004", "Light Medium Duty Tipper", lightTipperCatId, 210m, "KL-01-LT-010", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 10000m) { CompanyId = companyId, BranchId = branchId },
+                new Asset("AST-0005", "Heavy Duty Tipper", heavyTipperCatId, 155m, "KL-01-HT-012", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 5000m) { CompanyId = companyId, BranchId = branchId }
             };
 
             _context.Assets.AddRange(assets);

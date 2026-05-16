@@ -1,12 +1,11 @@
 using CERMS.Application.Features.Assets.Commands;
-using CERMS.Domain.Enums;
 
 namespace CERMS.Api.Contracts.Assets;
 
 public class CreateAssetRequest
 {
     public string? AssetName { get; init; }
-    public AssetCategory? AssetCategory { get; init; }
+    public Guid? AssetCategoryId { get; init; }
     public DateTime? PurchaseDate { get; init; }
     public decimal? CurrentMeterReading { get; init; }
     public int? MakeYear { get; init; }
@@ -34,7 +33,7 @@ public class CreateAssetRequest
 
     public CreateAssetCommand ToCommand() => new(
         AssetName ?? Name ?? string.Empty,
-        AssetCategory ?? ParseLegacyAssetType(AssetType),
+        AssetCategoryId,
         PurchaseDate,
         CurrentMeterReading ?? CurrentOdometer,
         MakeYear,
@@ -52,10 +51,4 @@ public class CreateAssetRequest
         IsTransportationRequired ?? false,
         TransportationNotes);
 
-    private static AssetCategory? ParseLegacyAssetType(string? assetType)
-    {
-        return Enum.TryParse<AssetCategory>(assetType?.Replace(" ", string.Empty), ignoreCase: true, out var category)
-            ? category
-            : null;
-    }
 }

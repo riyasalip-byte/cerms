@@ -12,6 +12,7 @@ namespace CERMS.Tests.Features.Assets.Commands;
 
 public class CompleteMaintenanceHandlerTests
 {
+    private static readonly Guid ExcavatorCategoryId = Guid.Parse("00000000-0000-0000-0000-000000000101");
     private readonly Mock<IAssetRepository> _assetRepoMock;
     private readonly Mock<IUnitOfWork> _uowMock;
     private readonly Mock<IMapper> _mapperMock;
@@ -117,7 +118,7 @@ public class CompleteMaintenanceHandlerTests
     private static Asset CreateAsset() => new(
         "AST-0001",
         "Excavator",
-        AssetCategory.Excavator,
+        ExcavatorCategoryId,
         1000,
         "KL-01-EX-001",
         DateTime.UtcNow.AddYears(1),

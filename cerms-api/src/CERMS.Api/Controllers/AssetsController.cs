@@ -9,7 +9,7 @@ namespace CERMS.Api.Controllers;
 public class AssetsController : ApiControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchTerm = null, [FromQuery] AssetStatus? status = null, [FromQuery] AssetCategory? category = null)
+    public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchTerm = null, [FromQuery] AssetStatus? status = null, [FromQuery] Guid? assetCategoryId = null)
     {
         var query = new GetAssetsQuery
         {
@@ -17,7 +17,7 @@ public class AssetsController : ApiControllerBase
             PageSize = pageSize,
             SearchTerm = searchTerm,
             Status = status,
-            AssetCategory = category
+            AssetCategoryId = assetCategoryId
         };
         return HandleResult(await Mediator.Send(query));
     }

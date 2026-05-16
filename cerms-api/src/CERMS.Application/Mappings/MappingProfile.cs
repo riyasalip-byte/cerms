@@ -8,8 +8,12 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap<Asset, AssetDto>().ReverseMap();
-        CreateMap<Asset, AssetDetailDto>().ReverseMap();
+        CreateMap<Asset, AssetDto>()
+            .ForMember(dest => dest.AssetCategoryName, opt => opt.MapFrom(src => src.AssetCategory != null ? src.AssetCategory.Name : string.Empty))
+            .ReverseMap();
+        CreateMap<Asset, AssetDetailDto>()
+            .ForMember(dest => dest.AssetCategoryName, opt => opt.MapFrom(src => src.AssetCategory != null ? src.AssetCategory.Name : string.Empty))
+            .ReverseMap();
         CreateMap<MaintenanceRecord, MaintenanceRecordDto>().ReverseMap();
         CreateMap<RentalBooking, RentalDto>().ReverseMap();
         CreateMap<Invoice, InvoiceDto>().ReverseMap();

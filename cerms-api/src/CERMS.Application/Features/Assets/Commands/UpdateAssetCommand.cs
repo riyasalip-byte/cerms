@@ -10,7 +10,7 @@ namespace CERMS.Application.Features.Assets.Commands;
 public record UpdateAssetCommand(
     Guid Id,
     string AssetName,
-    AssetCategory? AssetCategory,
+    Guid? AssetCategoryId,
     AssetStatus Status,
     decimal? CurrentMeterReading,
     string RegisterNo,
@@ -52,7 +52,7 @@ public class UpdateAssetHandler : IRequestHandler<UpdateAssetCommand, Result<Ass
         {
             asset.UpdateDetails(
                 request.AssetName,
-                request.AssetCategory!.Value,
+                request.AssetCategoryId!.Value,
                 request.PurchaseDate,
                 request.MakeYear,
                 request.Model,

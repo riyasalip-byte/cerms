@@ -44,14 +44,6 @@ import { MaintenanceCloseDialog } from "./MaintenanceCloseDialog"
 import { MaintenanceDialog } from "./MaintenanceDialog"
 import type { MaintenanceRecordDto } from "@/api/assets"
 
-const assetCategoryLabels = [
-  "Excavator",
-  "Mini Excavator",
-  "Backhoe Loader",
-  "Light / Medium Duty Tipper",
-  "Heavy Duty Tipper",
-] as const
-
 const dateFormatter = new Intl.DateTimeFormat("en-IN", {
   day: "2-digit",
   month: "short",
@@ -75,17 +67,6 @@ function formatDate(value?: string | null) {
 
 function formatNumber(value?: number | null) {
   return Number(value ?? 0).toLocaleString("en-IN")
-}
-
-function getCategoryLabel(category: number | string) {
-  if (typeof category === "number") {
-    return assetCategoryLabels[category] ?? `Category ${category}`
-  }
-
-  return String(category)
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/\s+/g, " ")
-    .trim()
 }
 
 function getExpiryState(value?: string | null) {
@@ -301,7 +282,7 @@ export function AssetDetail() {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-4">
-          <InfoItem label="Category" value={getCategoryLabel(asset.assetCategory)} icon={ClipboardCheck} />
+          <InfoItem label="Category" value={asset.assetCategoryName || "-"} icon={ClipboardCheck} />
           <InfoItem label="Current Meter" value={`${formatNumber(asset.currentMeterReading)} units`} icon={Activity} />
           <InfoItem label="Service Interval" value={`${formatNumber(asset.serviceIntervalKm)} km`} icon={Wrench} />
           <InfoItem label="Maintenance Cost" value={currencyFormatter.format(asset.maintenanceCost ?? 0)} icon={History} />

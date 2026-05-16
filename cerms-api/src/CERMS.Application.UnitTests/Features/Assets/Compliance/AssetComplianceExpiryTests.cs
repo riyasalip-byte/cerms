@@ -1,12 +1,12 @@
 using CERMS.Application.Features.Assets.Compliance;
 using CERMS.Domain.Entities;
-using CERMS.Domain.Enums;
 using FluentAssertions;
 
 namespace CERMS.Application.UnitTests.Features.Assets.Compliance;
 
 public class AssetComplianceExpiryTests
 {
+    private static readonly Guid ExcavatorCategoryId = Guid.Parse("00000000-0000-0000-0000-000000000101");
     [Fact]
     public void Evaluate_ShouldReturnCriticalAlerts_WhenComplianceDatesAreExpired()
     {
@@ -61,7 +61,7 @@ public class AssetComplianceExpiryTests
         DateTime puccExpiryDate) => new(
             "AST-0001",
             "Excavator EX-01",
-            AssetCategory.Excavator,
+            ExcavatorCategoryId,
             100,
             "KL-01-EX-001",
             fitnessExpiryDate,

@@ -21,7 +21,8 @@ export type Asset = {
   id: string
   assetCode: string
   assetName: string
-  assetCategory: number
+  assetCategoryId: string
+  assetCategoryName: string
   serialNumber?: string
   location?: string
   dailyRate?: number

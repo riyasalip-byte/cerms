@@ -10,6 +10,7 @@ namespace CERMS.Tests.Features.Assets.Commands;
 
 public class AddMaintenanceHandlerTests
 {
+    private static readonly Guid ExcavatorCategoryId = Guid.Parse("00000000-0000-0000-0000-000000000101");
     private readonly Mock<IAssetRepository> _assetRepoMock;
     private readonly Mock<IUnitOfWork> _uowMock;
     private readonly Mock<IRepository<MaintenanceRecord>> _maintRepoMock;
@@ -33,7 +34,7 @@ public class AddMaintenanceHandlerTests
         var assetId = Guid.NewGuid();
         var asset = CreateAsset();
         
-        var command = new AddMaintenanceCommand(assetId, "Oil Change", 500, DateTime.UtcNow, 1500, DateTime.UtcNow.AddMonths(6));
+        var command = new AddMaintenanceCommand(assetId, "Oil Change", 500, DateTime.UtcNow, 1500, DateTime.UtcNow.AddMonths(6), null);
 
         _assetRepoMock.Setup(repo => repo.GetByIdAsync(assetId))
             .ReturnsAsync(asset);
@@ -59,7 +60,7 @@ public class AddMaintenanceHandlerTests
     public async Task Handle_WithNonExistentAsset_ShouldReturnFailure()
     {
         // Arrange
-        var command = new AddMaintenanceCommand(Guid.NewGuid(), "Oil Change", 500, DateTime.UtcNow, 1500, null);
+        var command = new AddMaintenanceCommand(Guid.NewGuid(), "Oil Change", 500, DateTime.UtcNow, 1500, null, null);
 
         _assetRepoMock.Setup(repo => repo.GetByIdAsync(command.AssetId))
             .ReturnsAsync((Asset?)null);
@@ -77,7 +78,7 @@ public class AddMaintenanceHandlerTests
     private static Asset CreateAsset() => new(
         "AST-0001",
         "Excavator",
-        AssetCategory.Excavator,
+        ExcavatorCategoryId,
         1000,
         "KL-01-EX-001",
         DateTime.UtcNow.AddYears(1),

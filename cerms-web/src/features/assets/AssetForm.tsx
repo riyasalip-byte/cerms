@@ -1,7 +1,7 @@
 import * as React from "react"
-import { useAsset, useCreateAsset, useUpdateAsset } from "@/hooks/useAssets"
+import { useAsset, useAssetCategories, useCreateAsset, useUpdateAsset } from "@/hooks/useAssets"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import type { Control, Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -45,7 +45,7 @@ const optionalNumber = z.preprocess(
 const assetFormSchema = z.object({
   assetCode: z.string().optional(),
   assetName: z.string().min(2, "Asset name must be at least 2 characters."),
-  assetCategory: z.coerce.number().min(0, "Asset category is required."),
+  assetCategoryId: z.string().min(1, "Asset category is required."),
   currentMeterReading: z.coerce.number().min(0, "Meter reading cannot be negative."),
   registerNo: z.string().min(1, "Register number is required."),
   fitnessExpiryDate: z.string().min(1, "Fitness expiry date is required."),
@@ -68,22 +68,6 @@ const assetFormSchema = z.object({
 type AssetFormValues = z.infer<typeof assetFormSchema>
 const assetFormResolver = zodResolver(assetFormSchema) as unknown as Resolver<AssetFormValues>
 
-const assetCategories = [
-  { value: 0, label: "Excavator" },
-  { value: 1, label: "Mini Excavator" },
-  { value: 2, label: "Backhoe Loader" },
-  { value: 3, label: "Light / Medium Duty Tipper" },
-  { value: 4, label: "Heavy Duty Tipper" },
-]
-
-const categoryNameToValue = {
-  excavator: 0,
-  miniexcavator: 1,
-  backhoeloader: 2,
-  lightmediumdutytipper: 3,
-  heavydutytipper: 4,
-} as const
-
 const statusNameToValue = {
   available: 0,
   rented: 1,
@@ -100,15 +84,6 @@ const normalizeEnumKey = (value: string) => value.replace(/[\s/_-]/g, "").toLowe
 function toNumberValue(value: unknown, fallback = 0) {
   const numberValue = Number(value)
   return Number.isFinite(numberValue) ? numberValue : fallback
-}
-
-function toAssetCategoryValue(value: unknown) {
-  if (typeof value === "string") {
-    const key = normalizeEnumKey(value)
-    return categoryNameToValue[key as keyof typeof categoryNameToValue] ?? toNumberValue(value)
-  }
-
-  return toNumberValue(value)
 }
 
 function toAssetStatusValue(value: unknown) {
@@ -225,6 +200,7 @@ export function AssetForm() {
   const isEditMode = Boolean(id)
 
   const { data: existingAsset, isLoading } = useAsset(id!)
+  const { data: assetCategories = [], isLoading: isLoadingCategories } = useAssetCategories()
   const createAsset = useCreateAsset()
   const updateAsset = useUpdateAsset()
   const isSaving = createAsset.isPending || updateAsset.isPending
@@ -235,7 +211,7 @@ export function AssetForm() {
     defaultValues: {
       assetCode: "",
       assetName: "",
-      assetCategory: 0,
+      assetCategoryId: "",
       currentMeterReading: 0,
       registerNo: "",
       fitnessExpiryDate: "",
@@ -255,6 +231,28 @@ export function AssetForm() {
       transportationNotes: "",
     },
   })
+  const isTransportationRequired = useWatch({
+    control: form.control,
+    name: "isTransportationRequired",
+  })
+  const categoryOptions = React.useMemo(() => {
+    if (
+      existingAsset?.assetCategoryId &&
+      existingAsset.assetCategoryName &&
+      !assetCategories.some((category) => category.id === existingAsset.assetCategoryId)
+    ) {
+      return [
+        ...assetCategories,
+        {
+          id: existingAsset.assetCategoryId,
+          name: existingAsset.assetCategoryName,
+          isTransportationRequiredByDefault: existingAsset.isTransportationRequired ?? false,
+        },
+      ]
+    }
+
+    return assetCategories
+  }, [assetCategories, existingAsset])
 
   React.useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -272,7 +270,7 @@ export function AssetForm() {
       form.reset({
         assetCode: existingAsset.assetCode ?? "",
         assetName: existingAsset.assetName,
-        assetCategory: toAssetCategoryValue(existingAsset.assetCategory),
+        assetCategoryId: existingAsset.assetCategoryId ?? "",
         currentMeterReading: existingAsset.currentMeterReading,
         registerNo: existingAsset.registerNo,
         fitnessExpiryDate: toDateInput(existingAsset.fitnessExpiryDate),
@@ -303,7 +301,7 @@ export function AssetForm() {
   async function onSubmit(data: AssetFormValues) {
     const payload = {
       assetName: data.assetName,
-      assetCategory: data.assetCategory,
+      assetCategoryId: data.assetCategoryId,
       currentMeterReading: data.currentMeterReading,
       registerNo: data.registerNo,
       fitnessExpiryDate: toIsoDate(data.fitnessExpiryDate),
@@ -413,24 +411,21 @@ export function AssetForm() {
 
             <FormField
               control={form.control}
-              name="assetCategory"
+              name="assetCategoryId"
               render={({ field }) => (
                 <FormItem>
                   <FieldLabel required>Asset Category</FieldLabel>
                   <Select
                     onValueChange={(value) => {
-                      const numericValue = Number(value)
-                      field.onChange(numericValue)
-                      
-                      // Smart defaults for transportation
-                      if (numericValue === 0 || numericValue === 1) { // Excavators
+                      field.onChange(value)
+
+                      const selectedCategory = categoryOptions.find((category) => category.id === value)
+                      if (selectedCategory?.isTransportationRequiredByDefault) {
                         form.setValue("isTransportationRequired", true, { shouldValidate: true, shouldDirty: true })
-                      } else if (numericValue === 3 || numericValue === 4) { // Tippers
-                        form.setValue("isTransportationRequired", false, { shouldValidate: true, shouldDirty: true })
                       }
                     }}
-                    value={field.value?.toString()}
-                    disabled={isSaving}
+                    value={field.value}
+                    disabled={isSaving || isLoadingCategories}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -438,9 +433,9 @@ export function AssetForm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {assetCategories.map((category) => (
-                        <SelectItem key={category.value} value={category.value.toString()}>
-                          {category.label}
+                      {categoryOptions.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -658,7 +653,7 @@ export function AssetForm() {
               )}
             />
 
-            {form.watch("isTransportationRequired") && (
+            {isTransportationRequired && (
               <FormField
                 control={form.control}
                 name="transportationNotes"

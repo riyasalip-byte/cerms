@@ -8,6 +8,7 @@ public class Asset : BaseEntity
     // Core
     public string AssetCode { get; private set; }
     public string AssetName { get; private set; }
+    public Guid AssetCategoryId { get; private set; }
     public AssetCategory AssetCategory { get; private set; }
     public DateTime? PurchaseDate { get; private set; }
     
@@ -53,7 +54,7 @@ public class Asset : BaseEntity
     public Asset(
         string assetCode,
         string assetName,
-        AssetCategory assetCategory,
+        Guid assetCategoryId,
         decimal currentMeterReading,
         string registerNo,
         DateTime fitnessExpiryDate,
@@ -80,7 +81,7 @@ public class Asset : BaseEntity
         
         AssetCode = assetCode;
         AssetName = assetName;
-        AssetCategory = assetCategory;
+        AssetCategoryId = assetCategoryId;
         CurrentMeterReading = currentMeterReading;
         RegisterNo = registerNo;
         FitnessExpiryDate = fitnessExpiryDate;
@@ -107,7 +108,7 @@ public class Asset : BaseEntity
 
     public void UpdateDetails(
         string assetName,
-        AssetCategory assetCategory,
+        Guid assetCategoryId,
         DateTime? purchaseDate,
         int? makeYear,
         string? model,
@@ -128,7 +129,7 @@ public class Asset : BaseEntity
         if (string.IsNullOrWhiteSpace(registerNo)) throw new ArgumentException("Register number is required.", nameof(registerNo));
 
         AssetName = assetName;
-        AssetCategory = assetCategory;
+        AssetCategoryId = assetCategoryId;
         PurchaseDate = purchaseDate;
         MakeYear = makeYear;
         Model = model;

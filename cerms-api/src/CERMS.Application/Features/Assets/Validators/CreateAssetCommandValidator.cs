@@ -12,9 +12,9 @@ public class CreateAssetCommandValidator : AbstractValidator<CreateAssetCommand>
             .NotEmpty().WithMessage("Asset name is required.")
             .MaximumLength(200).WithMessage("Asset name must not exceed 200 characters.");
 
-        RuleFor(v => v.AssetCategory)
+        RuleFor(v => v.AssetCategoryId)
             .NotNull().WithMessage("Asset category is required.")
-            .IsInEnum().WithMessage("Invalid asset category.");
+            .NotEmpty().WithMessage("Asset category is required.");
 
         RuleFor(v => v.CurrentMeterReading)
             .NotNull().WithMessage("Current meter reading is required.")

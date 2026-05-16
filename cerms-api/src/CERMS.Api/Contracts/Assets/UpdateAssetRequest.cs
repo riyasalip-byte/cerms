@@ -7,7 +7,7 @@ public class UpdateAssetRequest
 {
     public Guid? Id { get; init; }
     public string? AssetName { get; init; }
-    public AssetCategory? AssetCategory { get; init; }
+    public Guid? AssetCategoryId { get; init; }
     public AssetStatus? Status { get; init; }
     public DateTime? PurchaseDate { get; init; }
     public decimal? CurrentMeterReading { get; init; }
@@ -35,7 +35,7 @@ public class UpdateAssetRequest
     public UpdateAssetCommand ToCommand(Guid routeId) => new(
         Id ?? routeId,
         AssetName ?? Name ?? string.Empty,
-        AssetCategory ?? ParseLegacyAssetType(AssetType),
+        AssetCategoryId,
         Status ?? AssetStatus.Available,
         CurrentMeterReading ?? CurrentOdometer,
         RegisterNo ?? string.Empty,
@@ -53,11 +53,4 @@ public class UpdateAssetRequest
         InsuranceNo,
         IsTransportationRequired ?? false,
         TransportationNotes);
-
-    private static AssetCategory? ParseLegacyAssetType(string? assetType)
-    {
-        return Enum.TryParse<AssetCategory>(assetType?.Replace(" ", string.Empty), ignoreCase: true, out var category)
-            ? category
-            : null;
-    }
 }

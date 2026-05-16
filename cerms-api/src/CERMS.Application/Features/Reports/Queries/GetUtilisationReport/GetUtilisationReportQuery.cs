@@ -21,14 +21,15 @@ public class GetUtilisationReportQueryHandler : IRequestHandler<GetUtilisationRe
     public async Task<List<ChartDataDto>> Handle(GetUtilisationReportQuery request, CancellationToken cancellationToken)
     {
         var assets = await _unitOfWork.Repository<Asset>().Entities
+            .Include(a => a.AssetCategory)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 
         var report = assets
-            .GroupBy(a => a.AssetCategory)
+            .GroupBy(a => a.AssetCategory?.Name ?? "Unknown")
             .Select(g => new ChartDataDto
             {
-                Label = g.Key.ToString(),
+                Label = g.Key,
                 Value = g.Count() == 0 ? 0 : Math.Round((decimal)g.Count(a => a.Status == AssetStatus.Rented) / g.Count() * 100, 2)
             })
             .ToList();

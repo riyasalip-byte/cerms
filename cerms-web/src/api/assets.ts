@@ -5,7 +5,8 @@ export type AssetDto = {
   id: string
   assetCode: string
   assetName: string
-  assetCategory: number
+  assetCategoryId: string
+  assetCategoryName: string
   purchaseDate?: string
   currentMeterReading: number
   makeYear?: number
@@ -29,6 +30,12 @@ export type AssetDto = {
   serviceIntervalKm: number
   isTransportationRequired: boolean
   transportationNotes?: string
+}
+
+export type AssetCategoryDto = {
+  id: string
+  name: string
+  isTransportationRequiredByDefault: boolean
 }
 
 export type MaintenanceRecordDto = {
@@ -61,6 +68,50 @@ export type AssetExpiryAlertDto = {
   notificationKey: string
 }
 
+export type AssetQueryParams = {
+  pageNumber?: number
+  pageSize?: number
+  searchTerm?: string
+  status?: number
+  assetCategoryId?: string
+}
+
+export type AssetPayload = {
+  assetName: string
+  assetCategoryId: string
+  currentMeterReading: number
+  registerNo: string
+  fitnessExpiryDate?: string
+  insuranceExpiryDate?: string
+  puccExpiryDate?: string
+  purchaseDate?: string
+  makeYear?: number
+  model?: string
+  engineNo?: string
+  chasisNo?: string
+  placeOfRegistration?: string
+  registerDate?: string
+  insuranceCompany?: string
+  insuranceNo?: string
+  isTransportationRequired: boolean
+  transportationNotes?: string
+}
+
+export type UpdateAssetPayload = AssetPayload & {
+  id: string
+  status: number
+}
+
+export type AddMaintenancePayload = {
+  assetId: string
+  description: string
+  cost: number
+  serviceDate: string
+  odometer: number
+  nextServiceDueDate?: string
+  nextServiceOdometer?: number
+}
+
 // Backend ApiResponse wrapper
 type ApiResponse<T> = {
   success: boolean
@@ -68,7 +119,9 @@ type ApiResponse<T> = {
   errors?: string[]
 }
 
-export const getAssets = async (params?: any) => {
+type AssetCategoriesResponse = AssetCategoryDto[] | ApiResponse<AssetCategoryDto[]>
+
+export const getAssets = async (params?: AssetQueryParams) => {
   const { data } = await api.get<ApiResponse<PaginatedList<AssetDto>>>('/assets', { params })
   return data.data
 }
@@ -85,27 +138,32 @@ export const getExpiringAssets = async (days = 30) => {
   return data.data
 }
 
-export const createAsset = async (assetData: any) => {
+export const getAssetCategories = async () => {
+  const { data } = await api.get<AssetCategoriesResponse>('/asset-categories')
+  return Array.isArray(data) ? data : data.data
+}
+
+export const createAsset = async (assetData: AssetPayload) => {
   const { data } = await api.post<ApiResponse<AssetDto>>('/assets', assetData)
   return data.data
 }
 
-export const updateAsset = async (id: string, assetData: any) => {
+export const updateAsset = async (id: string, assetData: UpdateAssetPayload) => {
   const { data } = await api.put<ApiResponse<AssetDto>>(`/assets/${id}`, assetData)
   return data.data
 }
 
-export const addMaintenance = async (id: string, maintenanceData: any) => {
+export const addMaintenance = async (id: string, maintenanceData: AddMaintenancePayload) => {
   const { data } = await api.post<ApiResponse<string>>(`/assets/${id}/maintenance`, maintenanceData)
   return data.data
 }
 
 export const completeMaintenance = async (id: string, maintenanceId: string, finalCost: number, notes?: string, serviceDate?: string, nextServiceDueDate?: string, nextServiceOdometer?: number) => {
-  const { data } = await api.post<ApiResponse<any>>(`/assets/${id}/maintenance/complete`, { maintenanceId, finalCost, notes, serviceDate, nextServiceDueDate, nextServiceOdometer })
+  const { data } = await api.post<ApiResponse<MaintenanceRecordDto>>(`/assets/${id}/maintenance/complete`, { maintenanceId, finalCost, notes, serviceDate, nextServiceDueDate, nextServiceOdometer })
   return data.data
 }
 
 export const deleteAsset = async (id: string) => {
-  const { data } = await api.delete<ApiResponse<any>>(`/assets/${id}`)
+  const { data } = await api.delete<ApiResponse<null>>(`/assets/${id}`)
   return data.data
 }

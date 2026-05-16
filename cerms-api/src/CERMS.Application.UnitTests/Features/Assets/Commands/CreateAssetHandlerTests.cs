@@ -4,7 +4,6 @@ using CERMS.Application.Features.Assets.Commands;
 using CERMS.Application.Interfaces;
 using CERMS.Application.Mappings;
 using CERMS.Domain.Entities;
-using CERMS.Domain.Enums;
 using FluentAssertions;
 using Moq;
 
@@ -12,6 +11,7 @@ namespace CERMS.Application.UnitTests.Features.Assets.Commands;
 
 public class CreateAssetHandlerTests
 {
+    private static readonly Guid ExcavatorCategoryId = Guid.Parse("00000000-0000-0000-0000-000000000101");
     private readonly Mock<IAssetRepository> _assetRepositoryMock;
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
     private readonly IMapper _mapper;
@@ -72,7 +72,7 @@ public class CreateAssetHandlerTests
         var existingAsset = new Asset(
             "AST-0009",
             "Existing Excavator",
-            AssetCategory.Excavator,
+            ExcavatorCategoryId,
             10,
             command.RegisterNo,
             DateTime.UtcNow.AddYears(1),
@@ -93,7 +93,7 @@ public class CreateAssetHandlerTests
 
     private static CreateAssetCommand CreateValidCommand() => new(
         "Excavator EX-01",
-        AssetCategory.Excavator,
+        ExcavatorCategoryId,
         DateTime.UtcNow,
         100,
         2024,

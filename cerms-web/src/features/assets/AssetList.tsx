@@ -17,16 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useAssets } from "@/hooks/useAssets"
+import { useAssetCategories, useAssets } from "@/hooks/useAssets"
 import { cn } from "@/lib/utils"
-
-const assetCategoryLabels = [
-  "Excavator",
-  "Mini Excavator",
-  "Backhoe Loader",
-  "Light / Medium Duty Tipper",
-  "Heavy Duty Tipper",
-] as const
 
 const defaultAssetColumnVisibility = {
   currentMeterReading: false,
@@ -39,17 +31,6 @@ const dateFormatter = new Intl.DateTimeFormat("en-IN", {
   month: "short",
   year: "numeric",
 })
-
-function getCategoryLabel(category: AssetDto["assetCategory"]) {
-  if (typeof category === "number") {
-    return assetCategoryLabels[category] ?? `Category ${category}`
-  }
-
-  return String(category)
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/\s+/g, " ")
-    .trim()
-}
 
 function formatDate(value?: string) {
   if (!value) return "-"
@@ -109,6 +90,7 @@ export function AssetList() {
   const [statusFilter, setStatusFilter] = React.useState("all")
   const [categoryFilter, setCategoryFilter] = React.useState("all")
   const [transportFilter, setTransportFilter] = React.useState<"all" | "required" | "not_required">("all")
+  const { data: assetCategories = [] } = useAssetCategories()
 
   React.useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300)
@@ -119,7 +101,7 @@ export function AssetList() {
     () => ({
       searchTerm: debouncedSearch || undefined,
       status: statusFilter === "all" ? undefined : Number(statusFilter),
-      category: categoryFilter === "all" ? undefined : Number(categoryFilter),
+      assetCategoryId: categoryFilter === "all" ? undefined : categoryFilter,
       pageSize: 100,
     }),
     [categoryFilter, debouncedSearch, statusFilter]
@@ -145,7 +127,7 @@ export function AssetList() {
         asset.assetCode,
         asset.assetName,
         asset.registerNo,
-        getCategoryLabel(asset.assetCategory),
+        asset.assetCategoryName,
       ]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(term))
@@ -172,11 +154,11 @@ export function AssetList() {
       ),
     },
     {
-      accessorKey: "assetCategory",
+      accessorKey: "assetCategoryName",
       header: "Category",
       cell: ({ row }) => (
         <Badge variant="secondary" className="font-semibold">
-          {getCategoryLabel(row.original.assetCategory)}
+          {row.original.assetCategoryName || "-"}
         </Badge>
       ),
     },
@@ -305,14 +287,17 @@ export function AssetList() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {assetCategoryLabels.map((label, index) => (
-                <SelectItem key={label} value={String(index)}>
-                  {label}
+              {assetCategories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={transportFilter} onValueChange={(val: any) => setTransportFilter(val)}>
+          <Select
+            value={transportFilter}
+            onValueChange={(value: "all" | "required" | "not_required") => setTransportFilter(value)}
+          >
             <SelectTrigger className="h-10 w-full sm:w-[220px]">
               <SelectValue placeholder="Transport required?" />
             </SelectTrigger>

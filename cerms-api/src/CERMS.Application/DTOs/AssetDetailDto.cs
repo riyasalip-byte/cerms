@@ -1,5 +1,4 @@
 using CERMS.Domain.Enums;
-
 namespace CERMS.Application.DTOs;
 
 public class AssetDetailDto
@@ -7,7 +6,8 @@ public class AssetDetailDto
     public Guid Id { get; set; }
     public string AssetCode { get; set; } = string.Empty;
     public string AssetName { get; set; } = string.Empty;
-    public AssetCategory AssetCategory { get; set; }
+    public Guid AssetCategoryId { get; set; }
+    public string AssetCategoryName { get; set; } = string.Empty;
     public DateTime? PurchaseDate { get; set; }
     public decimal CurrentMeterReading { get; set; }
     public int? MakeYear { get; set; }
@@ -37,8 +37,7 @@ public class AssetDetailDto
     [Obsolete("Use AssetName.")]
     public string Name => AssetName;
 
-    [Obsolete("Use AssetCategory.")]
-    public string AssetType => AssetCategory.ToString();
+    public string AssetType => AssetCategoryName;
 
     [Obsolete("Use CurrentMeterReading.")]
     public decimal CurrentOdometer => CurrentMeterReading;

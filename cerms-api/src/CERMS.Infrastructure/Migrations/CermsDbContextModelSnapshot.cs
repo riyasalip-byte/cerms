@@ -29,10 +29,9 @@ namespace CERMS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("AssetCategory")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("asset_category");
+                    b.Property<Guid>("AssetCategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("asset_category_id");
 
                     b.Property<string>("AssetCode")
                         .IsRequired()
@@ -180,6 +179,9 @@ namespace CERMS.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_assets");
 
+                    b.HasIndex("AssetCategoryId")
+                        .HasDatabaseName("ix_assets_asset_category_id");
+
                     b.HasIndex("AssetCode")
                         .IsUnique()
                         .HasDatabaseName("ix_assets_asset_code");
@@ -191,6 +193,66 @@ namespace CERMS.Infrastructure.Migrations
                         .HasDatabaseName("ix_assets_register_no");
 
                     b.ToTable("assets", (string)null);
+                });
+
+            modelBuilder.Entity("CERMS.Domain.Entities.AssetCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<bool>("IsTransportationRequiredByDefault")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_transportation_required_by_default");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_asset_categories");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_asset_categories_name");
+
+                    b.ToTable("asset_categories", (string)null);
                 });
 
             modelBuilder.Entity("CERMS.Domain.Entities.Customer", b =>
@@ -907,6 +969,18 @@ namespace CERMS.Infrastructure.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("CERMS.Domain.Entities.Asset", b =>
+                {
+                    b.HasOne("CERMS.Domain.Entities.AssetCategory", "AssetCategory")
+                        .WithMany("Assets")
+                        .HasForeignKey("AssetCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_assets_asset_categories_asset_category_id");
+
+                    b.Navigation("AssetCategory");
+                });
+
             modelBuilder.Entity("CERMS.Domain.Entities.Invoice", b =>
                 {
                     b.HasOne("CERMS.Domain.Entities.RentalBooking", null)
@@ -980,6 +1054,11 @@ namespace CERMS.Infrastructure.Migrations
             modelBuilder.Entity("CERMS.Domain.Entities.Asset", b =>
                 {
                     b.Navigation("MaintenanceRecords");
+                });
+
+            modelBuilder.Entity("CERMS.Domain.Entities.AssetCategory", b =>
+                {
+                    b.Navigation("Assets");
                 });
 
             modelBuilder.Entity("CERMS.Domain.Entities.Customer", b =>
