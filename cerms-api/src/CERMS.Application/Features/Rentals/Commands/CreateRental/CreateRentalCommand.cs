@@ -52,7 +52,7 @@ public class CreateRentalHandler : IRequestHandler<CreateRentalCommand, Result<R
         {
             Id = rental.Id,
             AssetId = rental.AssetId,
-            AssetName = asset.Name,
+            AssetName = asset.AssetName,
             CustomerId = rental.CustomerId,
             CustomerName = customer.Name,
             StartDateTime = rental.StartDateTime,

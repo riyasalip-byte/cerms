@@ -7,7 +7,25 @@ using MediatR;
 
 namespace CERMS.Application.Features.Assets.Commands;
 
-public record UpdateAssetCommand(Guid Id, string Name, string AssetType, AssetStatus Status, decimal CurrentOdometer) : IRequest<Result<AssetDto>>;
+public record UpdateAssetCommand(
+    Guid Id,
+    string AssetName,
+    AssetCategory? AssetCategory,
+    AssetStatus Status,
+    decimal? CurrentMeterReading,
+    string RegisterNo,
+    DateTime FitnessExpiryDate,
+    DateTime InsuranceExpiryDate,
+    DateTime PuccExpiryDate,
+    DateTime? PurchaseDate = null,
+    int? MakeYear = null,
+    string? Model = null,
+    string? EngineNo = null,
+    string? ChasisNo = null,
+    string? PlaceOfRegistration = null,
+    DateTime? RegisterDate = null,
+    string? InsuranceCompany = null,
+    string? InsuranceNo = null) : IRequest<Result<AssetDto>>;
 
 public class UpdateAssetHandler : IRequestHandler<UpdateAssetCommand, Result<AssetDto>>
 {
@@ -30,9 +48,24 @@ public class UpdateAssetHandler : IRequestHandler<UpdateAssetCommand, Result<Ass
 
         try 
         {
-            asset.UpdateDetails(request.Name, request.AssetType);
+            asset.UpdateDetails(
+                request.AssetName,
+                request.AssetCategory!.Value,
+                request.PurchaseDate,
+                request.MakeYear,
+                request.Model,
+                request.EngineNo,
+                request.ChasisNo,
+                request.PlaceOfRegistration,
+                request.RegisterNo,
+                request.RegisterDate,
+                request.FitnessExpiryDate,
+                request.InsuranceCompany,
+                request.InsuranceNo,
+                request.InsuranceExpiryDate,
+                request.PuccExpiryDate);
             asset.UpdateStatus(request.Status);
-            asset.UpdateOdometer(request.CurrentOdometer);
+            asset.UpdateMeterReading(request.CurrentMeterReading!.Value);
         }
         catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException)
         {

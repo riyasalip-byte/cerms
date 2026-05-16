@@ -23,7 +23,7 @@ public class GetMaintenanceCostReportQueryHandler : IRequestHandler<GetMaintenan
             .AsNoTracking()
             .Select(a => new ChartDataDto
             {
-                Label = a.Name,
+                Label = a.AssetName,
                 Value = a.MaintenanceCost
             })
             .OrderByDescending(x => x.Value)

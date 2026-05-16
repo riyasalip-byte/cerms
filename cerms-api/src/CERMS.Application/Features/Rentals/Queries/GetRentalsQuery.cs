@@ -38,7 +38,7 @@ public class GetRentalsHandler : IRequestHandler<GetRentalsQuery, Result<Paginat
                     {
                         Id = r.Id,
                         AssetId = r.AssetId,
-                        AssetName = a.Name,
+                        AssetName = a.AssetName,
                         CustomerId = r.CustomerId,
                         CustomerName = c.Name,
                         Status = r.Status,
@@ -90,7 +90,7 @@ public class GetRentalByIdHandler : IRequestHandler<GetRentalByIdQuery, Result<R
                                {
                                    Id = r.Id,
                                    AssetId = r.AssetId,
-                                   AssetName = a.Name,
+                                   AssetName = a.AssetName,
                                    CustomerId = r.CustomerId,
                                    CustomerName = c.Name,
                                    Status = r.Status,

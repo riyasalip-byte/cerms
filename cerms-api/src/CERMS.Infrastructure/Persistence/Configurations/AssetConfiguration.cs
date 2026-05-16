@@ -16,25 +16,54 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
             .IsRequired()
             .HasMaxLength(50);
 
-        builder.Property(a => a.Name)
+        builder.Property(a => a.AssetName)
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(a => a.AssetType)
+        builder.Property(a => a.AssetCategory)
             .IsRequired()
-            .HasMaxLength(100);
+            .HasConversion<string>();
 
         builder.Property(a => a.Status)
             .IsRequired()
             .HasConversion<string>();
 
-        builder.Property(a => a.CurrentOdometer)
+        builder.Property(a => a.CurrentMeterReading)
+            .IsRequired()
             .HasPrecision(18, 2);
             
         builder.Property(a => a.LastServiceOdometer)
             .HasPrecision(18, 2);
             
-        builder.Property(a => a.PurchaseDate)
+        builder.Property(a => a.Model)
+            .HasMaxLength(100);
+
+        builder.Property(a => a.EngineNo)
+            .HasMaxLength(100);
+
+        builder.Property(a => a.ChasisNo)
+            .HasMaxLength(100);
+
+        builder.Property(a => a.PlaceOfRegistration)
+            .HasMaxLength(200);
+
+        builder.Property(a => a.RegisterNo)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        builder.Property(a => a.FitnessExpiryDate)
+            .IsRequired();
+
+        builder.Property(a => a.InsuranceCompany)
+            .HasMaxLength(200);
+
+        builder.Property(a => a.InsuranceNo)
+            .HasMaxLength(100);
+
+        builder.Property(a => a.InsuranceExpiryDate)
+            .IsRequired();
+
+        builder.Property(a => a.PuccExpiryDate)
             .IsRequired();
             
         builder.Property(a => a.IsActive)
@@ -49,6 +78,8 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
         builder.Property(a => a.NextServiceDueDate);
             
         builder.HasIndex(a => a.AssetCode).IsUnique();
+        builder.HasIndex(a => a.RegisterNo);
+        builder.HasIndex(a => a.InsuranceNo);
         
         builder.HasMany(a => a.MaintenanceRecords)
             .WithOne(m => m.Asset)

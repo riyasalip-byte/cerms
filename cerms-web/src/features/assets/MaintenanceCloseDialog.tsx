@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useCompleteMaintenance } from "@/hooks/useAssets"
-import { CheckCircle } from "lucide-react"
 
 interface MaintenanceCloseDialogProps {
   assetId: string

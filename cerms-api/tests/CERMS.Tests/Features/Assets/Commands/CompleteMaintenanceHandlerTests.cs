@@ -32,7 +32,7 @@ public class CompleteMaintenanceHandlerTests
         // Arrange
         var assetId = Guid.NewGuid();
         var maintenanceId = Guid.NewGuid();
-        var asset = new Asset("CAT-01", "Excavator", "Heavy", 1000, DateTime.UtcNow, 10000);
+        var asset = CreateAsset();
         
         // Force status to Maintenance via valid methods
         asset.SendToMaintenance();
@@ -90,7 +90,7 @@ public class CompleteMaintenanceHandlerTests
         // Arrange
         var assetId = Guid.NewGuid();
         var maintenanceId = Guid.NewGuid();
-        var asset = new Asset("CAT-01", "Excavator", "Heavy", 1000, DateTime.UtcNow, 10000);
+        var asset = CreateAsset();
         // Asset starts as Available
 
         var record = new MaintenanceRecord(assetId, "Oil Change", 500, DateTime.UtcNow, 1200);
@@ -113,4 +113,15 @@ public class CompleteMaintenanceHandlerTests
         
         _assetRepoMock.Verify(repo => repo.Update(It.IsAny<Asset>()), Times.Never);
     }
+
+    private static Asset CreateAsset() => new(
+        "AST-0001",
+        "Excavator",
+        AssetCategory.Excavator,
+        1000,
+        "KL-01-EX-001",
+        DateTime.UtcNow.AddYears(1),
+        DateTime.UtcNow.AddYears(1),
+        DateTime.UtcNow.AddMonths(6),
+        DateTime.UtcNow);
 }

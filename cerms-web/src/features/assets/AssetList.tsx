@@ -1,13 +1,14 @@
 import * as React from "react"
-import { useAssets } from "@/hooks/useAssets"
 import { Link, useNavigate } from "react-router-dom"
 import type { ColumnDef } from "@tanstack/react-table"
-import { Plus, Eye, Edit2, Package, Activity } from "lucide-react"
+import { Activity, Edit2, Eye, Plus } from "lucide-react"
 
+import type { AssetDto } from "@/api/assets"
 import { DataTable } from "@/components/shared/DataTable"
-import { Button } from "@/components/ui/button"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { StatusBadge } from "@/components/shared/StatusBadge"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -16,76 +17,189 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useAssets } from "@/hooks/useAssets"
+import { cn } from "@/lib/utils"
 
-type AssetRecord = {
-  id: string
-  name: string
-  assetCode: string
-  assetType: string
-  currentOdometer: number
-  status: number
+const assetCategoryLabels = [
+  "Excavator",
+  "Mini Excavator",
+  "Backhoe Loader",
+  "Light / Medium Duty Tipper",
+  "Heavy Duty Tipper",
+] as const
+
+const defaultAssetColumnVisibility = {
+  currentMeterReading: false,
+  fitnessExpiryDate: false,
+  insuranceExpiryDate: false,
+}
+
+const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+})
+
+function getCategoryLabel(category: AssetDto["assetCategory"]) {
+  if (typeof category === "number") {
+    return assetCategoryLabels[category] ?? `Category ${category}`
+  }
+
+  return String(category)
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function formatDate(value?: string) {
+  if (!value) return "-"
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return "-"
+
+  return dateFormatter.format(date)
+}
+
+function getExpiryState(value?: string) {
+  if (!value) return null
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  date.setHours(0, 0, 0, 0)
+
+  const daysUntilExpiry = Math.ceil((date.getTime() - today.getTime()) / 86_400_000)
+
+  if (daysUntilExpiry < 0) return "expired"
+  if (daysUntilExpiry <= 30) return "expiring"
+
+  return null
+}
+
+function ExpiryCell({ value }: { value?: string }) {
+  const state = getExpiryState(value)
+
+  return (
+    <div className="flex min-w-[150px] flex-col gap-1">
+      <span className="font-medium text-foreground">{formatDate(value)}</span>
+      {state && (
+        <Badge
+          variant="outline"
+          className={cn(
+            "w-fit border px-2 py-0.5 text-xs font-bold",
+            state === "expired"
+              ? "border-destructive/30 bg-destructive/10 text-destructive dark:bg-destructive/20"
+              : "border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+          )}
+        >
+          {state === "expired" ? "Expired" : "Expiring in 30 days"}
+        </Badge>
+      )}
+    </div>
+  )
 }
 
 export function AssetList() {
   const navigate = useNavigate()
-  
+
   const [searchTerm, setSearchTerm] = React.useState("")
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
-  const [statusFilter, setStatusFilter] = React.useState<string>("all")
+  const [statusFilter, setStatusFilter] = React.useState("all")
+  const [categoryFilter, setCategoryFilter] = React.useState("all")
 
-  // Debounce search term to prevent excessive API calls
   React.useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 400)
-    return () => clearTimeout(timer)
+    const timer = window.setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300)
+    return () => window.clearTimeout(timer)
   }, [searchTerm])
 
-  const { data, isLoading, isError, refetch } = useAssets({
-    searchTerm: debouncedSearch || undefined,
-    status: statusFilter !== "all" ? Number(statusFilter) : undefined,
-    pageSize: 100 // Fetch a larger set to let DataTable handle local pagination
-  })
-  
-  const assets = React.useMemo(() => {
-    if (!data) return [];
-    return (data as any).items || (data as any).Items || [];
-  }, [data])
+  const queryParams = React.useMemo(
+    () => ({
+      searchTerm: debouncedSearch || undefined,
+      status: statusFilter === "all" ? undefined : Number(statusFilter),
+      category: categoryFilter === "all" ? undefined : Number(categoryFilter),
+      pageSize: 100,
+    }),
+    [categoryFilter, debouncedSearch, statusFilter]
+  )
 
-  const columns: ColumnDef<AssetRecord>[] = [
+  const { data, isLoading, isFetching, isError, refetch } = useAssets(queryParams)
+
+  const assets = React.useMemo(() => {
+    const items = data?.items ?? []
+    const term = searchTerm.trim().toLowerCase()
+
+    if (!term) return items
+
+    return items.filter((asset) =>
+      [
+        asset.assetCode,
+        asset.assetName,
+        asset.registerNo,
+        getCategoryLabel(asset.assetCategory),
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(term))
+    )
+  }, [data, searchTerm])
+
+  const columns: ColumnDef<AssetDto>[] = [
     {
-      accessorKey: "name",
-      header: "Asset",
+      accessorKey: "assetCode",
+      header: "Asset Code",
       cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <div className="size-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center border border-blue-100 dark:border-blue-800">
-            <Package className="size-5 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-foreground">{row.original.name}</span>
-            <span className="text-xs text-muted-foreground font-medium uppercase tracking-tight">
-              {row.original.assetCode}
-            </span>
-          </div>
-        </div>
+        <span className="font-mono text-sm font-semibold text-muted-foreground">
+          {row.original.assetCode}
+        </span>
       ),
     },
     {
-      accessorKey: "assetType",
-      header: "Type",
+      accessorKey: "assetName",
+      header: "Asset Name",
       cell: ({ row }) => (
-        <Badge variant="secondary" className="font-medium">
-          {row.original.assetType}
+        <span className="block min-w-[180px] max-w-[280px] truncate font-bold text-foreground">
+          {row.original.assetName}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "assetCategory",
+      header: "Category",
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="font-semibold">
+          {getCategoryLabel(row.original.assetCategory)}
         </Badge>
       ),
     },
     {
-      accessorKey: "currentOdometer",
-      header: "Odometer",
+      accessorKey: "registerNo",
+      header: "Register No",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2 font-mono text-sm">
-          <Activity className="size-3.5 text-muted-foreground" />
-          {row.original.currentOdometer.toLocaleString()} units
+        <span className="font-medium text-foreground">
+          {row.original.registerNo || "-"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "currentMeterReading",
+      header: "Current Meter Reading",
+      cell: ({ row }) => (
+        <div className="flex min-w-[150px] items-center gap-2 font-mono text-sm">
+          <Activity className="size-3.5 shrink-0 text-muted-foreground" />
+          <span>{row.original.currentMeterReading.toLocaleString()} units</span>
         </div>
       ),
+    },
+    {
+      accessorKey: "fitnessExpiryDate",
+      header: "Fitness Expiry",
+      cell: ({ row }) => <ExpiryCell value={row.original.fitnessExpiryDate} />,
+    },
+    {
+      accessorKey: "insuranceExpiryDate",
+      header: "Insurance Expiry",
+      cell: ({ row }) => <ExpiryCell value={row.original.insuranceExpiryDate} />,
     },
     {
       accessorKey: "status",
@@ -96,14 +210,14 @@ export function AssetList() {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
           <Button variant="ghost" size="icon" asChild>
-            <Link to={`/assets/${row.original.id}`}>
+            <Link to={`/assets/${row.original.id}`} aria-label={`View ${row.original.assetName}`}>
               <Eye className="size-4" />
             </Link>
           </Button>
           <Button variant="ghost" size="icon" asChild>
-            <Link to={`/assets/${row.original.id}/edit`}>
+            <Link to={`/assets/${row.original.id}/edit`} aria-label={`Edit ${row.original.assetName}`}>
               <Edit2 className="size-4 text-primary" />
             </Link>
           </Button>
@@ -114,69 +228,75 @@ export function AssetList() {
 
   if (isError) {
     return (
-      <ErrorState 
-        onRetry={refetch} 
-        message="We encountered an issue loading your fleet records." 
+      <ErrorState
+        onRetry={refetch}
+        message="We encountered an issue loading your fleet records."
       />
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Assets</h1>
           <p className="text-muted-foreground">
-            Manage and monitor your equipment fleet in real-time.
+            Search, filter, and monitor fleet documents from one view.
           </p>
         </div>
-        <Button 
-          onClick={() => navigate("/assets/new")} 
-          className="shadow-lg shadow-primary/20"
-        >
+        <Button onClick={() => navigate("/assets/new")} className="shadow-lg shadow-primary/20">
           <Plus className="mr-2 size-4" />
           New Asset
         </Button>
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center mb-6 mt-4 p-4 bg-card rounded-xl border border-muted/60 shadow-sm">
+      <div className="flex flex-col gap-4 rounded-xl border border-muted/60 bg-card p-4 shadow-sm lg:flex-row lg:items-center">
         <Input
-          placeholder="Search by name or code..."
+          placeholder="Search by code, name, register no, or category..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm h-10 transition-shadow focus:shadow-md"
+          onChange={(event) => setSearchTerm(event.target.value)}
+          className="h-10 w-full transition-shadow focus:shadow-md lg:max-w-md"
         />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[200px] h-10">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="1">Available</SelectItem>
-            <SelectItem value="2">Rented</SelectItem>
-            <SelectItem value="3">Maintenance</SelectItem>
-            <SelectItem value="4">Decommissioned</SelectItem>
-          </SelectContent>
-        </Select>
+        {isFetching && !isLoading && (
+          <span className="text-sm text-muted-foreground">Updating results...</span>
+        )}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:ml-auto">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-10 w-full sm:w-[200px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="0">Available</SelectItem>
+              <SelectItem value="1">Rented</SelectItem>
+              <SelectItem value="2">Maintenance</SelectItem>
+              <SelectItem value="3">Decommissioned</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="h-10 w-full sm:w-[240px]">
+              <SelectValue placeholder="Filter by category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {assetCategoryLabels.map((label, index) => (
+                <SelectItem key={label} value={String(index)}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <DataTable 
-        columns={columns} 
-        data={assets} 
-        isLoading={isLoading} 
+      <DataTable
+        columns={columns}
+        data={assets}
+        isLoading={isLoading}
         tableId="assets-table"
+        defaultColumnVisibility={defaultAssetColumnVisibility}
         onRowClick={(row) => navigate(`/assets/${row.id}`)}
       />
     </div>
-  )
-}
-
-function Badge({ className, variant = "default", ...props }: any) {
-  const variants = {
-    default: "bg-primary text-primary-foreground",
-    secondary: "bg-muted text-muted-foreground",
-  }
-  return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${variants[variant as keyof typeof variants]} ${className}`} {...props} />
   )
 }

@@ -1,27 +1,175 @@
 import * as React from "react"
-import { useAsset, useDeleteAsset, useCompleteMaintenance } from "@/hooks/useAssets"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { 
-  ArrowLeft, Edit2, Trash2, Package, Activity, Calendar, Tag, History, MoreVertical, CheckCircle, Wrench
+import {
+  Activity,
+  ArrowLeft,
+  Calendar,
+  CheckCircle,
+  ClipboardCheck,
+  Edit2,
+  FileCheck2,
+  Gauge,
+  History,
+  Landmark,
+  MoreVertical,
+  ShieldCheck,
+  Trash2,
+  Wrench,
 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { ErrorState } from "@/components/shared/ErrorState"
 import { StatusBadge } from "@/components/shared/StatusBadge"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ErrorState } from "@/components/shared/ErrorState"
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { MaintenanceDialog } from "./MaintenanceDialog"
+import { useAsset, useCompleteMaintenance, useDeleteAsset } from "@/hooks/useAssets"
+import { cn } from "@/lib/utils"
 import { MaintenanceCloseDialog } from "./MaintenanceCloseDialog"
+import { MaintenanceDialog } from "./MaintenanceDialog"
+import type { MaintenanceRecordDto } from "@/api/assets"
+
+const assetCategoryLabels = [
+  "Excavator",
+  "Mini Excavator",
+  "Backhoe Loader",
+  "Light / Medium Duty Tipper",
+  "Heavy Duty Tipper",
+] as const
+
+const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+})
+
+const currencyFormatter = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+})
+
+function formatDate(value?: string | null) {
+  if (!value) return "-"
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return "-"
+
+  return dateFormatter.format(date)
+}
+
+function formatNumber(value?: number | null) {
+  return Number(value ?? 0).toLocaleString("en-IN")
+}
+
+function getCategoryLabel(category: number | string) {
+  if (typeof category === "number") {
+    return assetCategoryLabels[category] ?? `Category ${category}`
+  }
+
+  return String(category)
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function getExpiryState(value?: string | null) {
+  if (!value) return null
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  date.setHours(0, 0, 0, 0)
+
+  const daysUntilExpiry = Math.ceil((date.getTime() - today.getTime()) / 86_400_000)
+
+  if (daysUntilExpiry < 0) return { severity: "critical", label: "Expired", daysUntilExpiry }
+  if (daysUntilExpiry <= 30) return { severity: "warning", label: "Expiring soon", daysUntilExpiry }
+
+  return null
+}
+
+function ExpiryBadge({ date }: { date?: string | null }) {
+  const state = getExpiryState(date)
+  if (!state) return null
+
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "w-fit px-2 py-0.5 text-xs font-bold",
+        state.severity === "critical"
+          ? "border-destructive/30 bg-destructive/10 text-destructive dark:bg-destructive/20"
+          : "border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+      )}
+    >
+      {state.label}
+    </Badge>
+  )
+}
+
+function InfoItem({
+  label,
+  value,
+  icon: Icon,
+  muted = false,
+}: {
+  label: string
+  value: React.ReactNode
+  icon?: React.ComponentType<{ className?: string }>
+  muted?: boolean
+}) {
+  return (
+    <div className="space-y-1">
+      <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {Icon && <Icon className="size-3.5" />}
+        {label}
+      </p>
+      <div className={cn("font-semibold text-foreground", muted && "text-muted-foreground")}>
+        {value || "-"}
+      </div>
+    </div>
+  )
+}
+
+function ComplianceItem({
+  label,
+  date,
+  description,
+}: {
+  label: string
+  date?: string | null
+  description: string
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 rounded-lg border border-muted/70 bg-background p-4">
+      <div className="space-y-1">
+        <p className="font-bold text-foreground">{label}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+      <div className="flex min-w-[120px] flex-col items-end gap-1 text-right">
+        <span className="font-semibold">{formatDate(date)}</span>
+        <ExpiryBadge date={date} />
+      </div>
+    </div>
+  )
+}
 
 export function AssetDetail() {
   const { id } = useParams()
@@ -29,8 +177,8 @@ export function AssetDetail() {
   const { data: asset, isLoading, isError, refetch } = useAsset(id!)
   const [isMaintenanceDialogOpen, setIsMaintenanceDialogOpen] = React.useState(false)
   const [isMaintenanceCloseDialogOpen, setIsMaintenanceCloseDialogOpen] = React.useState(false)
-  const [selectedMaintenance, setSelectedMaintenance] = React.useState<any>(null)
-  
+  const [selectedMaintenance, setSelectedMaintenance] = React.useState<MaintenanceRecordDto | null>(null)
+
   const deleteAsset = useDeleteAsset()
   const completeMaintenance = useCompleteMaintenance()
 
@@ -46,6 +194,14 @@ export function AssetDetail() {
     return <ErrorState onRetry={refetch} message="We couldn't find the asset you're looking for." />
   }
 
+  const expiryAlerts = [
+    { label: "Fitness", date: asset.fitnessExpiryDate },
+    { label: "Insurance", date: asset.insuranceExpiryDate },
+    { label: "PUCC", date: asset.puccExpiryDate },
+  ]
+    .map((item) => ({ ...item, state: getExpiryState(item.date) }))
+    .filter((item) => item.state)
+
   const handleDelete = async () => {
     if (confirm("Are you sure you want to delete this asset?")) {
       await deleteAsset.mutateAsync(id!)
@@ -55,27 +211,24 @@ export function AssetDetail() {
 
   return (
     <div className="space-y-6">
-      {/* Header & Actions */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/assets")}>
             <ArrowLeft className="size-5" />
           </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">{asset.name}</h1>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="truncate text-3xl font-bold tracking-tight">{asset.assetName}</h1>
               <StatusBadge status={asset.status} className="asset" />
             </div>
-            <p className="text-muted-foreground font-mono text-sm">{asset.assetCode}</p>
+            <p className="font-mono text-sm font-semibold text-muted-foreground">{asset.assetCode}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {(Number(asset.status) === 0 || String(asset.status).toLowerCase() === 'available') && (
-            <Button variant="outline" onClick={() => setIsMaintenanceDialogOpen(true)}>
-              <Wrench className="mr-2 size-4 text-primary" />
-              Add Maintenance
-            </Button>
-          )}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={() => setIsMaintenanceDialogOpen(true)}>
+            <Wrench className="mr-2 size-4 text-primary" />
+            Add Maintenance
+          </Button>
           <Button variant="outline" asChild>
             <Link to={`/assets/${id}/edit`}>
               <Edit2 className="mr-2 size-4 text-primary" />
@@ -89,7 +242,7 @@ export function AssetDetail() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem className="text-destructive font-bold" onClick={handleDelete}>
+              <DropdownMenuItem className="font-bold text-destructive" onClick={handleDelete}>
                 <Trash2 className="mr-2 size-4" />
                 Delete Asset
               </DropdownMenuItem>
@@ -98,123 +251,146 @@ export function AssetDetail() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Main Info */}
-        <Card className="md:col-span-1 border-none shadow-md overflow-hidden h-fit">
-          <CardHeader className="bg-muted/30">
+      {expiryAlerts.length > 0 && (
+        <div className="grid gap-3 md:grid-cols-3">
+          {expiryAlerts.map((alert) => (
+            <div
+              key={alert.label}
+              className={cn(
+                "rounded-lg border p-4",
+                alert.state?.severity === "critical"
+                  ? "border-destructive/30 bg-destructive/10"
+                  : "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20"
+              )}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold">{alert.label} expiry</p>
+                  <p className="text-xs text-muted-foreground">{formatDate(alert.date)}</p>
+                </div>
+                <ExpiryBadge date={alert.date} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Card className="overflow-hidden border-muted/60 shadow-sm">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Gauge className="size-5 text-primary" />
+            Asset Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-4">
+          <InfoItem label="Category" value={getCategoryLabel(asset.assetCategory)} icon={ClipboardCheck} />
+          <InfoItem label="Current Meter" value={`${formatNumber(asset.currentMeterReading)} units`} icon={Activity} />
+          <InfoItem label="Service Interval" value={`${formatNumber(asset.serviceIntervalKm)} km`} icon={Wrench} />
+          <InfoItem label="Maintenance Cost" value={currencyFormatter.format(asset.maintenanceCost ?? 0)} icon={History} />
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="border-muted/60 shadow-sm">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Package className="size-5 text-primary" />
-              Asset Details
+              <Activity className="size-5 text-primary" />
+              Vehicle Details
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6 space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Tag className="size-3.5" /> Category
-                </p>
-                <p className="font-bold text-lg">{asset.assetType}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Activity className="size-3.5" /> Current Odometer
-                </p>
-                <p className="font-bold text-lg font-mono">{asset.currentOdometer?.toLocaleString()} units</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Calendar className="size-3.5" /> Purchase Date
-                </p>
-                <p className="font-bold">{asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString() : "N/A"}</p>
-              </div>
-              <Separator />
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Wrench className="size-3.5" /> Total Maintenance Cost
-                </p>
-                <p className="font-bold text-destructive">
-                  ${asset.maintenanceCost?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}
-                </p>
-              </div>
-              {asset.nextServiceDueDate && (
-                <div className="space-y-1 mt-4">
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Calendar className="size-3.5" /> Next Service Due
-                  </p>
-                  <p className="font-bold text-amber-600 dark:text-amber-400">
-                    {new Date(asset.nextServiceDueDate).toLocaleDateString()}
-                  </p>
-                </div>
-              )}
-            </div>
+          <CardContent className="grid gap-5 sm:grid-cols-2">
+            <InfoItem label="Make Year" value={asset.makeYear ?? "-"} />
+            <InfoItem label="Model" value={asset.model || "-"} />
+            <InfoItem label="Engine No" value={asset.engineNo || "-"} />
+            <InfoItem label="Chasis No" value={asset.chasisNo || "-"} />
+            <InfoItem label="Purchase Date" value={formatDate(asset.purchaseDate)} icon={Calendar} />
+            <InfoItem label="Last Service Meter" value={`${formatNumber(asset.lastServiceOdometer)} units`} />
           </CardContent>
         </Card>
 
-        {/* Maintenance History */}
-        <Card className="md:col-span-2 border-none shadow-md overflow-hidden">
-          <CardHeader className="bg-primary text-primary-foreground flex flex-row items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <History className="size-5" />
-              Maintenance History
+        <Card className="border-muted/60 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Landmark className="size-5 text-primary" />
+              Registration Details
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0 overflow-x-auto">
-            {asset.maintenanceRecords && asset.maintenanceRecords.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Odometer</TableHead>
-                    <TableHead className="text-right">Cost</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {asset.maintenanceRecords
-                    .slice()
-                    .sort((a: any, b: any) => {
-                      if (a.status !== b.status) return a.status - b.status
-                      return new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime()
-                    })
-                    .map((record: any) => (
-                      <TableRow 
-                        key={record.id}
-                        className={record.status === 0 ? "bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-50 dark:hover:bg-amber-950/40" : "text-muted-foreground"}
-                      >
-                        <TableCell className="font-medium">{new Date(record.serviceDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{record.description}</TableCell>
-                      <TableCell className="font-mono">{record.odometer.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-mono">
-                        {record.status === 1 ? (
-                          <div className="flex flex-col items-end">
-                            {record.finalCost !== record.cost && (
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <del className="text-muted-foreground text-xs">
-                                  Est: ${record.cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </del>
-                                <span className="text-[10px] text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
-                                  {record.finalCost > record.cost ? '+' : '-'}${Math.abs(record.finalCost - record.cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </span>
-                              </div>
-                            )}
-                            <span className="text-destructive font-bold">
-                              ${(record.finalCost ?? record.cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                            <span className="text-[10px] text-emerald-600 font-sans tracking-tight mt-1">
-                              ✓ Updated on completion
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">
-                            Est: ${record.cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
+          <CardContent className="grid gap-5 sm:grid-cols-2">
+            <InfoItem label="Register No" value={asset.registerNo} />
+            <InfoItem label="Register Date" value={formatDate(asset.registerDate)} icon={Calendar} />
+            <InfoItem label="Registration Place" value={asset.placeOfRegistration || "-"} />
+            <InfoItem label="Active Record" value={asset.isActive ? "Yes" : "No"} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-muted/60 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <ShieldCheck className="size-5 text-primary" />
+            Insurance & Compliance
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <InfoItem label="Insurance Company" value={asset.insuranceCompany || "-"} />
+            <InfoItem label="Insurance No" value={asset.insuranceNo || "-"} />
+          </div>
+          <Separator />
+          <div className="grid gap-3 lg:grid-cols-3">
+            <ComplianceItem label="Fitness Expiry" date={asset.fitnessExpiryDate} description="Vehicle fitness certificate" />
+            <ComplianceItem label="Insurance Expiry" date={asset.insuranceExpiryDate} description="Insurance policy validity" />
+            <ComplianceItem label="PUCC Expiry" date={asset.puccExpiryDate} description="Pollution certificate validity" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden border-muted/60 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <History className="size-5 text-primary" />
+            Maintenance History
+          </CardTitle>
+          <Button size="sm" variant="outline" onClick={() => setIsMaintenanceDialogOpen(true)}>
+            <Wrench className="mr-2 size-3.5" />
+            Add
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          {asset.maintenanceRecords?.length ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Odometer</TableHead>
+                  <TableHead className="text-right">Cost</TableHead>
+                  <TableHead className="text-right">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {asset.maintenanceRecords
+                  .slice()
+                  .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime())
+                  .map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell className="font-medium">{formatDate(record.serviceDate)}</TableCell>
+                      <TableCell className="max-w-[360px]">
+                        <p className="font-semibold">{record.description}</p>
+                        {record.nextServiceDueDate && (
+                          <p className="text-xs text-muted-foreground">
+                            Next service: {formatDate(record.nextServiceDueDate)}
+                          </p>
                         )}
+                      </TableCell>
+                      <TableCell className="font-mono">{formatNumber(record.odometer)}</TableCell>
+                      <TableCell className="text-right font-mono">
+                        {currencyFormatter.format(record.finalCost ?? record.cost ?? 0)}
                       </TableCell>
                       <TableCell className="text-right">
                         {record.status === 0 ? (
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => {
                               setSelectedMaintenance(record)
@@ -226,40 +402,33 @@ export function AssetDetail() {
                             Complete
                           </Button>
                         ) : (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 cursor-help">
-                                  Completed
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Completed on: {record.completedAt ? new Date(record.completedAt).toLocaleDateString() : 'Unknown'}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                            <FileCheck2 className="mr-1 size-3" />
+                            Completed
+                          </Badge>
                         )}
                       </TableCell>
                     </TableRow>
                   ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="p-12 text-center bg-slate-50 dark:bg-slate-900/40">
-                <Wrench className="mx-auto size-12 text-muted-foreground/30 mb-4" />
-                <p className="text-sm font-medium text-muted-foreground">No maintenance history recorded for this asset.</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">Maintenance logs will appear here once registered.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="p-12 text-center">
+              <Wrench className="mx-auto mb-4 size-12 text-muted-foreground/40" />
+              <p className="text-sm font-semibold text-muted-foreground">No maintenance history recorded.</p>
+              <Button variant="outline" className="mt-4" onClick={() => setIsMaintenanceDialogOpen(true)}>
+                Add Maintenance
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      <MaintenanceDialog 
-        assetId={id!} 
-        currentOdometer={asset.currentOdometer || 0}
-        isOpen={isMaintenanceDialogOpen} 
-        onOpenChange={setIsMaintenanceDialogOpen} 
+      <MaintenanceDialog
+        assetId={id!}
+        currentOdometer={asset.currentMeterReading || 0}
+        isOpen={isMaintenanceDialogOpen}
+        onOpenChange={setIsMaintenanceDialogOpen}
       />
       <MaintenanceCloseDialog
         assetId={id!}

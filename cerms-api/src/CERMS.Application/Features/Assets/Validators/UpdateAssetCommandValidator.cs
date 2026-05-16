@@ -1,27 +1,65 @@
 using CERMS.Application.Features.Assets.Commands;
+using CERMS.Application.Interfaces;
 using FluentValidation;
 
 namespace CERMS.Application.Features.Assets.Validators;
 
 public class UpdateAssetCommandValidator : AbstractValidator<UpdateAssetCommand>
 {
-    public UpdateAssetCommandValidator()
+    public UpdateAssetCommandValidator(IAssetRepository assetRepository)
     {
         RuleFor(v => v.Id)
             .NotEmpty().WithMessage("Asset ID is required.");
 
-        RuleFor(v => v.Name)
-            .NotEmpty().WithMessage("Name is required.")
-            .MaximumLength(200).WithMessage("Name must not exceed 200 characters.");
+        RuleFor(v => v.AssetName)
+            .NotEmpty().WithMessage("Asset name is required.")
+            .MaximumLength(200).WithMessage("Asset name must not exceed 200 characters.");
 
-        RuleFor(v => v.AssetType)
-            .NotEmpty().WithMessage("Asset type is required.")
-            .MaximumLength(100).WithMessage("Asset type must not exceed 100 characters.");
+        RuleFor(v => v.AssetCategory)
+            .NotNull().WithMessage("Asset category is required.")
+            .IsInEnum().WithMessage("Invalid asset category.");
 
-        RuleFor(v => v.CurrentOdometer)
-            .GreaterThanOrEqualTo(0).WithMessage("Current odometer must be greater than or equal to 0.");
+        RuleFor(v => v.CurrentMeterReading)
+            .NotNull().WithMessage("Current meter reading is required.")
+            .GreaterThanOrEqualTo(0).WithMessage("Current meter reading must be greater than or equal to 0.");
+
+        RuleFor(v => v.RegisterNo)
+            .NotEmpty().WithMessage("Register number is required.")
+            .MaximumLength(100).WithMessage("Register number must not exceed 100 characters.")
+            .MustAsync(async (command, registerNo, cancellationToken) =>
+            {
+                if (string.IsNullOrWhiteSpace(registerNo))
+                    return true;
+
+                var existingAsset = await assetRepository.GetByRegisterNoAsync(registerNo, cancellationToken);
+                return existingAsset is null || existingAsset.Id == command.Id;
+            })
+            .WithMessage("An asset with this register number already exists.");
+
+        RuleFor(v => v.FitnessExpiryDate)
+            .NotEmpty().WithMessage("Fitness expiry date is required.")
+            .Must(BeFutureDate).WithMessage("Fitness expiry date must be a future date.");
+
+        RuleFor(v => v.InsuranceExpiryDate)
+            .NotEmpty().WithMessage("Insurance expiry date is required.")
+            .Must(BeFutureDate).WithMessage("Insurance expiry date must be a future date.");
+
+        RuleFor(v => v.PuccExpiryDate)
+            .NotEmpty().WithMessage("PUCC expiry date is required.")
+            .Must(BeFutureDate).WithMessage("PUCC expiry date must be a future date.");
+
+        RuleFor(v => v.EngineNo)
+            .MaximumLength(100).WithMessage("Engine number must not exceed 100 characters.");
+
+        RuleFor(v => v.ChasisNo)
+            .MaximumLength(100).WithMessage("Chasis number must not exceed 100 characters.");
+
+        RuleFor(v => v.InsuranceNo)
+            .MaximumLength(100).WithMessage("Insurance number must not exceed 100 characters.");
             
         RuleFor(v => v.Status)
             .IsInEnum().WithMessage("Invalid status value.");
     }
+
+    private static bool BeFutureDate(DateTime date) => date.Date > DateTime.UtcNow.Date;
 }

@@ -7,18 +7,36 @@ public class Asset : BaseEntity
 {
     // Core
     public string AssetCode { get; private set; }
-    public string Name { get; private set; }
-    public string AssetType { get; private set; }
-    public AssetStatus Status { get; private set; }
+    public string AssetName { get; private set; }
+    public AssetCategory AssetCategory { get; private set; }
+    public DateTime? PurchaseDate { get; private set; }
     
     // Operational
-    public decimal CurrentOdometer { get; private set; }
+    public decimal CurrentMeterReading { get; private set; }
     public decimal LastServiceOdometer { get; private set; }
-    public DateTime PurchaseDate { get; private set; }
+
+    // Vehicle
+    public int? MakeYear { get; private set; }
+    public string? Model { get; private set; }
+    public string? EngineNo { get; private set; }
+    public string? ChasisNo { get; private set; }
+    public string? PlaceOfRegistration { get; private set; }
+    public string RegisterNo { get; private set; }
+    public DateTime? RegisterDate { get; private set; }
+
+    // Compliance
+    public DateTime FitnessExpiryDate { get; private set; }
+    public string? InsuranceCompany { get; private set; }
+    public string? InsuranceNo { get; private set; }
+    public DateTime InsuranceExpiryDate { get; private set; }
+    public DateTime PuccExpiryDate { get; private set; }
+
+    // Lifecycle
+    public AssetStatus Status { get; private set; }
     public bool IsActive { get; private set; }
-    public decimal MaintenanceCost { get; private set; }
 
     // Maintenance
+    public decimal MaintenanceCost { get; private set; }
     public DateTime? NextServiceDueDate { get; private set; }
     public decimal ServiceIntervalKm { get; private set; }
 
@@ -27,32 +45,92 @@ public class Asset : BaseEntity
 
     protected Asset() { } // Parameterless constructor for EF Core
 
-    public Asset(string assetCode, string name, string assetType, decimal currentOdometer, DateTime purchaseDate, decimal serviceIntervalKm)
+    public Asset(
+        string assetCode,
+        string assetName,
+        AssetCategory assetCategory,
+        decimal currentMeterReading,
+        string registerNo,
+        DateTime fitnessExpiryDate,
+        DateTime insuranceExpiryDate,
+        DateTime puccExpiryDate,
+        DateTime? purchaseDate = null,
+        int? makeYear = null,
+        string? model = null,
+        string? engineNo = null,
+        string? chasisNo = null,
+        string? placeOfRegistration = null,
+        DateTime? registerDate = null,
+        string? insuranceCompany = null,
+        string? insuranceNo = null,
+        decimal serviceIntervalKm = 10000)
     {
         if (string.IsNullOrWhiteSpace(assetCode)) throw new ArgumentException("Asset code is required.", nameof(assetCode));
-        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Name is required.", nameof(name));
-        if (string.IsNullOrWhiteSpace(assetType)) throw new ArgumentException("Asset type is required.", nameof(assetType));
+        if (string.IsNullOrWhiteSpace(assetName)) throw new ArgumentException("Asset name is required.", nameof(assetName));
+        if (currentMeterReading < 0) throw new ArgumentException("Current meter reading cannot be negative.", nameof(currentMeterReading));
+        if (string.IsNullOrWhiteSpace(registerNo)) throw new ArgumentException("Register number is required.", nameof(registerNo));
+        if (serviceIntervalKm <= 0) throw new ArgumentException("Service interval must be greater than zero.", nameof(serviceIntervalKm));
         
         AssetCode = assetCode;
-        Name = name;
-        AssetType = assetType;
-        CurrentOdometer = currentOdometer;
+        AssetName = assetName;
+        AssetCategory = assetCategory;
+        CurrentMeterReading = currentMeterReading;
+        RegisterNo = registerNo;
+        FitnessExpiryDate = fitnessExpiryDate;
+        InsuranceExpiryDate = insuranceExpiryDate;
+        PuccExpiryDate = puccExpiryDate;
         PurchaseDate = purchaseDate;
+        MakeYear = makeYear;
+        Model = model;
+        EngineNo = engineNo;
+        ChasisNo = chasisNo;
+        PlaceOfRegistration = placeOfRegistration;
+        RegisterDate = registerDate;
+        InsuranceCompany = insuranceCompany;
+        InsuranceNo = insuranceNo;
         ServiceIntervalKm = serviceIntervalKm;
         
-        LastServiceOdometer = currentOdometer;
+        LastServiceOdometer = currentMeterReading;
         MaintenanceCost = 0;
         Status = AssetStatus.Available;
         IsActive = true;
     }
 
-    public void UpdateDetails(string name, string assetType)
+    public void UpdateDetails(
+        string assetName,
+        AssetCategory assetCategory,
+        DateTime? purchaseDate,
+        int? makeYear,
+        string? model,
+        string? engineNo,
+        string? chasisNo,
+        string? placeOfRegistration,
+        string registerNo,
+        DateTime? registerDate,
+        DateTime fitnessExpiryDate,
+        string? insuranceCompany,
+        string? insuranceNo,
+        DateTime insuranceExpiryDate,
+        DateTime puccExpiryDate)
     {
-        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Name is required.", nameof(name));
-        if (string.IsNullOrWhiteSpace(assetType)) throw new ArgumentException("Asset type is required.", nameof(assetType));
+        if (string.IsNullOrWhiteSpace(assetName)) throw new ArgumentException("Asset name is required.", nameof(assetName));
+        if (string.IsNullOrWhiteSpace(registerNo)) throw new ArgumentException("Register number is required.", nameof(registerNo));
 
-        Name = name;
-        AssetType = assetType;
+        AssetName = assetName;
+        AssetCategory = assetCategory;
+        PurchaseDate = purchaseDate;
+        MakeYear = makeYear;
+        Model = model;
+        EngineNo = engineNo;
+        ChasisNo = chasisNo;
+        PlaceOfRegistration = placeOfRegistration;
+        RegisterNo = registerNo;
+        RegisterDate = registerDate;
+        FitnessExpiryDate = fitnessExpiryDate;
+        InsuranceCompany = insuranceCompany;
+        InsuranceNo = insuranceNo;
+        InsuranceExpiryDate = insuranceExpiryDate;
+        PuccExpiryDate = puccExpiryDate;
         Update();
     }
 
@@ -71,12 +149,12 @@ public class Asset : BaseEntity
         Update();
     }
 
-    public void UpdateOdometer(decimal odometer)
+    public void UpdateMeterReading(decimal meterReading)
     {
-        if (odometer < CurrentOdometer)
-            throw new ArgumentException("New odometer reading cannot be less than current reading.", nameof(odometer));
+        if (meterReading < CurrentMeterReading)
+            throw new ArgumentException("New meter reading cannot be less than current reading.", nameof(meterReading));
             
-        CurrentOdometer = odometer;
+        CurrentMeterReading = meterReading;
         Update();
     }
 
@@ -95,7 +173,7 @@ public class Asset : BaseEntity
         if (Status != AssetStatus.Rented)
             throw new InvalidOperationException($"Cannot return asset that is not rented (Current status: {Status})");
 
-        UpdateOdometer(returnOdometer);
+        UpdateMeterReading(returnOdometer);
         Status = AssetStatus.Available;
         Update();
     }
@@ -119,7 +197,7 @@ public class Asset : BaseEntity
         if (serviceOdometer.HasValue)
         {
             LastServiceOdometer = serviceOdometer.Value;
-            CurrentOdometer = serviceOdometer.Value;
+            CurrentMeterReading = serviceOdometer.Value;
         }
 
         if (nextServiceDueDate.HasValue)
@@ -133,11 +211,11 @@ public class Asset : BaseEntity
 
     public void RecordService(decimal serviceOdometer, decimal cost, DateTime? nextServiceDueDate = null)
     {
-        if (serviceOdometer < CurrentOdometer)
-            throw new ArgumentException("Service odometer cannot be less than current odometer.", nameof(serviceOdometer));
+        if (serviceOdometer < CurrentMeterReading)
+            throw new ArgumentException("Service meter reading cannot be less than current meter reading.", nameof(serviceOdometer));
 
         LastServiceOdometer = serviceOdometer;
-        CurrentOdometer = serviceOdometer;
+        CurrentMeterReading = serviceOdometer;
         MaintenanceCost += cost;
         
         if (nextServiceDueDate.HasValue)

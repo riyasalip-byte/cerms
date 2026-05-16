@@ -53,7 +53,7 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
                                         select new CustomerRentalSummaryDto
                                         {
                                             RentalId = rental.Id,
-                                            AssetName = asset.Name,
+                                           AssetName = asset.AssetName,
                                             StartDateTime = rental.StartDateTime,
                                             Status = rental.Status,
                                             TotalAmount = rental.TotalAmount

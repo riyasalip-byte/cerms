@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { EmptyState } from "./EmptyState"
 import { useTableStore } from "@/stores/tableStore"
+import { useAuthStore } from "@/stores/authStore"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -35,6 +36,7 @@ interface DataTableProps<TData, TValue> {
   onRowClick?: (data: TData) => void
   isLoading?: boolean
   tableId?: string
+  defaultColumnVisibility?: VisibilityState
 }
 
 export function DataTable<TData, TValue>({
@@ -44,17 +46,40 @@ export function DataTable<TData, TValue>({
   onRowClick,
   isLoading = false,
   tableId,
+  defaultColumnVisibility = {},
 }: DataTableProps<TData, TValue>) {
-  const { pagination: storedPagination, filters: storedFilters, setPagination, setFilters } = useTableStore()
+  const {
+    pagination: storedPagination,
+    filters: storedFilters,
+    columnVisibility: storedColumnVisibility,
+    setPagination,
+    setFilters,
+    setColumnVisibility: saveColumnVisibility,
+    resetColumnVisibility,
+  } = useTableStore()
+  const user = useAuthStore((state) => state.user)
   const [isOptionsOpen, setIsOptionsOpen] = React.useState(false)
   const optionsRef = React.useRef<HTMLDivElement>(null)
-  
-  const initialPagination = tableId ? storedPagination[tableId] || { pageIndex: 0, pageSize: 10 } : { pageIndex: 0, pageSize: 10 }
-  const initialFilters = tableId ? storedFilters[tableId] || [] : []
+
+  const userTableId = React.useMemo(() => {
+    if (!tableId) return undefined
+    const userKey = user?.id || user?.email || "anonymous"
+    return `${userKey}:${tableId}`
+  }, [tableId, user?.email, user?.id])
+
+  const initialFilters = userTableId ? storedFilters[userTableId] || [] : []
+  const initialVisibility = userTableId
+    ? storedColumnVisibility[userTableId] || defaultColumnVisibility
+    : defaultColumnVisibility
 
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(initialFilters)
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(initialVisibility)
+
+  React.useEffect(() => {
+    setColumnFilters(userTableId ? storedFilters[userTableId] || [] : [])
+    setColumnVisibility(userTableId ? storedColumnVisibility[userTableId] || defaultColumnVisibility : defaultColumnVisibility)
+  }, [defaultColumnVisibility, storedColumnVisibility, storedFilters, userTableId])
 
   const table = useReactTable({
     data,
@@ -66,20 +91,24 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: (updater) => {
       const next = typeof updater === "function" ? updater(columnFilters) : updater
       setColumnFilters(next)
-      if (tableId) setFilters(tableId, next)
+      if (userTableId) setFilters(userTableId, next)
     },
     onPaginationChange: (updater) => {
       const next = typeof updater === "function" ? updater(table.getState().pagination) : updater
       table.setPageIndex(next.pageIndex)
-      if (tableId) setPagination(tableId, next.pageIndex, next.pageSize)
+      if (userTableId) setPagination(userTableId, next.pageIndex, next.pageSize)
     },
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange: (updater) => {
+      const next = typeof updater === "function" ? updater(columnVisibility) : updater
+      setColumnVisibility(next)
+      if (userTableId) saveColumnVisibility(userTableId, next)
+    },
     state: {
       sorting,
       columnFilters,
       columnVisibility,
-      pagination: tableId ? storedPagination[tableId] || { pageIndex: 0, pageSize: 10 } : undefined,
+      pagination: userTableId ? storedPagination[userTableId] || { pageIndex: 0, pageSize: 10 } : undefined,
     },
   })
 
@@ -94,38 +123,52 @@ export function DataTable<TData, TValue>({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  const pageCount = table.getPageCount()
+  const searchFilterValue = searchKey
+    ? ((table.getColumn(searchKey)?.getFilterValue() as string | undefined) ?? "")
+    : ""
+
   React.useEffect(() => {
-    if (tableId && storedPagination[tableId]) {
-      const storedIndex = storedPagination[tableId].pageIndex
-      const pageCount = table.getPageCount()
+    if (userTableId && storedPagination[userTableId]) {
+      const storedIndex = storedPagination[userTableId].pageIndex
       
       // If we have a stored page that's now out of bounds (due to data changes), reset to page 0
       if (pageCount > 0 && storedIndex >= pageCount) {
-        console.log(`[DataTable] Resetting out-of-bounds page index for ${tableId}: ${storedIndex} -> 0`)
+        console.log(`[DataTable] Resetting out-of-bounds page index for ${userTableId}: ${storedIndex} -> 0`)
         table.setPageIndex(0)
-        setPagination(tableId, 0, storedPagination[tableId].pageSize)
+        setPagination(userTableId, 0, storedPagination[userTableId].pageSize)
       } else {
         table.setPageIndex(storedIndex)
-        table.setPageSize(storedPagination[tableId].pageSize)
+        table.setPageSize(storedPagination[userTableId].pageSize)
       }
     }
-  }, [tableId, table.getPageCount()])
+  }, [pageCount, setPagination, storedPagination, table, userTableId])
+
+  const resetColumns = () => {
+    setColumnVisibility(defaultColumnVisibility)
+    if (userTableId) resetColumnVisibility(userTableId)
+  }
+
+  const saveColumns = () => {
+    if (userTableId) saveColumnVisibility(userTableId, table.getState().columnVisibility)
+    setIsOptionsOpen(false)
+  }
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-1 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {searchKey && (
             <div className="relative w-full max-sm:max-w-none max-w-sm">
               <Input
                 placeholder={`Search ${searchKey}...`}
-                value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
+                value={searchFilterValue}
                 onChange={(event) =>
                   table.getColumn(searchKey)?.setFilterValue(event.target.value)
                 }
                 className="h-10 pr-10 shadow-sm transition-shadow focus:shadow-md"
               />
-              {table.getColumn(searchKey)?.getFilterValue() && (
+              {searchFilterValue && (
                 <Button
                   variant="ghost"
                   onClick={() => table.getColumn(searchKey)?.setFilterValue("")}
@@ -157,6 +200,11 @@ export function DataTable<TData, TValue>({
               <div className="px-2 py-1.5 text-sm font-bold text-muted-foreground">
                 Display Settings
               </div>
+              {user?.email && (
+                <div className="px-2 pb-1 text-[11px] text-muted-foreground">
+                  Saved for {user.email}
+                </div>
+              )}
               <div className="my-1 h-px bg-muted" />
               <div className="max-h-[300px] overflow-y-auto">
                 {table
@@ -183,13 +231,33 @@ export function DataTable<TData, TValue>({
                     </button>
                   ))}
               </div>
+              <div className="my-1 h-px bg-muted" />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                onClick={saveColumns}
+              >
+                <Check className="mr-2 size-4 text-primary" />
+                Save columns
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                onClick={resetColumns}
+              >
+                Reset columns
+              </Button>
             </div>
           )}
         </div>
       </div>
       
-      <div className="rounded-2xl border bg-card shadow-sm overflow-hidden border-muted/60">
-        <Table wrapperClassName="max-h-[600px]">
+      <div className="min-w-0 rounded-2xl border bg-card shadow-sm overflow-hidden border-muted/60">
+        <Table className="min-w-max" wrapperClassName="max-h-[600px] max-w-full">
           <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur-md">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent border-muted/40">

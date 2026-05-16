@@ -87,11 +87,11 @@ public class CermsDbContextInitialiser
             var purchaseDate = DateTime.UtcNow.AddYears(-1);
             var assets = new List<Asset>
             {
-                new Asset("EX-320", "Caterpillar Excavator 320", "Excavator", 1250m, purchaseDate, 10000m) { CompanyId = companyId, BranchId = branchId },
-                new Asset("GEN-50", "Cummins 50kVA Generator", "Generator", 450m, purchaseDate, 5000m) { CompanyId = companyId, BranchId = branchId },
-                new Asset("FL-25", "Toyota Forklift 2.5T", "Forklift", 890m, purchaseDate, 5000m) { CompanyId = companyId, BranchId = branchId },
-                new Asset("CM-10", "Putzmeister Concrete Pump", "Construction", 210m, purchaseDate, 10000m) { CompanyId = companyId, BranchId = branchId },
-                new Asset("SL-12", "JLG Scissor Lift 12m", "Lifting", 155m, purchaseDate, 5000m) { CompanyId = companyId, BranchId = branchId }
+                new Asset("AST-0001", "Caterpillar Excavator 320", AssetCategory.Excavator, 1250m, "KL-01-EX-320", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 10000m) { CompanyId = companyId, BranchId = branchId },
+                new Asset("AST-0002", "Mini Excavator 35", AssetCategory.MiniExcavator, 450m, "KL-01-ME-035", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 5000m) { CompanyId = companyId, BranchId = branchId },
+                new Asset("AST-0003", "Backhoe Loader 3DX", AssetCategory.BackhoeLoader, 890m, "KL-01-BL-3DX", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 5000m) { CompanyId = companyId, BranchId = branchId },
+                new Asset("AST-0004", "Light Medium Duty Tipper", AssetCategory.LightMediumDutyTipper, 210m, "KL-01-LT-010", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 10000m) { CompanyId = companyId, BranchId = branchId },
+                new Asset("AST-0005", "Heavy Duty Tipper", AssetCategory.HeavyDutyTipper, 155m, "KL-01-HT-012", purchaseDate.AddYears(1), purchaseDate.AddYears(1), purchaseDate.AddMonths(6), purchaseDate, serviceIntervalKm: 5000m) { CompanyId = companyId, BranchId = branchId }
             };
 
             _context.Assets.AddRange(assets);

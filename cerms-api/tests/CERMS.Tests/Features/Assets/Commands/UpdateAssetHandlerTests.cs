@@ -31,15 +31,15 @@ public class UpdateAssetHandlerTests
     {
         // Arrange
         var assetId = Guid.NewGuid();
-        var asset = new Asset("CAT-01", "Excavator", "Heavy", 1000, DateTime.UtcNow, 10000);
+        var asset = CreateAsset();
         // Force the ID for testing (reflection or just assume it updates the existing object)
         
-        var command = new UpdateAssetCommand(assetId, "Updated Excavator", "Light", AssetStatus.Decommissioned, 1500);
+        var command = CreateUpdateCommand(assetId, "Updated Excavator", AssetCategory.BackhoeLoader, AssetStatus.Decommissioned, 1500);
 
         _assetRepoMock.Setup(repo => repo.GetByIdAsync(assetId))
             .ReturnsAsync(asset);
 
-        var expectedDto = new AssetDto { Id = assetId, Name = "Updated Excavator" };
+        var expectedDto = new AssetDto { Id = assetId, AssetName = "Updated Excavator" };
         _mapperMock.Setup(m => m.Map<AssetDto>(asset)).Returns(expectedDto);
 
         // Act
@@ -47,10 +47,10 @@ public class UpdateAssetHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        asset.Name.Should().Be("Updated Excavator");
-        asset.AssetType.Should().Be("Light");
+        asset.AssetName.Should().Be("Updated Excavator");
+        asset.AssetCategory.Should().Be(AssetCategory.BackhoeLoader);
         asset.Status.Should().Be(AssetStatus.Decommissioned);
-        asset.CurrentOdometer.Should().Be(1500);
+        asset.CurrentMeterReading.Should().Be(1500);
 
         _assetRepoMock.Verify(repo => repo.Update(asset), Times.Once);
         _uowMock.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -60,7 +60,7 @@ public class UpdateAssetHandlerTests
     public async Task Handle_WithNonExistentAsset_ShouldReturnFailure()
     {
         // Arrange
-        var command = new UpdateAssetCommand(Guid.NewGuid(), "Name", "Type", AssetStatus.Available, 100);
+        var command = CreateUpdateCommand(Guid.NewGuid(), "Name", AssetCategory.Excavator, AssetStatus.Available, 100);
 
         _assetRepoMock.Setup(repo => repo.GetByIdAsync(command.Id))
             .ReturnsAsync((Asset?)null);
@@ -80,13 +80,13 @@ public class UpdateAssetHandlerTests
     {
         // Arrange
         var assetId = Guid.NewGuid();
-        var asset = new Asset("CAT-01", "Excavator", "Heavy", 1000, DateTime.UtcNow, 10000);
+        var asset = CreateAsset();
         
         // Status is Available. Move to Rented.
         asset.UpdateStatus(AssetStatus.Rented); 
         
         // Attempt to update status to Maintenance directly from Rented
-        var command = new UpdateAssetCommand(assetId, "Excavator", "Heavy", AssetStatus.Maintenance, 1000);
+        var command = CreateUpdateCommand(assetId, "Excavator", AssetCategory.Excavator, AssetStatus.Maintenance, 1000);
 
         _assetRepoMock.Setup(repo => repo.GetByIdAsync(assetId))
             .ReturnsAsync(asset);
@@ -100,4 +100,26 @@ public class UpdateAssetHandlerTests
         
         _assetRepoMock.Verify(repo => repo.Update(It.IsAny<Asset>()), Times.Never);
     }
+
+    private static Asset CreateAsset() => new(
+        "AST-0001",
+        "Excavator",
+        AssetCategory.Excavator,
+        1000,
+        "KL-01-EX-001",
+        DateTime.UtcNow.AddYears(1),
+        DateTime.UtcNow.AddYears(1),
+        DateTime.UtcNow.AddMonths(6),
+        DateTime.UtcNow);
+
+    private static UpdateAssetCommand CreateUpdateCommand(Guid id, string name, AssetCategory category, AssetStatus status, decimal meterReading) => new(
+        id,
+        name,
+        category,
+        status,
+        meterReading,
+        "KL-01-EX-001",
+        DateTime.UtcNow.AddYears(1),
+        DateTime.UtcNow.AddYears(1),
+        DateTime.UtcNow.AddMonths(6));
 }

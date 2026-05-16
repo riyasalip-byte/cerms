@@ -29,21 +29,31 @@ namespace CERMS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("AssetCategory")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("asset_category");
+
                     b.Property<string>("AssetCode")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("asset_code");
 
-                    b.Property<string>("AssetType")
+                    b.Property<string>("AssetName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("asset_type");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("asset_name");
 
                     b.Property<Guid>("BranchId")
                         .HasColumnType("uuid")
                         .HasColumnName("branch_id");
+
+                    b.Property<string>("ChasisNo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("chasis_no");
 
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid")
@@ -53,10 +63,33 @@ namespace CERMS.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<decimal>("CurrentOdometer")
+                    b.Property<decimal>("CurrentMeterReading")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
-                        .HasColumnName("current_odometer");
+                        .HasColumnName("current_meter_reading");
+
+                    b.Property<string>("EngineNo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("engine_no");
+
+                    b.Property<DateTime>("FitnessExpiryDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fitness_expiry_date");
+
+                    b.Property<string>("InsuranceCompany")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("insurance_company");
+
+                    b.Property<DateTime>("InsuranceExpiryDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("insurance_expiry_date");
+
+                    b.Property<string>("InsuranceNo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("insurance_no");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -78,19 +111,41 @@ namespace CERMS.Infrastructure.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("maintenance_cost");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                    b.Property<int?>("MakeYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("make_year");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("model");
 
                     b.Property<DateTime?>("NextServiceDueDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("next_service_due_date");
 
-                    b.Property<DateTime>("PurchaseDate")
+                    b.Property<string>("PlaceOfRegistration")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("place_of_registration");
+
+                    b.Property<DateTime>("PuccExpiryDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("pucc_expiry_date");
+
+                    b.Property<DateTime?>("PurchaseDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("purchase_date");
+
+                    b.Property<DateTime?>("RegisterDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("register_date");
+
+                    b.Property<string>("RegisterNo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("register_no");
 
                     b.Property<decimal>("ServiceIntervalKm")
                         .HasPrecision(18, 2)
@@ -112,6 +167,12 @@ namespace CERMS.Infrastructure.Migrations
                     b.HasIndex("AssetCode")
                         .IsUnique()
                         .HasDatabaseName("ix_assets_asset_code");
+
+                    b.HasIndex("InsuranceNo")
+                        .HasDatabaseName("ix_assets_insurance_no");
+
+                    b.HasIndex("RegisterNo")
+                        .HasDatabaseName("ix_assets_register_no");
 
                     b.ToTable("assets", (string)null);
                 });
@@ -197,6 +258,12 @@ namespace CERMS.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasDatabaseName("ix_customers_email");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("ix_customers_name");
+
+                    b.HasIndex("Phone")
+                        .HasDatabaseName("ix_customers_phone");
 
                     b.ToTable("customers", (string)null);
                 });
@@ -872,12 +939,12 @@ namespace CERMS.Infrastructure.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_rental_bookings_assets_asset_id");
 
-                      b.HasOne("CERMS.Domain.Entities.Customer", null)
-                          .WithMany("RentalBookings")
-                          .HasForeignKey("CustomerId")
-                          .OnDelete(DeleteBehavior.Restrict)
-                          .IsRequired()
-                          .HasConstraintName("fk_rental_bookings_customers_customer_id");
+                    b.HasOne("CERMS.Domain.Entities.Customer", null)
+                        .WithMany("RentalBookings")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_rental_bookings_customers_customer_id");
                 });
 
             modelBuilder.Entity("CERMS.Domain.Entities.StaffMember", b =>
@@ -894,18 +961,18 @@ namespace CERMS.Infrastructure.Migrations
                     b.Navigation("MaintenanceRecords");
                 });
 
-              modelBuilder.Entity("CERMS.Domain.Entities.Invoice", b =>
-                  {
-                      b.Navigation("LineItems");
-                  });
+            modelBuilder.Entity("CERMS.Domain.Entities.Customer", b =>
+                {
+                    b.Navigation("RentalBookings");
+                });
 
-              modelBuilder.Entity("CERMS.Domain.Entities.Customer", b =>
-                  {
-                      b.Navigation("RentalBookings");
-                  });
-  
-              modelBuilder.Entity("CERMS.Domain.Entities.User", b =>
-                  {
+            modelBuilder.Entity("CERMS.Domain.Entities.Invoice", b =>
+                {
+                    b.Navigation("LineItems");
+                });
+
+            modelBuilder.Entity("CERMS.Domain.Entities.User", b =>
+                {
                     b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618

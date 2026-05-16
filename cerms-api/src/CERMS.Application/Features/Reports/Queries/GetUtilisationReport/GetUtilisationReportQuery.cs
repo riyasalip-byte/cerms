@@ -25,10 +25,10 @@ public class GetUtilisationReportQueryHandler : IRequestHandler<GetUtilisationRe
             .ToListAsync(cancellationToken);
 
         var report = assets
-            .GroupBy(a => a.AssetType)
+            .GroupBy(a => a.AssetCategory)
             .Select(g => new ChartDataDto
             {
-                Label = g.Key,
+                Label = g.Key.ToString(),
                 Value = g.Count() == 0 ? 0 : Math.Round((decimal)g.Count(a => a.Status == AssetStatus.Rented) / g.Count() * 100, 2)
             })
             .ToList();

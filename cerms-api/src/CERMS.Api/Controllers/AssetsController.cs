@@ -1,3 +1,4 @@
+using CERMS.Api.Contracts.Assets;
 using CERMS.Application.Features.Assets.Commands;
 using CERMS.Application.Features.Assets.Queries;
 using CERMS.Domain.Enums;
@@ -8,7 +9,7 @@ namespace CERMS.Api.Controllers;
 public class AssetsController : ApiControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchTerm = null, [FromQuery] AssetStatus? status = null, [FromQuery] string? type = null)
+    public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchTerm = null, [FromQuery] AssetStatus? status = null, [FromQuery] AssetCategory? category = null)
     {
         var query = new GetAssetsQuery
         {
@@ -16,9 +17,15 @@ public class AssetsController : ApiControllerBase
             PageSize = pageSize,
             SearchTerm = searchTerm,
             Status = status,
-            AssetType = type
+            AssetCategory = category
         };
         return HandleResult(await Mediator.Send(query));
+    }
+
+    [HttpGet("expiring")]
+    public async Task<IActionResult> GetExpiring([FromQuery] int days = 30)
+    {
+        return HandleResult(await Mediator.Send(new GetExpiringAssetsQuery(days)));
     }
 
     [HttpGet("{id}")]
@@ -28,14 +35,15 @@ public class AssetsController : ApiControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateAssetCommand command)
+    public async Task<IActionResult> Create([FromBody] CreateAssetRequest request)
     {
-        return HandleResult(await Mediator.Send(command));
+        return HandleResult(await Mediator.Send(request.ToCommand()));
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAssetCommand command)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAssetRequest request)
     {
+        var command = request.ToCommand(id);
         if (id != command.Id)
             return BadRequest(new ApiResponse<object> { Success = false, Errors = new[] { "ID mismatch" } });
 

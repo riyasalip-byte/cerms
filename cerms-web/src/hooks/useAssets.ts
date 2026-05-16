@@ -17,6 +17,13 @@ export function useAsset(id: string) {
   })
 }
 
+export function useExpiringAssets(days = 30) {
+  return useQuery({
+    queryKey: ['assets', 'expiring', days],
+    queryFn: () => assetsApi.getExpiringAssets(days)
+  })
+}
+
 export function useCreateAsset() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -64,8 +71,8 @@ export function useAddMaintenance() {
 export function useCompleteMaintenance() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payload: { id: string; maintenanceId: string; finalCost: number; notes?: string }) => 
-      assetsApi.completeMaintenance(payload.id, payload.maintenanceId, payload.finalCost, payload.notes),
+    mutationFn: (payload: { id: string; maintenanceId: string; finalCost: number; notes?: string; serviceDate?: string }) => 
+      assetsApi.completeMaintenance(payload.id, payload.maintenanceId, payload.finalCost, payload.notes, payload.serviceDate),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['assets'] })
       queryClient.invalidateQueries({ queryKey: ['assets', variables.id] })

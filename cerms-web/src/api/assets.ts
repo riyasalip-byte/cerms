@@ -4,12 +4,24 @@ import type { PaginatedList } from './services'
 export type AssetDto = {
   id: string
   assetCode: string
-  name: string
-  assetType: string
+  assetName: string
+  assetCategory: number
+  purchaseDate?: string
+  currentMeterReading: number
+  makeYear?: number
+  model?: string
+  engineNo?: string
+  chasisNo?: string
+  placeOfRegistration?: string
+  registerNo: string
+  registerDate?: string
+  fitnessExpiryDate: string
+  insuranceCompany?: string
+  insuranceNo?: string
+  insuranceExpiryDate: string
+  puccExpiryDate: string
   status: number
-  currentOdometer: number
   lastServiceOdometer: number
-  purchaseDate: string
   isActive: boolean
   maintenanceCost: number
   nextServiceDueDate?: string
@@ -21,13 +33,28 @@ export type MaintenanceRecordDto = {
   assetId: string
   description: string
   cost: number
+  finalCost?: number
   serviceDate: string
   odometer: number
   nextServiceDueDate?: string
+  status?: number
+  completedAt?: string
 }
 
 export type AssetDetailDto = AssetDto & {
   maintenanceRecords: MaintenanceRecordDto[]
+}
+
+export type AssetExpiryAlertDto = {
+  assetId: string
+  assetCode: string
+  assetName: string
+  registerNo: string
+  complianceType: string
+  expiryDate: string
+  daysUntilExpiry: number
+  severity: 'critical' | 'warning' | string
+  notificationKey: string
 }
 
 // Backend ApiResponse wrapper
@@ -47,6 +74,13 @@ export const getAssetById = async (id: string) => {
   return data.data
 }
 
+export const getExpiringAssets = async (days = 30) => {
+  const { data } = await api.get<ApiResponse<AssetExpiryAlertDto[]>>('/assets/expiring', {
+    params: { days },
+  })
+  return data.data
+}
+
 export const createAsset = async (assetData: any) => {
   const { data } = await api.post<ApiResponse<AssetDto>>('/assets', assetData)
   return data.data
@@ -62,8 +96,8 @@ export const addMaintenance = async (id: string, maintenanceData: any) => {
   return data.data
 }
 
-export const completeMaintenance = async (id: string, maintenanceId: string, finalCost: number, notes?: string) => {
-  const { data } = await api.post<ApiResponse<any>>(`/assets/${id}/maintenance/complete`, { maintenanceId, finalCost, notes })
+export const completeMaintenance = async (id: string, maintenanceId: string, finalCost: number, notes?: string, serviceDate?: string) => {
+  const { data } = await api.post<ApiResponse<any>>(`/assets/${id}/maintenance/complete`, { maintenanceId, finalCost, notes, serviceDate })
   return data.data
 }
 

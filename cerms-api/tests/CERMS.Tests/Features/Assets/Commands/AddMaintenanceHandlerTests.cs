@@ -31,7 +31,7 @@ public class AddMaintenanceHandlerTests
     {
         // Arrange
         var assetId = Guid.NewGuid();
-        var asset = new Asset("CAT-01", "Excavator", "Heavy", 1000, DateTime.UtcNow, 10000);
+        var asset = CreateAsset();
         
         var command = new AddMaintenanceCommand(assetId, "Oil Change", 500, DateTime.UtcNow, 1500, DateTime.UtcNow.AddMonths(6));
 
@@ -46,7 +46,7 @@ public class AddMaintenanceHandlerTests
         result.Value.Should().NotBeEmpty();
 
         asset.Status.Should().Be(AssetStatus.Maintenance);
-        asset.CurrentOdometer.Should().Be(1500);
+        asset.CurrentMeterReading.Should().Be(1500);
         asset.LastServiceOdometer.Should().Be(1500);
         asset.MaintenanceCost.Should().Be(500);
 
@@ -73,4 +73,15 @@ public class AddMaintenanceHandlerTests
 
         _maintRepoMock.Verify(repo => repo.AddAsync(It.IsAny<MaintenanceRecord>()), Times.Never);
     }
+
+    private static Asset CreateAsset() => new(
+        "AST-0001",
+        "Excavator",
+        AssetCategory.Excavator,
+        1000,
+        "KL-01-EX-001",
+        DateTime.UtcNow.AddYears(1),
+        DateTime.UtcNow.AddYears(1),
+        DateTime.UtcNow.AddMonths(6),
+        DateTime.UtcNow);
 }

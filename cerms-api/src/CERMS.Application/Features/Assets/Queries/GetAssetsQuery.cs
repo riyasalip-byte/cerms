@@ -16,7 +16,7 @@ public record GetAssetsQuery : IRequest<Result<PagedResult<AssetDto>>>
     public int PageSize { get; init; } = 10;
     public string? SearchTerm { get; init; }
     public AssetStatus? Status { get; init; }
-    public string? AssetType { get; init; }
+    public AssetCategory? AssetCategory { get; init; }
 }
 
 public class GetAssetsHandler : IRequestHandler<GetAssetsQuery, Result<PagedResult<AssetDto>>>
@@ -37,7 +37,7 @@ public class GetAssetsHandler : IRequestHandler<GetAssetsQuery, Result<PagedResu
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var searchTerm = request.SearchTerm.ToLower();
-            query = query.Where(x => x.Name.ToLower().Contains(searchTerm) || x.AssetCode.ToLower().Contains(searchTerm));
+            query = query.Where(x => x.AssetName.ToLower().Contains(searchTerm) || x.AssetCode.ToLower().Contains(searchTerm));
         }
 
         if (request.Status.HasValue)
@@ -45,9 +45,9 @@ public class GetAssetsHandler : IRequestHandler<GetAssetsQuery, Result<PagedResu
             query = query.Where(x => x.Status == request.Status);
         }
 
-        if (!string.IsNullOrEmpty(request.AssetType))
+        if (request.AssetCategory.HasValue)
         {
-            query = query.Where(x => x.AssetType == request.AssetType);
+            query = query.Where(x => x.AssetCategory == request.AssetCategory);
         }
 
         var count = await query.CountAsync(cancellationToken);

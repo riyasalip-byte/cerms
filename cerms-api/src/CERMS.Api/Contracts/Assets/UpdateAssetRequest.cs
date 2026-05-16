@@ -1,0 +1,59 @@
+using CERMS.Application.Features.Assets.Commands;
+using CERMS.Domain.Enums;
+
+namespace CERMS.Api.Contracts.Assets;
+
+public class UpdateAssetRequest
+{
+    public Guid? Id { get; init; }
+    public string? AssetName { get; init; }
+    public AssetCategory? AssetCategory { get; init; }
+    public AssetStatus? Status { get; init; }
+    public DateTime? PurchaseDate { get; init; }
+    public decimal? CurrentMeterReading { get; init; }
+    public int? MakeYear { get; init; }
+    public string? Model { get; init; }
+    public string? EngineNo { get; init; }
+    public string? ChasisNo { get; init; }
+    public string? PlaceOfRegistration { get; init; }
+    public string? RegisterNo { get; init; }
+    public DateTime? RegisterDate { get; init; }
+    public DateTime? FitnessExpiryDate { get; init; }
+    public string? InsuranceCompany { get; init; }
+    public string? InsuranceNo { get; init; }
+    public DateTime? InsuranceExpiryDate { get; init; }
+    public DateTime? PuccExpiryDate { get; init; }
+
+    public string? Name { get; init; }
+
+    public string? AssetType { get; init; }
+
+    public decimal? CurrentOdometer { get; init; }
+
+    public UpdateAssetCommand ToCommand(Guid routeId) => new(
+        Id ?? routeId,
+        AssetName ?? Name ?? string.Empty,
+        AssetCategory ?? ParseLegacyAssetType(AssetType),
+        Status ?? AssetStatus.Available,
+        CurrentMeterReading ?? CurrentOdometer,
+        RegisterNo ?? string.Empty,
+        FitnessExpiryDate ?? default,
+        InsuranceExpiryDate ?? default,
+        PuccExpiryDate ?? default,
+        PurchaseDate,
+        MakeYear,
+        Model,
+        EngineNo,
+        ChasisNo,
+        PlaceOfRegistration,
+        RegisterDate,
+        InsuranceCompany,
+        InsuranceNo);
+
+    private static AssetCategory? ParseLegacyAssetType(string? assetType)
+    {
+        return Enum.TryParse<AssetCategory>(assetType?.Replace(" ", string.Empty), ignoreCase: true, out var category)
+            ? category
+            : null;
+    }
+}

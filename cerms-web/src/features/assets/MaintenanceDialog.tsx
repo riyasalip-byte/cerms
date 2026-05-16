@@ -34,7 +34,7 @@ export function MaintenanceDialog({ assetId, currentOdometer, isOpen, onOpenChan
   const addMaintenance = useAddMaintenance()
 
   const form = useForm<MaintenanceFormValues>({
-    resolver: zodResolver(maintenanceSchema),
+    resolver: zodResolver(maintenanceSchema) as any,
     defaultValues: {
       description: "",
       cost: 0,

@@ -20,14 +20,13 @@ export type PaginatedList<T> = {
 export type Asset = {
   id: string
   assetCode: string
-  name: string
-  assetType: string
-  category?: string
+  assetName: string
+  assetCategory: number
   serialNumber?: string
   location?: string
   dailyRate?: number
   status: number
-  currentOdometer: number
+  currentMeterReading: number
 }
 
 // Rental types
