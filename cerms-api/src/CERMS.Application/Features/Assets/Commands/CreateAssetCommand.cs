@@ -24,7 +24,9 @@ public record CreateAssetCommand(
     string? InsuranceCompany,
     string? InsuranceNo,
     DateTime InsuranceExpiryDate,
-    DateTime PuccExpiryDate) : IRequest<Result<AssetDto>>;
+    DateTime PuccExpiryDate,
+    bool IsTransportationRequired = false,
+    string? TransportationNotes = null) : IRequest<Result<AssetDto>>;
 
 public class CreateAssetHandler : IRequestHandler<CreateAssetCommand, Result<AssetDto>>
 {
@@ -64,7 +66,10 @@ public class CreateAssetHandler : IRequestHandler<CreateAssetCommand, Result<Ass
             request.PlaceOfRegistration,
             request.RegisterDate,
             request.InsuranceCompany,
-            request.InsuranceNo);
+            request.InsuranceNo,
+            10000,
+            request.IsTransportationRequired,
+            request.TransportationNotes);
             
         await _assetRepository.AddAsync(asset);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

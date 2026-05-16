@@ -25,7 +25,9 @@ public record UpdateAssetCommand(
     string? PlaceOfRegistration = null,
     DateTime? RegisterDate = null,
     string? InsuranceCompany = null,
-    string? InsuranceNo = null) : IRequest<Result<AssetDto>>;
+    string? InsuranceNo = null,
+    bool IsTransportationRequired = false,
+    string? TransportationNotes = null) : IRequest<Result<AssetDto>>;
 
 public class UpdateAssetHandler : IRequestHandler<UpdateAssetCommand, Result<AssetDto>>
 {
@@ -63,7 +65,9 @@ public class UpdateAssetHandler : IRequestHandler<UpdateAssetCommand, Result<Ass
                 request.InsuranceCompany,
                 request.InsuranceNo,
                 request.InsuranceExpiryDate,
-                request.PuccExpiryDate);
+                request.PuccExpiryDate,
+                request.IsTransportationRequired,
+                request.TransportationNotes);
             asset.UpdateStatus(request.Status);
             asset.UpdateMeterReading(request.CurrentMeterReading!.Value);
         }

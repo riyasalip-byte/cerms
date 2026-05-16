@@ -27,7 +27,10 @@ public class AssetDto
     public bool IsActive { get; set; }
     public decimal MaintenanceCost { get; set; }
     public DateTime? NextServiceDueDate { get; set; }
+    public decimal? NextServiceOdometer { get; set; }
     public decimal ServiceIntervalKm { get; set; }
+    public bool IsTransportationRequired { get; set; }
+    public string? TransportationNotes { get; set; }
 
     [Obsolete("Use AssetName.")]
     public string Name => AssetName;

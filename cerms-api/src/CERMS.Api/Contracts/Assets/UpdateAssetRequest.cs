@@ -23,6 +23,8 @@ public class UpdateAssetRequest
     public string? InsuranceNo { get; init; }
     public DateTime? InsuranceExpiryDate { get; init; }
     public DateTime? PuccExpiryDate { get; init; }
+    public bool? IsTransportationRequired { get; init; }
+    public string? TransportationNotes { get; init; }
 
     public string? Name { get; init; }
 
@@ -48,7 +50,9 @@ public class UpdateAssetRequest
         PlaceOfRegistration,
         RegisterDate,
         InsuranceCompany,
-        InsuranceNo);
+        InsuranceNo,
+        IsTransportationRequired ?? false,
+        TransportationNotes);
 
     private static AssetCategory? ParseLegacyAssetType(string? assetType)
     {

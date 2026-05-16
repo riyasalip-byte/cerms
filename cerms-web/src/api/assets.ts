@@ -25,7 +25,10 @@ export type AssetDto = {
   isActive: boolean
   maintenanceCost: number
   nextServiceDueDate?: string
+  nextServiceOdometer?: number
   serviceIntervalKm: number
+  isTransportationRequired: boolean
+  transportationNotes?: string
 }
 
 export type MaintenanceRecordDto = {
@@ -37,7 +40,8 @@ export type MaintenanceRecordDto = {
   serviceDate: string
   odometer: number
   nextServiceDueDate?: string
-  status?: number
+  nextServiceOdometer?: number
+  status?: number | string
   completedAt?: string
 }
 
@@ -96,8 +100,8 @@ export const addMaintenance = async (id: string, maintenanceData: any) => {
   return data.data
 }
 
-export const completeMaintenance = async (id: string, maintenanceId: string, finalCost: number, notes?: string, serviceDate?: string) => {
-  const { data } = await api.post<ApiResponse<any>>(`/assets/${id}/maintenance/complete`, { maintenanceId, finalCost, notes, serviceDate })
+export const completeMaintenance = async (id: string, maintenanceId: string, finalCost: number, notes?: string, serviceDate?: string, nextServiceDueDate?: string, nextServiceOdometer?: number) => {
+  const { data } = await api.post<ApiResponse<any>>(`/assets/${id}/maintenance/complete`, { maintenanceId, finalCost, notes, serviceDate, nextServiceDueDate, nextServiceOdometer })
   return data.data
 }
 

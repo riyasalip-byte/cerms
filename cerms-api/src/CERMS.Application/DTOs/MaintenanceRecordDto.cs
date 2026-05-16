@@ -9,6 +9,7 @@ public class MaintenanceRecordDto
     public DateTime ServiceDate { get; set; }
     public decimal Odometer { get; set; }
     public DateTime? NextServiceDueDate { get; set; }
+    public decimal? NextServiceOdometer { get; set; }
     public decimal? FinalCost { get; set; }
     public CERMS.Domain.Enums.MaintenanceStatus Status { get; set; }
     public DateTime? CompletedAt { get; set; }

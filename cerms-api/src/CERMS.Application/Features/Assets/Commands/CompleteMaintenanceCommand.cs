@@ -13,7 +13,9 @@ public record CompleteMaintenanceCommand(
     Guid MaintenanceId, 
     decimal FinalCost, 
     string? Notes = null, 
-    DateTime? ServiceDate = null
+    DateTime? ServiceDate = null,
+    DateTime? NextServiceDueDate = null,
+    decimal? NextServiceOdometer = null
 ) : IRequest<Result<MaintenanceRecordDto>>;
 
 public class CompleteMaintenanceHandler : IRequestHandler<CompleteMaintenanceCommand, Result<MaintenanceRecordDto>>
@@ -51,10 +53,10 @@ public class CompleteMaintenanceHandler : IRequestHandler<CompleteMaintenanceCom
         {
             var costDifference = request.FinalCost - maintenance.Cost;
             
-            maintenance.UpdateDetails(request.FinalCost, request.Notes, request.ServiceDate);
+            maintenance.UpdateDetails(request.FinalCost, request.Notes, request.ServiceDate, request.NextServiceDueDate, request.NextServiceOdometer);
             maintenanceRepo.Update(maintenance);
 
-            asset.CompleteMaintenance(costDifference, maintenance.Odometer, maintenance.NextServiceDueDate);
+            asset.CompleteMaintenance(costDifference, maintenance.Odometer, maintenance.NextServiceDueDate, maintenance.NextServiceOdometer);
             
             _assetRepository.Update(asset);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

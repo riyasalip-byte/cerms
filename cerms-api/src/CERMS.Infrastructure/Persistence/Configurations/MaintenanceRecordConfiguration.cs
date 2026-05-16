@@ -25,6 +25,9 @@ public class MaintenanceRecordConfiguration : IEntityTypeConfiguration<Maintenan
         builder.Property(m => m.ServiceDate)
             .IsRequired();
             
+        builder.Property(m => m.NextServiceOdometer)
+            .HasPrecision(18, 2);
+            
         // The foreign key is already configured from the Asset side,
         // but can also be explicitly stated here.
         builder.HasOne(m => m.Asset)

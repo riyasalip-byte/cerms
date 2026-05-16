@@ -11,7 +11,6 @@ import { CalendarIcon, Loader2, Save } from "lucide-react"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,6 +32,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -60,6 +61,8 @@ const assetFormSchema = z.object({
   registerDate: z.string().optional(),
   insuranceCompany: z.string().optional(),
   insuranceNo: z.string().optional(),
+  isTransportationRequired: z.boolean().default(false),
+  transportationNotes: z.string().optional(),
 })
 
 type AssetFormValues = z.infer<typeof assetFormSchema>
@@ -92,7 +95,6 @@ const toIsoDate = (value?: string) => value ? new Date(value).toISOString() : un
 const toDateInput = (value?: string) => value ? new Date(value).toISOString().split("T")[0] : ""
 const fromDate = (date?: Date) => date ? format(date, "yyyy-MM-dd") : ""
 const parseDate = (value?: string) => value ? new Date(`${value}T00:00:00`) : undefined
-const displayDate = (value?: string) => value ? format(parseDate(value)!, "PPP") : "Pick a date"
 const normalizeEnumKey = (value: string) => value.replace(/[\s/_-]/g, "").toLowerCase()
 
 function toNumberValue(value: unknown, fallback = 0) {
@@ -124,7 +126,7 @@ function RequiredMark() {
 
 type SectionCardProps = {
   title: string
-  description: string
+  description?: string
   children: React.ReactNode
 }
 
@@ -133,7 +135,7 @@ function SectionCard({ title, description, children }: SectionCardProps) {
     <Card className="overflow-hidden shadow-sm">
       <CardHeader className="border-b bg-muted/30">
         <CardTitle className="text-base font-semibold">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent className="grid gap-6 p-5 sm:grid-cols-2 xl:grid-cols-4">
         {children}
@@ -159,12 +161,11 @@ type DateFieldProps = {
   control: Control<AssetFormValues>
   name: "purchaseDate" | "registerDate" | "fitnessExpiryDate" | "insuranceExpiryDate" | "puccExpiryDate"
   label: string
-  description: string
   required?: boolean
   disabled?: boolean
 }
 
-function DateField({ control, name, label, description, required, disabled }: DateFieldProps) {
+function DateField({ control, name, label, required, disabled }: DateFieldProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const calendarStartMonth = React.useMemo(() => new Date(1950, 0), [])
   const calendarEndMonth = React.useMemo(() => {
@@ -211,12 +212,6 @@ function DateField({ control, name, label, description, required, disabled }: Da
               </PopoverContent>
             </Popover>
           </div>
-          {field.value && (
-            <p className="text-xs font-medium text-muted-foreground">
-              Selected: {displayDate(field.value)}
-            </p>
-          )}
-          <FormDescription>{description}</FormDescription>
           <FormMessage />
         </FormItem>
       )}
@@ -256,6 +251,8 @@ export function AssetForm() {
       registerDate: "",
       insuranceCompany: "",
       insuranceNo: "",
+      isTransportationRequired: false,
+      transportationNotes: "",
     },
   })
 
@@ -291,6 +288,8 @@ export function AssetForm() {
         registerDate: toDateInput(existingAsset.registerDate),
         insuranceCompany: existingAsset.insuranceCompany ?? "",
         insuranceNo: existingAsset.insuranceNo ?? "",
+        isTransportationRequired: existingAsset.isTransportationRequired ?? false,
+        transportationNotes: existingAsset.transportationNotes ?? "",
       })
     }
   }, [existingAsset, form])
@@ -319,6 +318,8 @@ export function AssetForm() {
       registerDate: toIsoDate(data.registerDate),
       insuranceCompany: data.insuranceCompany || undefined,
       insuranceNo: data.insuranceNo || undefined,
+      isTransportationRequired: data.isTransportationRequired,
+      transportationNotes: data.isTransportationRequired ? data.transportationNotes : undefined,
     }
 
     if (isEditMode) {
@@ -376,7 +377,6 @@ export function AssetForm() {
         <form onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-6">
           <SectionCard
             title="Basic Info"
-            description="Core identification used across asset lists, rentals, and reporting."
           >
             <FormField
               control={form.control}
@@ -392,7 +392,6 @@ export function AssetForm() {
                       className="font-mono"
                     />
                   </FormControl>
-                  <FormDescription>System-generated code assigned automatically.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -407,7 +406,6 @@ export function AssetForm() {
                   <FormControl>
                     <Input placeholder="e.g. Caterpillar Excavator 320" autoFocus {...field} />
                   </FormControl>
-                  <FormDescription>Name shown to operations and billing teams.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -420,7 +418,17 @@ export function AssetForm() {
                 <FormItem>
                   <FieldLabel required>Asset Category</FieldLabel>
                   <Select
-                    onValueChange={(value) => field.onChange(Number(value))}
+                    onValueChange={(value) => {
+                      const numericValue = Number(value)
+                      field.onChange(numericValue)
+                      
+                      // Smart defaults for transportation
+                      if (numericValue === 0 || numericValue === 1) { // Excavators
+                        form.setValue("isTransportationRequired", true, { shouldValidate: true, shouldDirty: true })
+                      } else if (numericValue === 3 || numericValue === 4) { // Tippers
+                        form.setValue("isTransportationRequired", false, { shouldValidate: true, shouldDirty: true })
+                      }
+                    }}
                     value={field.value?.toString()}
                     disabled={isSaving}
                   >
@@ -437,7 +445,6 @@ export function AssetForm() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormDescription>Classifies the asset for utilization and billing.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -447,14 +454,12 @@ export function AssetForm() {
               control={form.control}
               name="purchaseDate"
               label="Purchase Date"
-              description="Date the asset was acquired."
               disabled={isEditMode || isSaving}
             />
           </SectionCard>
 
           <SectionCard
             title="Vehicle Details"
-            description="Technical information used by maintenance and field operations."
           >
             <FormField
               control={form.control}
@@ -465,7 +470,6 @@ export function AssetForm() {
                   <FormControl>
                     <Input type="number" min={0} placeholder="0" disabled={isSaving} {...field} />
                   </FormControl>
-                  <FormDescription>Latest odometer or hour meter reading.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -487,7 +491,6 @@ export function AssetForm() {
                       value={field.value ?? ""}
                     />
                   </FormControl>
-                  <FormDescription>Manufacturing year, if available.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -502,7 +505,6 @@ export function AssetForm() {
                   <FormControl>
                     <Input placeholder="e.g. 320D" disabled={isSaving} {...field} />
                   </FormControl>
-                  <FormDescription>Model name or variant from the manufacturer.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -517,7 +519,6 @@ export function AssetForm() {
                   <FormControl>
                     <Input placeholder="Enter engine number" disabled={isSaving} {...field} />
                   </FormControl>
-                  <FormDescription>Engine identifier used for service records.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -532,7 +533,6 @@ export function AssetForm() {
                   <FormControl>
                     <Input placeholder="Enter chasis number" disabled={isSaving} {...field} />
                   </FormControl>
-                  <FormDescription>Chasis identifier for compliance records.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -541,7 +541,6 @@ export function AssetForm() {
 
           <SectionCard
             title="Registration"
-            description="Registration information for transport and statutory reference."
           >
             <FormField
               control={form.control}
@@ -552,7 +551,6 @@ export function AssetForm() {
                   <FormControl>
                     <Input placeholder="e.g. Ernakulam RTO" disabled={isSaving} {...field} />
                   </FormControl>
-                  <FormDescription>Office or location where the asset is registered.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -567,7 +565,6 @@ export function AssetForm() {
                   <FormControl>
                     <Input placeholder="e.g. KL-01-AB-1234" disabled={isSaving} {...field} />
                   </FormControl>
-                  <FormDescription>Vehicle registration or fleet registration number.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -577,20 +574,17 @@ export function AssetForm() {
               control={form.control}
               name="registerDate"
               label="Register Date"
-              description="Date recorded on the registration certificate."
               disabled={isSaving}
             />
           </SectionCard>
 
           <SectionCard
             title="Insurance & Compliance"
-            description="Expiry dates and policy details that keep the asset operationally compliant."
           >
             <DateField
               control={form.control}
               name="fitnessExpiryDate"
               label="Fitness Expiry Date"
-              description="Renewal deadline for the vehicle fitness certificate."
               required
               disabled={isSaving}
             />
@@ -604,7 +598,6 @@ export function AssetForm() {
                   <FormControl>
                     <Input placeholder="e.g. National Insurance" disabled={isSaving} {...field} />
                   </FormControl>
-                  <FormDescription>Provider responsible for the active policy.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -619,7 +612,6 @@ export function AssetForm() {
                   <FormControl>
                     <Input placeholder="Enter policy number" disabled={isSaving} {...field} />
                   </FormControl>
-                  <FormDescription>Policy number used during claims and audits.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -629,7 +621,6 @@ export function AssetForm() {
               control={form.control}
               name="insuranceExpiryDate"
               label="Insurance Expiry Date"
-              description="Renewal deadline for the insurance policy."
               required
               disabled={isSaving}
             />
@@ -638,10 +629,55 @@ export function AssetForm() {
               control={form.control}
               name="puccExpiryDate"
               label="PUCC Expiry Date"
-              description="Renewal deadline for the pollution certificate."
               required
               disabled={isSaving}
             />
+          </SectionCard>
+
+          <SectionCard
+            title="Transportation"
+          >
+            <FormField
+              control={form.control}
+              name="isTransportationRequired"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm sm:col-span-2 xl:col-span-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isSaving}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Transportation Required
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {form.watch("isTransportationRequired") && (
+              <FormField
+                control={form.control}
+                name="transportationNotes"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2 xl:col-span-4">
+                    <FieldLabel>Transportation Notes</FieldLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="e.g. Requires trailer transport or low-bed vehicle" 
+                        disabled={isSaving} 
+                        {...field} 
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </SectionCard>
 
           <div className="sticky bottom-0 z-10 -mx-4 border-t bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:static sm:mx-0 sm:border-t-0 sm:bg-transparent sm:p-0">

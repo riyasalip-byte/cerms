@@ -71,8 +71,8 @@ export function useAddMaintenance() {
 export function useCompleteMaintenance() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payload: { id: string; maintenanceId: string; finalCost: number; notes?: string; serviceDate?: string }) => 
-      assetsApi.completeMaintenance(payload.id, payload.maintenanceId, payload.finalCost, payload.notes, payload.serviceDate),
+    mutationFn: (payload: { id: string; maintenanceId: string; finalCost: number; notes?: string; serviceDate?: string; nextServiceDueDate?: string; nextServiceOdometer?: number }) => 
+      assetsApi.completeMaintenance(payload.id, payload.maintenanceId, payload.finalCost, payload.notes, payload.serviceDate, payload.nextServiceDueDate, payload.nextServiceOdometer),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['assets'] })
       queryClient.invalidateQueries({ queryKey: ['assets', variables.id] })

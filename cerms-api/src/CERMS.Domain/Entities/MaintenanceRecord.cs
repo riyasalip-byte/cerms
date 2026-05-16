@@ -12,6 +12,7 @@ public class MaintenanceRecord : BaseEntity
     public DateTime ServiceDate { get; private set; }
     public decimal Odometer { get; private set; }
     public DateTime? NextServiceDueDate { get; private set; }
+    public decimal? NextServiceOdometer { get; private set; }
     public MaintenanceStatus Status { get; private set; }
     public DateTime? CompletedAt { get; private set; }
 
@@ -20,7 +21,7 @@ public class MaintenanceRecord : BaseEntity
 
     protected MaintenanceRecord() { } // EF Core
 
-    public MaintenanceRecord(Guid assetId, string description, decimal cost, DateTime serviceDate, decimal odometer, DateTime? nextServiceDueDate = null)
+    public MaintenanceRecord(Guid assetId, string description, decimal cost, DateTime serviceDate, decimal odometer, DateTime? nextServiceDueDate = null, decimal? nextServiceOdometer = null)
     {
         if (assetId == Guid.Empty) throw new ArgumentException("Asset ID is required.", nameof(assetId));
         if (string.IsNullOrWhiteSpace(description)) throw new ArgumentException("Description is required.", nameof(description));
@@ -31,10 +32,11 @@ public class MaintenanceRecord : BaseEntity
         ServiceDate = serviceDate;
         Odometer = odometer;
         NextServiceDueDate = nextServiceDueDate;
+        NextServiceOdometer = nextServiceOdometer;
         Status = MaintenanceStatus.Pending;
     }
 
-    public void UpdateDetails(decimal finalCost, string? notes, DateTime? serviceDate)
+    public void UpdateDetails(decimal finalCost, string? notes, DateTime? serviceDate, DateTime? nextServiceDueDate = null, decimal? nextServiceOdometer = null)
     {
         FinalCost = finalCost;
         if (!string.IsNullOrWhiteSpace(notes))
@@ -44,6 +46,14 @@ public class MaintenanceRecord : BaseEntity
         if (serviceDate.HasValue)
         {
             ServiceDate = serviceDate.Value;
+        }
+        if (nextServiceDueDate.HasValue)
+        {
+            NextServiceDueDate = nextServiceDueDate.Value;
+        }
+        if (nextServiceOdometer.HasValue)
+        {
+            NextServiceOdometer = nextServiceOdometer.Value;
         }
         Status = MaintenanceStatus.Completed;
         CompletedAt = DateTime.UtcNow;

@@ -27,5 +27,9 @@ public class AddMaintenanceCommandValidator : AbstractValidator<AddMaintenanceCo
         RuleFor(v => v.NextServiceDueDate)
             .GreaterThan(v => v.ServiceDate).When(v => v.NextServiceDueDate.HasValue)
             .WithMessage("Next service due date must be after the service date.");
+
+        RuleFor(v => v.NextServiceOdometer)
+            .GreaterThan(v => v.Odometer).When(v => v.NextServiceOdometer.HasValue)
+            .WithMessage("Next service odometer must be greater than the current service odometer.");
     }
 }

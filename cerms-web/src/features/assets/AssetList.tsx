@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Link, useNavigate } from "react-router-dom"
 import type { ColumnDef } from "@tanstack/react-table"
-import { Activity, Edit2, Eye, Plus } from "lucide-react"
+import { Activity, Edit2, Eye, Plus, Truck } from "lucide-react"
 
 import type { AssetDto } from "@/api/assets"
 import { DataTable } from "@/components/shared/DataTable"
@@ -108,6 +108,7 @@ export function AssetList() {
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState("all")
   const [categoryFilter, setCategoryFilter] = React.useState("all")
+  const [transportFilter, setTransportFilter] = React.useState<"all" | "required" | "not_required">("all")
 
   React.useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300)
@@ -127,7 +128,14 @@ export function AssetList() {
   const { data, isLoading, isFetching, isError, refetch } = useAssets(queryParams)
 
   const assets = React.useMemo(() => {
-    const items = data?.items ?? []
+    let items = data?.items ?? []
+    
+    if (transportFilter === "required") {
+      items = items.filter((a) => a.isTransportationRequired)
+    } else if (transportFilter === "not_required") {
+      items = items.filter((a) => !a.isTransportationRequired)
+    }
+
     const term = searchTerm.trim().toLowerCase()
 
     if (!term) return items
@@ -142,7 +150,7 @@ export function AssetList() {
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(term))
     )
-  }, [data, searchTerm])
+  }, [data, searchTerm, transportFilter])
 
   const columns: ColumnDef<AssetDto>[] = [
     {
@@ -200,6 +208,24 @@ export function AssetList() {
       accessorKey: "insuranceExpiryDate",
       header: "Insurance Expiry",
       cell: ({ row }) => <ExpiryCell value={row.original.insuranceExpiryDate} />,
+    },
+    {
+      accessorKey: "isTransportationRequired",
+      header: "Transport",
+      cell: ({ row }) => (
+        <Badge
+          variant={row.original.isTransportationRequired ? "default" : "secondary"}
+          className="flex w-fit items-center gap-1 font-semibold"
+        >
+          {row.original.isTransportationRequired ? (
+            <>
+              <Truck className="size-3" /> Yes
+            </>
+          ) : (
+            "No"
+          )}
+        </Badge>
+      ),
     },
     {
       accessorKey: "status",
@@ -284,6 +310,16 @@ export function AssetList() {
                   {label}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={transportFilter} onValueChange={(val: any) => setTransportFilter(val)}>
+            <SelectTrigger className="h-10 w-full sm:w-[220px]">
+              <SelectValue placeholder="Transport required?" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any Transport</SelectItem>
+              <SelectItem value="required">Required Only</SelectItem>
+              <SelectItem value="not_required">Not Required</SelectItem>
             </SelectContent>
           </Select>
         </div>

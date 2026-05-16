@@ -27,7 +27,10 @@ public class AssetDetailDto
     public bool IsActive { get; set; }
     public decimal MaintenanceCost { get; set; }
     public DateTime? NextServiceDueDate { get; set; }
+    public decimal? NextServiceOdometer { get; set; }
     public decimal ServiceIntervalKm { get; set; }
+    public bool IsTransportationRequired { get; set; }
+    public string? TransportationNotes { get; set; }
 
     public List<MaintenanceRecordDto> MaintenanceRecords { get; set; } = new();
 

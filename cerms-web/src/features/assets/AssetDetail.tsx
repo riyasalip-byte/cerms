@@ -14,6 +14,7 @@ import {
   MoreVertical,
   ShieldCheck,
   Trash2,
+  Truck,
   Wrench,
 } from "lucide-react"
 
@@ -202,6 +203,9 @@ export function AssetDetail() {
     .map((item) => ({ ...item, state: getExpiryState(item.date) }))
     .filter((item) => item.state)
 
+  const isAssetInMaintenance = String(asset.status).toLowerCase() === "maintenance" || asset.status === 2;
+  const activeMaintenanceRecord = asset.maintenanceRecords?.find(r => r.status === 0 || r.status === "Pending") || null;
+
   const handleDelete = async () => {
     if (confirm("Are you sure you want to delete this asset?")) {
       await deleteAsset.mutateAsync(id!)
@@ -225,10 +229,24 @@ export function AssetDetail() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={() => setIsMaintenanceDialogOpen(true)}>
-            <Wrench className="mr-2 size-4 text-primary" />
-            Add Maintenance
-          </Button>
+          {isAssetInMaintenance ? (
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setSelectedMaintenance(activeMaintenanceRecord)
+                setIsMaintenanceCloseDialogOpen(true)
+              }}
+              disabled={!activeMaintenanceRecord}
+            >
+              <CheckCircle className="mr-2 size-4 text-emerald-500" />
+              Complete Maintenance
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={() => setIsMaintenanceDialogOpen(true)}>
+              <Wrench className="mr-2 size-4 text-primary" />
+              Add Maintenance
+            </Button>
+          )}
           <Button variant="outline" asChild>
             <Link to={`/assets/${id}/edit`}>
               <Edit2 className="mr-2 size-4 text-primary" />
@@ -327,6 +345,28 @@ export function AssetDetail() {
       <Card className="border-muted/60 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
+            <Truck className="size-5 text-primary" />
+            Transportation
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-5 sm:grid-cols-2">
+          <InfoItem 
+            label="Transportation Required" 
+            value={
+              <Badge variant={asset.isTransportationRequired ? "default" : "secondary"} className="flex w-fit items-center gap-1 font-semibold">
+                {asset.isTransportationRequired ? <><Truck className="size-3" /> Yes</> : "No"}
+              </Badge>
+            } 
+          />
+          {asset.isTransportationRequired && (
+            <InfoItem label="Transportation Notes" value={asset.transportationNotes || "No specific notes provided."} />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-muted/60 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
             <ShieldCheck className="size-5 text-primary" />
             Insurance & Compliance
           </CardTitle>
@@ -351,10 +391,25 @@ export function AssetDetail() {
             <History className="size-5 text-primary" />
             Maintenance History
           </CardTitle>
-          <Button size="sm" variant="outline" onClick={() => setIsMaintenanceDialogOpen(true)}>
-            <Wrench className="mr-2 size-3.5" />
-            Add
-          </Button>
+          {isAssetInMaintenance ? (
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => {
+                setSelectedMaintenance(activeMaintenanceRecord)
+                setIsMaintenanceCloseDialogOpen(true)
+              }}
+              disabled={!activeMaintenanceRecord}
+            >
+              <CheckCircle className="mr-2 size-3.5 text-emerald-500" />
+              Complete
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" onClick={() => setIsMaintenanceDialogOpen(true)}>
+              <Wrench className="mr-2 size-3.5" />
+              Add
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="p-0">
           {asset.maintenanceRecords?.length ? (
@@ -377,9 +432,12 @@ export function AssetDetail() {
                       <TableCell className="font-medium">{formatDate(record.serviceDate)}</TableCell>
                       <TableCell className="max-w-[360px]">
                         <p className="font-semibold">{record.description}</p>
-                        {record.nextServiceDueDate && (
+                        {(record.nextServiceDueDate || record.nextServiceOdometer) && (
                           <p className="text-xs text-muted-foreground">
-                            Next service: {formatDate(record.nextServiceDueDate)}
+                            Next service: {[
+                              record.nextServiceDueDate && formatDate(record.nextServiceDueDate),
+                              record.nextServiceOdometer && `${formatNumber(record.nextServiceOdometer)} units`
+                            ].filter(Boolean).join(" | ")}
                           </p>
                         )}
                       </TableCell>
@@ -388,7 +446,7 @@ export function AssetDetail() {
                         {currencyFormatter.format(record.finalCost ?? record.cost ?? 0)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {record.status === 0 ? (
+                        {record.status === 0 || record.status === "Pending" ? (
                           <Button
                             variant="outline"
                             size="sm"
@@ -416,9 +474,23 @@ export function AssetDetail() {
             <div className="p-12 text-center">
               <Wrench className="mx-auto mb-4 size-12 text-muted-foreground/40" />
               <p className="text-sm font-semibold text-muted-foreground">No maintenance history recorded.</p>
-              <Button variant="outline" className="mt-4" onClick={() => setIsMaintenanceDialogOpen(true)}>
-                Add Maintenance
-              </Button>
+              {isAssetInMaintenance ? (
+                <Button 
+                  variant="outline" 
+                  className="mt-4" 
+                  onClick={() => {
+                    setSelectedMaintenance(activeMaintenanceRecord)
+                    setIsMaintenanceCloseDialogOpen(true)
+                  }}
+                  disabled={!activeMaintenanceRecord}
+                >
+                  Complete Maintenance
+                </Button>
+              ) : (
+                <Button variant="outline" className="mt-4" onClick={() => setIsMaintenanceDialogOpen(true)}>
+                  Add Maintenance
+                </Button>
+              )}
             </div>
           )}
         </CardContent>

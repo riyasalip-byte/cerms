@@ -38,7 +38,12 @@ public class Asset : BaseEntity
     // Maintenance
     public decimal MaintenanceCost { get; private set; }
     public DateTime? NextServiceDueDate { get; private set; }
+    public decimal? NextServiceOdometer { get; private set; }
     public decimal ServiceIntervalKm { get; private set; }
+
+    // Transportation
+    public bool IsTransportationRequired { get; private set; }
+    public string? TransportationNotes { get; private set; }
 
     private readonly List<MaintenanceRecord> _maintenanceRecords = new();
     public IReadOnlyCollection<MaintenanceRecord> MaintenanceRecords => _maintenanceRecords.AsReadOnly();
@@ -63,7 +68,9 @@ public class Asset : BaseEntity
         DateTime? registerDate = null,
         string? insuranceCompany = null,
         string? insuranceNo = null,
-        decimal serviceIntervalKm = 10000)
+        decimal serviceIntervalKm = 10000,
+        bool isTransportationRequired = false,
+        string? transportationNotes = null)
     {
         if (string.IsNullOrWhiteSpace(assetCode)) throw new ArgumentException("Asset code is required.", nameof(assetCode));
         if (string.IsNullOrWhiteSpace(assetName)) throw new ArgumentException("Asset name is required.", nameof(assetName));
@@ -89,6 +96,8 @@ public class Asset : BaseEntity
         InsuranceCompany = insuranceCompany;
         InsuranceNo = insuranceNo;
         ServiceIntervalKm = serviceIntervalKm;
+        IsTransportationRequired = isTransportationRequired;
+        TransportationNotes = transportationNotes;
         
         LastServiceOdometer = currentMeterReading;
         MaintenanceCost = 0;
@@ -111,7 +120,9 @@ public class Asset : BaseEntity
         string? insuranceCompany,
         string? insuranceNo,
         DateTime insuranceExpiryDate,
-        DateTime puccExpiryDate)
+        DateTime puccExpiryDate,
+        bool isTransportationRequired,
+        string? transportationNotes)
     {
         if (string.IsNullOrWhiteSpace(assetName)) throw new ArgumentException("Asset name is required.", nameof(assetName));
         if (string.IsNullOrWhiteSpace(registerNo)) throw new ArgumentException("Register number is required.", nameof(registerNo));
@@ -131,6 +142,8 @@ public class Asset : BaseEntity
         InsuranceNo = insuranceNo;
         InsuranceExpiryDate = insuranceExpiryDate;
         PuccExpiryDate = puccExpiryDate;
+        IsTransportationRequired = isTransportationRequired;
+        TransportationNotes = transportationNotes;
         Update();
     }
 
@@ -187,7 +200,7 @@ public class Asset : BaseEntity
         Update();
     }
 
-    public void CompleteMaintenance(decimal additionalCost = 0, decimal? serviceOdometer = null, DateTime? nextServiceDueDate = null)
+    public void CompleteMaintenance(decimal additionalCost = 0, decimal? serviceOdometer = null, DateTime? nextServiceDueDate = null, decimal? nextServiceOdometer = null)
     {
         if (Status != AssetStatus.Maintenance)
             throw new InvalidOperationException($"Cannot complete maintenance for asset in status: {Status}. Must be in Maintenance.");
@@ -205,11 +218,16 @@ public class Asset : BaseEntity
             NextServiceDueDate = nextServiceDueDate;
         }
 
+        if (nextServiceOdometer.HasValue)
+        {
+            NextServiceOdometer = nextServiceOdometer;
+        }
+
         Status = AssetStatus.Available;
         Update();
     }
 
-    public void RecordService(decimal serviceOdometer, decimal cost, DateTime? nextServiceDueDate = null)
+    public void RecordService(decimal serviceOdometer, decimal cost, DateTime? nextServiceDueDate = null, decimal? nextServiceOdometer = null)
     {
         if (serviceOdometer < CurrentMeterReading)
             throw new ArgumentException("Service meter reading cannot be less than current meter reading.", nameof(serviceOdometer));
@@ -221,6 +239,11 @@ public class Asset : BaseEntity
         if (nextServiceDueDate.HasValue)
         {
             NextServiceDueDate = nextServiceDueDate;
+        }
+
+        if (nextServiceOdometer.HasValue)
+        {
+            NextServiceOdometer = nextServiceOdometer;
         }
 
         Status = AssetStatus.Available;

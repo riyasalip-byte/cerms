@@ -3,6 +3,7 @@ using System;
 using CERMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CERMS.Infrastructure.Migrations
 {
     [DbContext(typeof(CermsDbContext))]
-    partial class CermsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260516071242_AddAssetTransportationFields")]
+    partial class AddAssetTransportationFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -129,11 +132,6 @@ namespace CERMS.Infrastructure.Migrations
                     b.Property<DateTime?>("NextServiceDueDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("next_service_due_date");
-
-                    b.Property<decimal?>("NextServiceOdometer")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)")
-                        .HasColumnName("next_service_odometer");
 
                     b.Property<string>("PlaceOfRegistration")
                         .HasMaxLength(200)
@@ -477,11 +475,6 @@ namespace CERMS.Infrastructure.Migrations
                     b.Property<DateTime?>("NextServiceDueDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("next_service_due_date");
-
-                    b.Property<decimal?>("NextServiceOdometer")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)")
-                        .HasColumnName("next_service_odometer");
 
                     b.Property<decimal>("Odometer")
                         .HasPrecision(18, 2)

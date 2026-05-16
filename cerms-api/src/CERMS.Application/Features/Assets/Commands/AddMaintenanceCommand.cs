@@ -11,7 +11,8 @@ public record AddMaintenanceCommand(
     decimal Cost,
     DateTime ServiceDate,
     decimal Odometer,
-    DateTime? NextServiceDueDate
+    DateTime? NextServiceDueDate,
+    decimal? NextServiceOdometer
 ) : IRequest<Result<Guid>>;
 
 public class AddMaintenanceHandler : IRequestHandler<AddMaintenanceCommand, Result<Guid>>
@@ -31,6 +32,9 @@ public class AddMaintenanceHandler : IRequestHandler<AddMaintenanceCommand, Resu
         if (asset == null)
             return Result<Guid>.Failure("Asset not found.");
 
+        if (asset.Status == CERMS.Domain.Enums.AssetStatus.Maintenance)
+            return Result<Guid>.Failure("Asset is already in maintenance. Complete the current maintenance before adding a new one.");
+
         try
         {
             var record = new MaintenanceRecord(
@@ -39,12 +43,13 @@ public class AddMaintenanceHandler : IRequestHandler<AddMaintenanceCommand, Resu
                 request.Cost,
                 request.ServiceDate,
                 request.Odometer,
-                request.NextServiceDueDate
+                request.NextServiceDueDate,
+                request.NextServiceOdometer
             );
 
             await _unitOfWork.Repository<MaintenanceRecord>().AddAsync(record);
 
-            asset.RecordService(request.Odometer, request.Cost, request.NextServiceDueDate);
+            asset.RecordService(request.Odometer, request.Cost, request.NextServiceDueDate, request.NextServiceOdometer);
             asset.SendToMaintenance();
 
             _assetRepository.Update(asset);

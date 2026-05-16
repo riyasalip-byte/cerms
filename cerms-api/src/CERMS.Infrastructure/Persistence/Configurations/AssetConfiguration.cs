@@ -77,6 +77,15 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
             
         builder.Property(a => a.NextServiceDueDate);
             
+        builder.Property(a => a.NextServiceOdometer)
+            .HasPrecision(18, 2);
+            
+        builder.Property(a => a.IsTransportationRequired)
+            .HasDefaultValue(false);
+            
+        builder.Property(a => a.TransportationNotes)
+            .HasMaxLength(500);
+            
         builder.HasIndex(a => a.AssetCode).IsUnique();
         builder.HasIndex(a => a.RegisterNo);
         builder.HasIndex(a => a.InsuranceNo);

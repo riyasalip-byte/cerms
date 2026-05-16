@@ -19,6 +19,10 @@ const maintenanceSchema = z.object({
   serviceDate: z.string().min(1, "Service date is required"),
   odometer: z.coerce.number().min(0, "Odometer cannot be negative"),
   nextServiceDueDate: z.string().optional(),
+  nextServiceOdometer: z.string().optional(),
+}).refine(data => !data.nextServiceOdometer || Number(data.nextServiceOdometer) > data.odometer, {
+  message: "Must be greater than service odometer",
+  path: ["nextServiceOdometer"],
 })
 
 type MaintenanceFormValues = z.infer<typeof maintenanceSchema>
@@ -41,6 +45,7 @@ export function MaintenanceDialog({ assetId, currentOdometer, isOpen, onOpenChan
       serviceDate: new Date().toISOString().split('T')[0],
       odometer: currentOdometer,
       nextServiceDueDate: "",
+      nextServiceOdometer: "",
     },
   })
 
@@ -60,6 +65,7 @@ export function MaintenanceDialog({ assetId, currentOdometer, isOpen, onOpenChan
         serviceDate: new Date(data.serviceDate).toISOString(),
         odometer: data.odometer,
         nextServiceDueDate: data.nextServiceDueDate ? new Date(data.nextServiceDueDate).toISOString() : undefined,
+        nextServiceOdometer: data.nextServiceOdometer ? Number(data.nextServiceOdometer) : undefined,
       }
     })
     onOpenChange(false)
@@ -146,6 +152,19 @@ export function MaintenanceDialog({ assetId, currentOdometer, isOpen, onOpenChan
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="nextServiceOdometer"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Next Service Odometer</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="Optional" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel

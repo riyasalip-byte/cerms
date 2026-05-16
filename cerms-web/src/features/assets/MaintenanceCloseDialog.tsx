@@ -30,13 +30,17 @@ export function MaintenanceCloseDialog({
   const [finalCost, setFinalCost] = React.useState<string>("")
   const [notes, setNotes] = React.useState<string>("")
   const [serviceDate, setServiceDate] = React.useState<string>("")
+  const [nextServiceDueDate, setNextServiceDueDate] = React.useState<string>("")
+  const [nextServiceOdometer, setNextServiceOdometer] = React.useState<string>("")
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     if (isOpen && activeMaintenance) {
-      setFinalCost(activeMaintenance.cost.toString())
+      setFinalCost(activeMaintenance.cost?.toString() || "")
       setNotes("")
       setServiceDate(new Date().toISOString().split('T')[0])
+      setNextServiceDueDate(activeMaintenance.nextServiceDueDate ? new Date(activeMaintenance.nextServiceDueDate).toISOString().split('T')[0] : "")
+      setNextServiceOdometer(activeMaintenance.nextServiceOdometer?.toString() || "")
       setError(null)
     }
   }, [isOpen, activeMaintenance])
@@ -59,7 +63,9 @@ export function MaintenanceCloseDialog({
         maintenanceId: activeMaintenance.id,
         finalCost: cost,
         notes: notes,
-        serviceDate: serviceDate ? new Date(serviceDate).toISOString() : undefined
+        serviceDate: serviceDate ? new Date(serviceDate).toISOString() : undefined,
+        nextServiceDueDate: nextServiceDueDate ? new Date(nextServiceDueDate).toISOString() : undefined,
+        nextServiceOdometer: nextServiceOdometer ? Number(nextServiceOdometer) : undefined
       })
       onOpenChange(false)
     } catch (err) {
@@ -106,6 +112,28 @@ export function MaintenanceCloseDialog({
               onChange={(e) => setServiceDate(e.target.value)}
               required
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nextServiceDueDate">Next Service Due Date</Label>
+              <Input
+                id="nextServiceDueDate"
+                type="date"
+                value={nextServiceDueDate}
+                onChange={(e) => setNextServiceDueDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="nextServiceOdometer">Next Service Odometer</Label>
+              <Input
+                id="nextServiceOdometer"
+                type="number"
+                placeholder="Optional"
+                value={nextServiceOdometer}
+                onChange={(e) => setNextServiceOdometer(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
