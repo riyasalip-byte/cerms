@@ -46,12 +46,8 @@ public class AddMaintenanceHandlerTests
             "Oil Change",
             1500,
             350,
-            150,
             "Vendor A",
-            DateTime.UtcNow,
-            DateTime.UtcNow.AddMonths(6),
-            null,
-            "Routine service");
+            DateTime.UtcNow);
 
         _assetRepoMock.Setup(repo => repo.GetByIdAsync(assetId))
             .ReturnsAsync(asset);
@@ -66,7 +62,7 @@ public class AddMaintenanceHandlerTests
         asset.Status.Should().Be(AssetStatus.Maintenance);
         asset.CurrentMeterReading.Should().Be(1500);
         asset.LastServiceOdometer.Should().Be(1500);
-        asset.MaintenanceCost.Should().Be(500);
+        asset.MaintenanceCost.Should().Be(0);
 
         _maintRepoMock.Verify(repo => repo.AddAsync(It.IsAny<MaintenanceRecord>()), Times.Once);
         _assetRepoMock.Verify(repo => repo.Update(asset), Times.Once);
@@ -83,12 +79,8 @@ public class AddMaintenanceHandlerTests
             "Oil Change",
             1500,
             350,
-            150,
             "Vendor A",
-            DateTime.UtcNow,
-            DateTime.UtcNow.AddMonths(6),
-            null,
-            null);
+            DateTime.UtcNow);
 
         _assetRepoMock.Setup(repo => repo.GetByIdAsync(command.AssetId))
             .ReturnsAsync((Asset?)null);

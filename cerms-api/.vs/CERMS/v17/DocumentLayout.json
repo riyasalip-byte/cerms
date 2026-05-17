@@ -1,0 +1,122 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "R:\\Projects\\cerms\\cerms-api\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{8D6E8753-6C80-4534-841C-3D61D3415290}|src\\CERMS.Api\\CERMS.Api.csproj|r:\\projects\\cerms\\cerms-api\\src\\cerms.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{8D6E8753-6C80-4534-841C-3D61D3415290}|src\\CERMS.Api\\CERMS.Api.csproj|solutionrelative:src\\cerms.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8D6E8753-6C80-4534-841C-3D61D3415290}|src\\CERMS.Api\\CERMS.Api.csproj|r:\\projects\\cerms\\cerms-api\\src\\cerms.api\\dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{8D6E8753-6C80-4534-841C-3D61D3415290}|src\\CERMS.Api\\CERMS.Api.csproj|solutionrelative:src\\cerms.api\\dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8D6E8753-6C80-4534-841C-3D61D3415290}|src\\CERMS.Api\\CERMS.Api.csproj|r:\\projects\\cerms\\cerms-api\\src\\cerms.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8D6E8753-6C80-4534-841C-3D61D3415290}|src\\CERMS.Api\\CERMS.Api.csproj|solutionrelative:src\\cerms.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8D6E8753-6C80-4534-841C-3D61D3415290}|src\\CERMS.Api\\CERMS.Api.csproj|r:\\projects\\cerms\\cerms-api\\src\\cerms.api\\appsettings.production.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{8D6E8753-6C80-4534-841C-3D61D3415290}|src\\CERMS.Api\\CERMS.Api.csproj|solutionrelative:src\\cerms.api\\appsettings.production.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A8E4CC49-4326-460A-87CF-E6C6FC8B3C97}|tests\\CERMS.Tests\\CERMS.Tests.csproj|r:\\projects\\cerms\\cerms-api\\tests\\cerms.tests\\features\\assets\\commands\\addmaintenancehandlertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A8E4CC49-4326-460A-87CF-E6C6FC8B3C97}|tests\\CERMS.Tests\\CERMS.Tests.csproj|solutionrelative:tests\\cerms.tests\\features\\assets\\commands\\addmaintenancehandlertests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8C376730-BE95-47B2-B657-8ADA8218B1F6}|src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj|r:\\projects\\cerms\\cerms-api\\src\\cerms.infrastructure\\dependencyinjection.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8C376730-BE95-47B2-B657-8ADA8218B1F6}|src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj|solutionrelative:src\\cerms.infrastructure\\dependencyinjection.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 5,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Dockerfile",
+              "DocumentMoniker": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\Dockerfile",
+              "RelativeDocumentMoniker": "src\\CERMS.Api\\Dockerfile",
+              "ToolTip": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\Dockerfile",
+              "RelativeToolTip": "src\\CERMS.Api\\Dockerfile",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-05-17T17:32:36.441Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "appsettings.Production.json",
+              "DocumentMoniker": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\appsettings.Production.json",
+              "RelativeDocumentMoniker": "src\\CERMS.Api\\appsettings.Production.json",
+              "ToolTip": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\appsettings.Production.json",
+              "RelativeToolTip": "src\\CERMS.Api\\appsettings.Production.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-05-17T17:26:35.283Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "AddMaintenanceHandlerTests.cs",
+              "DocumentMoniker": "R:\\Projects\\cerms\\cerms-api\\tests\\CERMS.Tests\\Features\\Assets\\Commands\\AddMaintenanceHandlerTests.cs",
+              "RelativeDocumentMoniker": "tests\\CERMS.Tests\\Features\\Assets\\Commands\\AddMaintenanceHandlerTests.cs",
+              "ToolTip": "R:\\Projects\\cerms\\cerms-api\\tests\\CERMS.Tests\\Features\\Assets\\Commands\\AddMaintenanceHandlerTests.cs",
+              "RelativeToolTip": "tests\\CERMS.Tests\\Features\\Assets\\Commands\\AddMaintenanceHandlerTests.cs",
+              "ViewState": "AgIAAB8AAAAAAAAAAAAmwCoAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-17T16:48:56.16Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "DependencyInjection.cs",
+              "DocumentMoniker": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\DependencyInjection.cs",
+              "RelativeDocumentMoniker": "src\\CERMS.Infrastructure\\DependencyInjection.cs",
+              "ToolTip": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\DependencyInjection.cs",
+              "RelativeToolTip": "src\\CERMS.Infrastructure\\DependencyInjection.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAxwCEAAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-17T16:39:01.733Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Program.cs",
+              "DocumentMoniker": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\Program.cs",
+              "RelativeDocumentMoniker": "src\\CERMS.Api\\Program.cs",
+              "ToolTip": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\Program.cs",
+              "RelativeToolTip": "src\\CERMS.Api\\Program.cs",
+              "ViewState": "AgIAADwAAAAAAAAAAAAAAHYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-17T16:32:30.372Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\appsettings.json",
+              "RelativeDocumentMoniker": "src\\CERMS.Api\\appsettings.json",
+              "ToolTip": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\appsettings.json",
+              "RelativeToolTip": "src\\CERMS.Api\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-05-17T16:21:44.102Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

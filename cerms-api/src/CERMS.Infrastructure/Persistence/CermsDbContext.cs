@@ -28,6 +28,7 @@ public class CermsDbContext : DbContext
     public DbSet<MaintenanceRecord> MaintenanceRecords => Set<MaintenanceRecord>();
     public DbSet<AssetCategory> AssetCategories => Set<AssetCategory>();
     public DbSet<MaintenanceType> MaintenanceTypes => Set<MaintenanceType>();
+    public DbSet<FuelEntry> FuelEntries => Set<FuelEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -41,7 +41,7 @@ public class CompleteMaintenanceHandlerTests
 
         var record = CreateMaintenanceRecord(assetId);
 
-        var command = new CompleteMaintenanceCommand(assetId, maintenanceId, 600, "Extra parts", DateTime.UtcNow);
+        var command = new CompleteMaintenanceCommand(assetId, maintenanceId, 600, 0, "Extra parts", DateTime.UtcNow);
 
         _assetRepoMock.Setup(repo => repo.GetByIdAsync(assetId))
             .ReturnsAsync(asset);
@@ -71,7 +71,7 @@ public class CompleteMaintenanceHandlerTests
     public async Task Handle_WhenAssetNotAvailable_ShouldReturnFailure()
     {
         // Arrange
-        var command = new CompleteMaintenanceCommand(Guid.NewGuid(), Guid.NewGuid(), 100);
+        var command = new CompleteMaintenanceCommand(Guid.NewGuid(), Guid.NewGuid(), 100, 0);
 
         _assetRepoMock.Setup(repo => repo.GetByIdAsync(command.AssetId))
             .ReturnsAsync((Asset?)null);
@@ -97,7 +97,7 @@ public class CompleteMaintenanceHandlerTests
 
         var record = CreateMaintenanceRecord(assetId);
 
-        var command = new CompleteMaintenanceCommand(assetId, maintenanceId, 100);
+        var command = new CompleteMaintenanceCommand(assetId, maintenanceId, 100, 0);
 
         _assetRepoMock.Setup(repo => repo.GetByIdAsync(assetId))
             .ReturnsAsync(asset);
@@ -133,10 +133,6 @@ public class CompleteMaintenanceHandlerTests
         "Oil Change",
         1200,
         400,
-        100,
         "Vendor A",
-        DateTime.UtcNow,
-        DateTime.UtcNow.AddMonths(6),
-        null,
-        null);
+        DateTime.UtcNow);
 }

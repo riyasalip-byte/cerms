@@ -17,7 +17,7 @@ namespace CERMS.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.26")
+                .HasAnnotation("ProductVersion", "8.0.27")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -344,6 +344,103 @@ namespace CERMS.Infrastructure.Migrations
                         .HasDatabaseName("ix_customers_phone");
 
                     b.ToTable("customers", (string)null);
+                });
+
+            modelBuilder.Entity("CERMS.Domain.Entities.FuelEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AssetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("asset_id");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DriverName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("driver_name");
+
+                    b.Property<DateTime>("FuelDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fuel_date");
+
+                    b.Property<decimal>("FuelQuantityLiters")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("fuel_quantity_liters");
+
+                    b.Property<decimal>("FuelRatePerLiter")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("fuel_rate_per_liter");
+
+                    b.Property<string>("FuelStationName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("fuel_station_name");
+
+                    b.Property<decimal?>("HourMeterReading")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("hour_meter_reading");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<decimal>("OdoMeterReading")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("odo_meter_reading");
+
+                    b.Property<string>("ReferenceNo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("reference_no");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("remarks");
+
+                    b.Property<Guid?>("RentalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("rental_id");
+
+                    b.Property<decimal>("TotalFuelCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_fuel_cost");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_fuel_entries");
+
+                    b.HasIndex("AssetId")
+                        .HasDatabaseName("ix_fuel_entries_asset_id");
+
+                    b.HasIndex("RentalId")
+                        .HasDatabaseName("ix_fuel_entries_rental_id");
+
+                    b.ToTable("FuelEntries", (string)null);
                 });
 
             modelBuilder.Entity("CERMS.Domain.Entities.Invoice", b =>
@@ -1067,6 +1164,26 @@ namespace CERMS.Infrastructure.Migrations
                         .HasConstraintName("fk_assets_asset_categories_asset_category_id");
 
                     b.Navigation("AssetCategory");
+                });
+
+            modelBuilder.Entity("CERMS.Domain.Entities.FuelEntry", b =>
+                {
+                    b.HasOne("CERMS.Domain.Entities.Asset", "Asset")
+                        .WithMany()
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_fuel_entries_assets_asset_id");
+
+                    b.HasOne("CERMS.Domain.Entities.RentalBooking", "RentalBooking")
+                        .WithMany()
+                        .HasForeignKey("RentalId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_fuel_entries_rental_bookings_rental_id");
+
+                    b.Navigation("Asset");
+
+                    b.Navigation("RentalBooking");
                 });
 
             modelBuilder.Entity("CERMS.Domain.Entities.Invoice", b =>

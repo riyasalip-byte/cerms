@@ -8,6 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
 using System.Text;
 using Hangfire;
+using System;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +54,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
     });
+
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 var app = builder.Build();
 
@@ -105,5 +110,11 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<CermsDbContext>();
+    db.Database.Migrate();
+}
 
 app.Run();
