@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "RFRxWuu4Ows=",
+  "dgSpecHash": "1RKkEwaPFvc=",
   "success": true,
   "projectFilePath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Application\\CERMS.Application.csproj",
   "expectedPackageFiles": [
@@ -22,19 +22,14 @@
     "C:\\Users\\riyas\\.nuget\\packages\\microsoft.extensions.logging\\8.0.0\\microsoft.extensions.logging.8.0.0.nupkg.sha512",
     "C:\\Users\\riyas\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.0\\microsoft.extensions.logging.abstractions.8.0.0.nupkg.sha512",
     "C:\\Users\\riyas\\.nuget\\packages\\microsoft.extensions.options\\8.0.0\\microsoft.extensions.options.8.0.0.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.extensions.primitives\\8.0.0\\microsoft.extensions.primitives.8.0.0.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.24\\microsoft.netcore.app.ref.8.0.24.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.24\\microsoft.windowsdesktop.app.ref.8.0.24.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.24\\microsoft.aspnetcore.app.ref.8.0.24.nupkg.sha512"
+    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.extensions.primitives\\8.0.0\\microsoft.extensions.primitives.8.0.0.nupkg.sha512"
   ],
   "logs": [
     {
       "code": "NU1608",
       "level": "Warning",
-      "message": "Detected package version outside of dependency constraint: MediatR.Extensions.Microsoft.DependencyInjection 11.1.0 requires MediatR (>= 11.0.0 && < 12.0.0) but version MediatR 12.4.1 was resolved.",
-      "projectPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Application\\CERMS.Application.csproj",
       "warningLevel": 1,
-      "filePath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Application\\CERMS.Application.csproj",
+      "message": "Detected package version outside of dependency constraint: MediatR.Extensions.Microsoft.DependencyInjection 11.1.0 requires MediatR (>= 11.0.0 && < 12.0.0) but version MediatR 12.4.1 was resolved.",
       "libraryId": "MediatR",
       "targetGraphs": [
         "net8.0"

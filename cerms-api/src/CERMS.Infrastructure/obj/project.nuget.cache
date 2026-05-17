@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "i6+kDdrjV5g=",
+  "dgSpecHash": "wKrTT+wzyMk=",
   "success": true,
   "projectFilePath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj",
   "expectedPackageFiles": [
@@ -58,19 +58,14 @@
     "C:\\Users\\riyas\\.nuget\\packages\\system.reflection.metadata\\6.0.1\\system.reflection.metadata.6.0.1.nupkg.sha512",
     "C:\\Users\\riyas\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
     "C:\\Users\\riyas\\.nuget\\packages\\system.text.encoding.codepages\\6.0.0\\system.text.encoding.codepages.6.0.0.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\system.threading.channels\\6.0.0\\system.threading.channels.6.0.0.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.24\\microsoft.netcore.app.ref.8.0.24.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.24\\microsoft.windowsdesktop.app.ref.8.0.24.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.24\\microsoft.aspnetcore.app.ref.8.0.24.nupkg.sha512"
+    "C:\\Users\\riyas\\.nuget\\packages\\system.threading.channels\\6.0.0\\system.threading.channels.6.0.0.nupkg.sha512"
   ],
   "logs": [
     {
       "code": "NU1603",
       "level": "Warning",
-      "message": "CERMS.Infrastructure depends on Microsoft.Extensions.Configuration.Abstractions (>= 8.0.2) but Microsoft.Extensions.Configuration.Abstractions 8.0.2 was not found. Microsoft.Extensions.Configuration.Abstractions 9.0.0 was resolved instead.",
-      "projectPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj",
       "warningLevel": 1,
-      "filePath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj",
+      "message": "CERMS.Infrastructure depends on Microsoft.Extensions.Configuration.Abstractions (>= 8.0.2) but Microsoft.Extensions.Configuration.Abstractions 8.0.2 was not found. Microsoft.Extensions.Configuration.Abstractions 9.0.0 was resolved instead.",
       "libraryId": "Microsoft.Extensions.Configuration.Abstractions",
       "targetGraphs": [
         "net8.0"
@@ -79,10 +74,8 @@
     {
       "code": "NU1608",
       "level": "Warning",
-      "message": "Detected package version outside of dependency constraint: MediatR.Extensions.Microsoft.DependencyInjection 11.1.0 requires MediatR (>= 11.0.0 && < 12.0.0) but version MediatR 12.4.1 was resolved.",
-      "projectPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj",
       "warningLevel": 1,
-      "filePath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Infrastructure\\CERMS.Infrastructure.csproj",
+      "message": "Detected package version outside of dependency constraint: MediatR.Extensions.Microsoft.DependencyInjection 11.1.0 requires MediatR (>= 11.0.0 && < 12.0.0) but version MediatR 12.4.1 was resolved.",
       "libraryId": "MediatR",
       "targetGraphs": [
         "net8.0"

@@ -1,12 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Gh47zdnmMK0=",
+  "dgSpecHash": "6S9uA8S1Xng=",
   "success": true,
   "projectFilePath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Domain\\CERMS.Domain.csproj",
-  "expectedPackageFiles": [
-    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.24\\microsoft.netcore.app.ref.8.0.24.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.24\\microsoft.windowsdesktop.app.ref.8.0.24.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.24\\microsoft.aspnetcore.app.ref.8.0.24.nupkg.sha512"
-  ],
+  "expectedPackageFiles": [],
   "logs": []
 }

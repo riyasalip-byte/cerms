@@ -46,8 +46,7 @@
               "RelativeToolTip": "src\\CERMS.Api\\Dockerfile",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-05-17T17:32:36.441Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-17T17:32:36.441Z"
             },
             {
               "$type": "Document",
@@ -59,8 +58,7 @@
               "RelativeToolTip": "src\\CERMS.Api\\appsettings.Production.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-05-17T17:26:35.283Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-17T17:26:35.283Z"
             },
             {
               "$type": "Document",
@@ -72,8 +70,7 @@
               "RelativeToolTip": "tests\\CERMS.Tests\\Features\\Assets\\Commands\\AddMaintenanceHandlerTests.cs",
               "ViewState": "AgIAAB8AAAAAAAAAAAAmwCoAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-17T16:48:56.16Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-17T16:48:56.16Z"
             },
             {
               "$type": "Document",
@@ -85,8 +82,7 @@
               "RelativeToolTip": "src\\CERMS.Infrastructure\\DependencyInjection.cs",
               "ViewState": "AgIAAAsAAAAAAAAAAAAxwCEAAAAjAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-17T16:39:01.733Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-17T16:39:01.733Z"
             },
             {
               "$type": "Document",
@@ -98,8 +94,7 @@
               "RelativeToolTip": "src\\CERMS.Api\\Program.cs",
               "ViewState": "AgIAADwAAAAAAAAAAAAAAHYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-17T16:32:30.372Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-17T16:32:30.372Z"
             },
             {
               "$type": "Document",
