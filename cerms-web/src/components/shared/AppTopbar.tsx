@@ -70,7 +70,9 @@ export function AppTopbar() {
             {pathnames.map((value, index) => {
               const to = `/${pathnames.slice(0, index + 1).join("/")}`
               const isLast = index === pathnames.length - 1
-              const label = value.charAt(0).toUpperCase() + value.slice(1)
+              
+              const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+              const label = isUuid ? "Details" : (value.charAt(0).toUpperCase() + value.slice(1))
 
               if (value === "dashboard") return null
 

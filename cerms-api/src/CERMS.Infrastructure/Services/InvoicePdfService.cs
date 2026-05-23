@@ -58,9 +58,9 @@ public class InvoicePdfService : IInvoicePdfService
                         row.RelativeItem().Column(customerCol =>
                         {
                             customerCol.Item().Text("Bill To:").Bold();
-                            customerCol.Item().Text(customer.Name);
+                            customerCol.Item().Text(customer.CustomerName);
                             customerCol.Item().Text(customer.Email);
-                            customerCol.Item().Text(customer.Phone);
+                            customerCol.Item().Text(customer.MobileNo);
                         });
                     });
 

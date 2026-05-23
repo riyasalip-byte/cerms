@@ -54,7 +54,7 @@ public class CreateRentalHandler : IRequestHandler<CreateRentalCommand, Result<R
             AssetId = rental.AssetId,
             AssetName = asset.AssetName,
             CustomerId = rental.CustomerId,
-            CustomerName = customer.Name,
+            CustomerName = customer.CustomerName,
             StartDateTime = rental.StartDateTime,
             ExpectedEndDateTime = rental.ExpectedEndDateTime,
             ActualEndDateTime = rental.ActualEndDateTime,

@@ -206,3 +206,4 @@ R:\Projects\cerms\cerms-api\src\CERMS.Api\obj\Debug\net8.0\refint\CERMS.Api.dll
 R:\Projects\cerms\cerms-api\src\CERMS.Api\obj\Debug\net8.0\CERMS.Api.pdb
 R:\Projects\cerms\cerms-api\src\CERMS.Api\obj\Debug\net8.0\CERMS.Api.genruntimeconfig.cache
 R:\Projects\cerms\cerms-api\src\CERMS.Api\obj\Debug\net8.0\ref\CERMS.Api.dll
+R:\Projects\cerms\cerms-api\src\CERMS.Api\bin\Debug\net8.0\appsettings.Production.json

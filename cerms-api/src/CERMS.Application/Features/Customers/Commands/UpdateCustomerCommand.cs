@@ -3,17 +3,30 @@ using CERMS.Application.Common;
 using CERMS.Application.DTOs;
 using CERMS.Application.Interfaces;
 using CERMS.Domain.Entities;
+using CERMS.Domain.Enums;
 using MediatR;
 
 namespace CERMS.Application.Features.Customers.Commands;
 
 public record UpdateCustomerCommand(
     Guid Id,
-    string Name,
-    string Phone,
-    string? Email = null,
+    CustomerType CustomerType,
+    string CustomerName,
+    string MobileNo,
     string? Address = null,
-    string? CompanyName = null,
+    string? AlternateMobileNo = null,
+    string? Email = null,
+    string? WhatsAppNo = null,
+    string? City = null,
+    string? State = null,
+    string? Pincode = null,
+    string? ContactPersonName = null,
+    string? ContactPersonMobileNo = null,
+    string? ContactPersonAddress = null,
+    string? GstOrTaxNumber = null,
+    decimal CreditLimit = 0,
+    decimal OutstandingBalance = 0,
+    string? Notes = null,
     bool IsActive = true) : IRequest<Result<CustomerDto>>;
 
 public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Result<CustomerDto>>
@@ -34,12 +47,24 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
             return Result<CustomerDto>.Failure("Customer not found.");
 
         customer.UpdateDetails(
-            request.Name.Trim(),
-            request.Phone.Trim(),
-            NormalizeOptionalValue(request.Email),
+            request.CustomerType,
+            request.CustomerName.Trim(),
+            request.MobileNo.Trim(),
             NormalizeOptionalValue(request.Address),
-            NormalizeOptionalValue(request.CompanyName),
-            customer.IDProofNumber);
+            NormalizeOptionalValue(request.AlternateMobileNo),
+            NormalizeOptionalValue(request.Email),
+            NormalizeOptionalValue(request.WhatsAppNo),
+            NormalizeOptionalValue(request.City),
+            NormalizeOptionalValue(request.State),
+            NormalizeOptionalValue(request.Pincode),
+            NormalizeOptionalValue(request.ContactPersonName),
+            NormalizeOptionalValue(request.ContactPersonMobileNo),
+            NormalizeOptionalValue(request.ContactPersonAddress),
+            NormalizeOptionalValue(request.GstOrTaxNumber),
+            request.CreditLimit,
+            request.OutstandingBalance,
+            NormalizeOptionalValue(request.Notes)
+        );
 
         if (request.IsActive)
             customer.Activate();

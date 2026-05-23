@@ -88,14 +88,14 @@ export function CustomerList() {
               >
                 <td className="px-4 py-3">
                   <div className="font-medium text-slate-900 dark:text-slate-100">
-                    {customer.name}
+                    {customer.customerName}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     {customer.id} - {customer.email}
                   </div>
                 </td>
                 <td className="px-4 py-3">{customer.company}</td>
-                <td className="px-4 py-3">{customer.phone}</td>
+                <td className="px-4 py-3">{customer.mobileNo}</td>
                 <td className="px-4 py-3">
                   <span
                     className={[

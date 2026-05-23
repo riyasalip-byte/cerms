@@ -3,17 +3,30 @@ using CERMS.Application.Common;
 using CERMS.Application.DTOs;
 using CERMS.Application.Interfaces;
 using CERMS.Domain.Entities;
+using CERMS.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace CERMS.Application.Features.Customers.Commands;
 
 public record CreateCustomerCommand(
-    string Name,
-    string Phone,
-    string? Email = null,
+    CustomerType CustomerType,
+    string CustomerName,
+    string MobileNo,
     string? Address = null,
-    string? CompanyName = null) : IRequest<Result<CustomerDto>>;
+    string? AlternateMobileNo = null,
+    string? Email = null,
+    string? WhatsAppNo = null,
+    string? City = null,
+    string? State = null,
+    string? Pincode = null,
+    string? ContactPersonName = null,
+    string? ContactPersonMobileNo = null,
+    string? ContactPersonAddress = null,
+    string? GstOrTaxNumber = null,
+    decimal CreditLimit = 0,
+    decimal OutstandingBalance = 0,
+    string? Notes = null) : IRequest<Result<CustomerDto>>;
 
 public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Result<CustomerDto>>
 {
@@ -34,11 +47,24 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
 
         var customer = new Customer(
             customerCode,
-            request.Name.Trim(),
-            request.Phone.Trim(),
-            NormalizeOptionalValue(request.Email),
+            request.CustomerType,
+            request.CustomerName.Trim(),
+            request.MobileNo.Trim(),
             NormalizeOptionalValue(request.Address),
-            NormalizeOptionalValue(request.CompanyName));
+            NormalizeOptionalValue(request.AlternateMobileNo),
+            NormalizeOptionalValue(request.Email),
+            NormalizeOptionalValue(request.WhatsAppNo),
+            NormalizeOptionalValue(request.City),
+            NormalizeOptionalValue(request.State),
+            NormalizeOptionalValue(request.Pincode),
+            NormalizeOptionalValue(request.ContactPersonName),
+            NormalizeOptionalValue(request.ContactPersonMobileNo),
+            NormalizeOptionalValue(request.ContactPersonAddress),
+            NormalizeOptionalValue(request.GstOrTaxNumber),
+            request.CreditLimit,
+            request.OutstandingBalance,
+            NormalizeOptionalValue(request.Notes)
+        );
 
         await _unitOfWork.Repository<Customer>().AddAsync(customer);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -58,7 +84,7 @@ public class CreateCustomerHandler : IRequestHandler<CreateCustomerCommand, Resu
             .DefaultIfEmpty(0)
             .Max() + 1;
 
-        return $"{CustomerCodePrefix}{nextNumber:000}";
+        return $"{CustomerCodePrefix}{nextNumber:0000}"; // 4 digits!
     }
 
     private static int GetCustomerCodeNumber(string customerCode)

@@ -4,6 +4,7 @@ using CERMS.Application.Common;
 using CERMS.Application.DTOs;
 using CERMS.Application.Interfaces;
 using CERMS.Domain.Entities;
+using CERMS.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +16,7 @@ public record GetCustomersQuery : IRequest<Result<PagedResult<CustomerDto>>>
     public int PageSize { get; init; } = 10;
     public string? SearchTerm { get; init; }
     public bool? IsActive { get; init; }
+    public CustomerType? CustomerType { get; init; }
 }
 
 public class GetCustomersHandler : IRequestHandler<GetCustomersQuery, Result<PagedResult<CustomerDto>>>
@@ -36,14 +38,19 @@ public class GetCustomersHandler : IRequestHandler<GetCustomersQuery, Result<Pag
         {
             var searchTerm = request.SearchTerm.Trim().ToLower();
             query = query.Where(customer =>
-                customer.Name.ToLower().Contains(searchTerm) ||
-                customer.Phone.ToLower().Contains(searchTerm) ||
+                customer.CustomerName.ToLower().Contains(searchTerm) ||
+                customer.MobileNo.ToLower().Contains(searchTerm) ||
                 customer.CustomerCode.ToLower().Contains(searchTerm));
         }
 
         if (request.IsActive.HasValue)
         {
             query = query.Where(customer => customer.IsActive == request.IsActive.Value);
+        }
+
+        if (request.CustomerType.HasValue)
+        {
+            query = query.Where(customer => customer.CustomerType == request.CustomerType.Value);
         }
 
         var count = await query.CountAsync(cancellationToken);

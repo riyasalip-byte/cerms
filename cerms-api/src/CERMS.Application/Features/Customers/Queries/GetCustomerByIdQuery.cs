@@ -26,12 +26,24 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
             {
                 Id = customer.Id,
                 CustomerCode = customer.CustomerCode,
-                Name = customer.Name,
-                CompanyName = customer.CompanyName,
-                IsActive = customer.IsActive,
-                Phone = customer.Phone,
+                CustomerType = customer.CustomerType,
+                CustomerName = customer.CustomerName,
+                Address = customer.Address,
+                MobileNo = customer.MobileNo,
+                AlternateMobileNo = customer.AlternateMobileNo,
                 Email = customer.Email,
-                Address = customer.Address
+                WhatsAppNo = customer.WhatsAppNo,
+                City = customer.City,
+                State = customer.State,
+                Pincode = customer.Pincode,
+                ContactPersonName = customer.ContactPersonName,
+                ContactPersonMobileNo = customer.ContactPersonMobileNo,
+                ContactPersonAddress = customer.ContactPersonAddress,
+                GstOrTaxNumber = customer.GstOrTaxNumber,
+                CreditLimit = customer.CreditLimit,
+                OutstandingBalance = customer.OutstandingBalance,
+                Notes = customer.Notes,
+                IsActive = customer.IsActive
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -47,19 +59,39 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
             .Where(rental => rental.TotalAmount.HasValue)
             .SumAsync(rental => rental.TotalAmount!.Value, cancellationToken);
 
-        customer.RentalHistory = await (from rental in customerRentalsQuery
+        var rentalHistoryItems = await (from rental in customerRentalsQuery
                                         join asset in assetsQuery on rental.AssetId equals asset.Id
+                                        join invoice in _unitOfWork.Repository<Invoice>().Entities on rental.Id equals invoice.BookingId into invoiceGroup
+                                        from inv in invoiceGroup.DefaultIfEmpty()
                                         orderby rental.StartDateTime descending
-                                        select new CustomerRentalSummaryDto
+                                        select new
                                         {
                                             RentalId = rental.Id,
-                                           AssetName = asset.AssetName,
+                                            InvoiceId = inv != null ? (Guid?)inv.Id : null,
+                                            AssetName = asset.AssetName,
                                             StartDateTime = rental.StartDateTime,
+                                            EndDateTime = rental.ActualEndDateTime ?? rental.ExpectedEndDateTime,
                                             Status = rental.Status,
-                                            TotalAmount = rental.TotalAmount
+                                            TotalBillAmount = inv != null ? inv.Total : (rental.TotalAmount ?? 0),
+                                            PaidAmount = inv != null ? inv.AmountPaid : 0,
+                                            BalanceAmount = inv != null ? inv.BalanceDue : (rental.TotalAmount ?? 0)
                                         })
-            .Take(10)
+            .Take(20)
             .ToListAsync(cancellationToken);
+
+        customer.RentalHistory = rentalHistoryItems.Select(r => new CustomerRentalSummaryDto
+        {
+            RentalId = r.RentalId,
+            InvoiceId = r.InvoiceId,
+            RentalNo = "RENT-" + r.RentalId.ToString()[..8].ToUpper(),
+            AssetName = r.AssetName,
+            StartDateTime = r.StartDateTime,
+            EndDateTime = r.EndDateTime,
+            Status = r.Status,
+            TotalBillAmount = r.TotalBillAmount,
+            PaidAmount = r.PaidAmount,
+            BalanceAmount = r.BalanceAmount
+        }).ToList();
 
         return Result<CustomerDetailDto>.Success(customer);
     }

@@ -10,23 +10,39 @@ type ApiResponse<T> = {
 export type CustomerDto = {
   id: string
   customerCode: string
-  name: string
-  phone: string
+  customerType: number // 0 = Individual, 1 = Company
+  customerName: string
+  mobileNo: string
+  alternateMobileNo?: string | null
   email?: string | null
+  whatsAppNo?: string | null
   address?: string | null
-  companyName?: string | null
+  city?: string | null
+  state?: string | null
+  pincode?: string | null
+  contactPersonName?: string | null
+  contactPersonMobileNo?: string | null
+  contactPersonAddress?: string | null
+  gstOrTaxNumber?: string | null
+  creditLimit: number
+  outstandingBalance: number
+  notes?: string | null
   isActive: boolean
-  company?: string | null
+  company?: string | null // compatibility field
   status?: 'active' | 'inactive'
-  joinedOn?: string | null
 }
 
 export type CustomerRentalSummaryDto = {
   rentalId: string
+  invoiceId?: string | null
+  rentalNo: string
   assetName: string
   startDateTime: string
+  endDateTime: string
   status: number
-  totalAmount?: number | null
+  totalBillAmount: number
+  paidAmount: number
+  balanceAmount: number
 }
 
 export type CustomerDetailDto = CustomerDto & {
@@ -40,23 +56,46 @@ export type GetCustomersParams = {
   pageSize?: number
   searchTerm?: string
   isActive?: boolean
+  customerType?: number
 }
 
 export type CreateCustomerRequest = {
-  name: string
-  phone: string
-  email?: string | null
+  customerType: number
+  customerName: string
+  mobileNo: string
   address?: string | null
-  companyName?: string | null
+  alternateMobileNo?: string | null
+  email?: string | null
+  whatsAppNo?: string | null
+  city?: string | null
+  state?: string | null
+  pincode?: string | null
+  contactPersonName?: string | null
+  contactPersonMobileNo?: string | null
+  contactPersonAddress?: string | null
+  gstOrTaxNumber?: string | null
+  creditLimit: number
+  notes?: string | null
 }
 
 export type UpdateCustomerRequest = {
   id: string
-  name: string
-  phone: string
-  email?: string | null
+  customerType: number
+  customerName: string
+  mobileNo: string
   address?: string | null
-  companyName?: string | null
+  alternateMobileNo?: string | null
+  email?: string | null
+  whatsAppNo?: string | null
+  city?: string | null
+  state?: string | null
+  pincode?: string | null
+  contactPersonName?: string | null
+  contactPersonMobileNo?: string | null
+  contactPersonAddress?: string | null
+  gstOrTaxNumber?: string | null
+  creditLimit: number
+  notes?: string | null
   isActive: boolean
 }
 
@@ -91,7 +130,7 @@ export const deactivateCustomer = async (id: string) => {
 function normalizeCustomer<T extends CustomerDto>(customer: T): T {
   return {
     ...customer,
-    company: customer.companyName,
+    company: customer.customerType === 1 ? customer.customerName : null,
     status: customer.isActive ? 'active' : 'inactive'
   }
 }

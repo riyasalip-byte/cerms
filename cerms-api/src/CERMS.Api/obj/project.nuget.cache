@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "xqZl7VIC3dc=",
+  "dgSpecHash": "C1j1sv3WvsQ=",
   "success": true,
   "projectFilePath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\CERMS.Api.csproj",
   "expectedPackageFiles": [
@@ -93,14 +93,20 @@
     "C:\\Users\\riyas\\.nuget\\packages\\system.text.encoding.codepages\\6.0.0\\system.text.encoding.codepages.6.0.0.nupkg.sha512",
     "C:\\Users\\riyas\\.nuget\\packages\\system.text.encodings.web\\10.0.0\\system.text.encodings.web.10.0.0.nupkg.sha512",
     "C:\\Users\\riyas\\.nuget\\packages\\system.text.json\\10.0.0\\system.text.json.10.0.0.nupkg.sha512",
-    "C:\\Users\\riyas\\.nuget\\packages\\system.threading.channels\\6.0.0\\system.threading.channels.6.0.0.nupkg.sha512"
+    "C:\\Users\\riyas\\.nuget\\packages\\system.threading.channels\\6.0.0\\system.threading.channels.6.0.0.nupkg.sha512",
+    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.24\\microsoft.netcore.app.ref.8.0.24.nupkg.sha512",
+    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.24\\microsoft.windowsdesktop.app.ref.8.0.24.nupkg.sha512",
+    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.24\\microsoft.aspnetcore.app.ref.8.0.24.nupkg.sha512",
+    "C:\\Users\\riyas\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.24\\microsoft.netcore.app.host.win-x64.8.0.24.nupkg.sha512"
   ],
   "logs": [
     {
       "code": "NU1608",
       "level": "Warning",
-      "warningLevel": 1,
       "message": "Detected package version outside of dependency constraint: MediatR.Extensions.Microsoft.DependencyInjection 11.1.0 requires MediatR (>= 11.0.0 && < 12.0.0) but version MediatR 12.4.1 was resolved.",
+      "projectPath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\CERMS.Api.csproj",
+      "warningLevel": 1,
+      "filePath": "R:\\Projects\\cerms\\cerms-api\\src\\CERMS.Api\\CERMS.Api.csproj",
       "libraryId": "MediatR",
       "targetGraphs": [
         "net8.0"

@@ -1,5 +1,6 @@
 using CERMS.Application.Features.Customers.Commands;
 using CERMS.Application.Features.Customers.Queries;
+using CERMS.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CERMS.Api.Controllers;
@@ -7,14 +8,20 @@ namespace CERMS.Api.Controllers;
 public class CustomersController : ApiControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchTerm = null, [FromQuery] bool? isActive = null)
+    public async Task<IActionResult> Get(
+        [FromQuery] int pageNumber = 1, 
+        [FromQuery] int pageSize = 10, 
+        [FromQuery] string? searchTerm = null, 
+        [FromQuery] bool? isActive = null,
+        [FromQuery] CustomerType? customerType = null)
     {
         var query = new GetCustomersQuery
         {
             PageNumber = pageNumber,
             PageSize = pageSize,
             SearchTerm = searchTerm,
-            IsActive = isActive
+            IsActive = isActive,
+            CustomerType = customerType
         };
 
         return HandleResult(await Mediator.Send(query));

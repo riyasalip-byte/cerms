@@ -15,6 +15,7 @@ import { useAuthStore } from "@/stores/authStore"
 import { authService } from "@/api/services"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 import {
   Sidebar,
@@ -115,9 +116,13 @@ export function AppSidebar() {
                         asChild
                         tooltip={item.label}
                         isActive={isActive}
+                        className={cn(
+                          "transition-all duration-200",
+                          isActive && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 font-bold border-l-2 border-emerald-500 rounded-none pl-3"
+                        )}
                       >
                         <Link to={item.to} onClick={() => handleNavClick(item.to)}>
-                          <item.icon />
+                          <item.icon className={cn(isActive && "text-emerald-600 dark:text-emerald-400")} />
                           <span>{item.label}</span>
                         </Link>
                       </SidebarMenuButton>

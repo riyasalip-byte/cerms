@@ -186,7 +186,7 @@ export function RentalForm() {
                       <SelectContent>
                         {customersData?.items.map((customer) => (
                           <SelectItem key={customer.id} value={customer.id}>
-                            {customer.name}
+                            {customer.customerName}
                           </SelectItem>
                         ))}
                       </SelectContent>
