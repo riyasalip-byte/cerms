@@ -67,9 +67,9 @@ export const offlineQueue = {
 
     for (const item of unsynced) {
       try {
-        await rentalService.close(item.rentalId, {
-          actualEndDate: item.actualEndDate,
-          currentOdometer: item.currentOdometer
+        await rentalService.completeRental(item.rentalId, {
+          actualEndDateTime: new Date(item.actualEndDate).toISOString(),
+          endOdometer: item.currentOdometer
         })
         
         // Mark as synced

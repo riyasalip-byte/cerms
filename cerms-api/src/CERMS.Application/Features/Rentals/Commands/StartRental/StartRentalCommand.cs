@@ -22,8 +22,8 @@ public class StartRentalHandler : IRequestHandler<StartRentalCommand, Result<Uni
         var rental = await _unitOfWork.Repository<RentalBooking>().GetByIdAsync(request.RentalId);
         if (rental == null) return Result<Unit>.Failure("Rental not found.");
 
-        if (rental.Status != RentalStatus.Confirmed)
-            return Result<Unit>.Failure("Only confirmed rentals can be started.");
+        if (rental.Status != RentalStatus.Dispatched)
+            return Result<Unit>.Failure("Only dispatched rentals can be started.");
 
         try
         {

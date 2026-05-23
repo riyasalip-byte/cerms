@@ -33,6 +33,42 @@ public class RentalBookingConfiguration : IEntityTypeConfiguration<RentalBooking
             .IsRequired()
             .HasConversion<string>();
 
+        builder.Property(r => r.SiteName)
+            .IsRequired()
+            .HasMaxLength(200);
+
+        builder.Property(r => r.SiteAddress)
+            .IsRequired()
+            .HasMaxLength(500);
+
+        builder.Property(r => r.SiteLandmark)
+            .HasMaxLength(200);
+
+        builder.Property(r => r.SiteContactPerson)
+            .HasMaxLength(100);
+
+        builder.Property(r => r.SiteContactNumber)
+            .HasMaxLength(50);
+
+        builder.Property(r => r.PickupTransportCharge)
+            .HasPrecision(18, 2);
+
+        builder.Property(r => r.ReturnTransportCharge)
+            .HasPrecision(18, 2);
+
+        builder.Property(r => r.TransportNotes)
+            .HasMaxLength(1000);
+
+        builder.Property(r => r.AdvanceAmount)
+            .HasPrecision(18, 2);
+
+        builder.Property(r => r.SecurityDepositAmount)
+            .HasPrecision(18, 2);
+
+        builder.Property(r => r.FuelResponsibilityType)
+            .IsRequired()
+            .HasConversion<string>();
+
         builder.HasOne<Asset>()
             .WithMany()
             .HasForeignKey(r => r.AssetId)

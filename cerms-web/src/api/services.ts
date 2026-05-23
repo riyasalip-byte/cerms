@@ -28,6 +28,7 @@ export type Asset = {
   dailyRate?: number
   status: number
   currentMeterReading: number
+  isTransportationRequired?: boolean
 }
 
 // Rental types
@@ -52,9 +53,20 @@ export type Rental = {
   endOdometer?: number
   totalAmount?: number
   currentOdometer?: number
+  siteName?: string
+  siteAddress?: string
+  siteLandmark?: string
+  siteContactPerson?: string
+  siteContactNumber?: string
+  pickupTransportCharge?: number
+  returnTransportCharge?: number
+  transportNotes?: string
+  advanceAmount?: number
+  securityDepositAmount?: number
+  fuelResponsibilityType?: string | number
 }
 
-export type CloseRentalPayload = {
+export type CompleteRentalPayload = {
   actualEndDateTime: string
   endOdometer: number
   billingMode?: 0 | 1 | 2 | "Auto" | "ManualRate" | "OverrideTotal"
@@ -121,11 +133,15 @@ export const rentalService = {
   getRentals: (params?: any) => api.get<PaginatedList<Rental>>('/rentals', { params }).then(r => r.data),
   getRentalById: (id: string) => api.get<Rental>(`/rentals/${id}`).then(r => r.data),
   createRental: (data: any) => api.post<string>('/rentals', data).then(r => r.data),
+  updateRental: (id: string, data: any) => api.put(`/rentals/${id}`, data).then(r => r.data),
   confirmRental: (id: string) => api.post(`/rentals/${id}/confirm`).then(r => r.data),
+  dispatchRental: (id: string) => api.post(`/rentals/${id}/dispatch`).then(r => r.data),
+  cancelRental: (id: string) => api.post(`/rentals/${id}/cancel`).then(r => r.data),
   startRental: (id: string, data: { startOdometer: number }) => api.post(`/rentals/${id}/start`, data).then(r => r.data),
-  closeRental: (id: string, data: CloseRentalPayload) => api.post<any>(`/rentals/${id}/close`, data).then(r => r.data),
+  completeRental: (id: string, data: CompleteRentalPayload) => api.post<any>(`/rentals/${id}/complete`, data).then(r => r.data),
+  closeRental: (id: string) => api.post(`/rentals/${id}/close`).then(r => r.data),
   getById: (id: string) => api.get<Rental>(`/rentals/${id}`).then(r => r.data),
-  close: (id: string, data: any) => api.post<any>(`/rentals/${id}/close`, data).then(r => r.data),
+  close: (id: string) => api.post<any>(`/rentals/${id}/close`).then(r => r.data),
 }
 
 export const invoiceService = {

@@ -4,37 +4,31 @@ using CERMS.Domain.Entities;
 using CERMS.Domain.Enums;
 using MediatR;
 
-namespace CERMS.Application.Features.Rentals.Commands.CloseRental;
+namespace CERMS.Application.Features.Rentals.Commands.DispatchRental;
 
-public enum BillingMode
-{
-    Auto,
-    ManualRate,
-    OverrideTotal
-}
+public record DispatchRentalCommand(Guid RentalId) : IRequest<Result<Unit>>;
 
-public record CloseRentalCommand(Guid RentalId) : IRequest<Result<Unit>>;
-
-public class CloseRentalHandler : IRequestHandler<CloseRentalCommand, Result<Unit>>
+public class DispatchRentalHandler : IRequestHandler<DispatchRentalCommand, Result<Unit>>
 {
     private readonly IUnitOfWork _unitOfWork;
 
-    public CloseRentalHandler(IUnitOfWork unitOfWork)
+    public DispatchRentalHandler(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<Unit>> Handle(CloseRentalCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Unit>> Handle(DispatchRentalCommand request, CancellationToken cancellationToken)
     {
         var rental = await _unitOfWork.Repository<RentalBooking>().GetByIdAsync(request.RentalId);
         if (rental == null) return Result<Unit>.Failure("Rental not found.");
 
-        if (rental.Status != RentalStatus.Completed)
-            return Result<Unit>.Failure("Only completed rentals can be closed.");
+        if (rental.Status != RentalStatus.Confirmed)
+            return Result<Unit>.Failure("Only confirmed rentals can be dispatched.");
 
         try
         {
-            rental.Close();
+            rental.Dispatch();
+            
             _unitOfWork.Repository<RentalBooking>().Update(rental);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 

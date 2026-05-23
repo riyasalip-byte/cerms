@@ -10,9 +10,12 @@ export type StatusType =
   | "decommissioned"
   | "overdue" 
   | "draft"
-  | "active"
   | "confirmed"
+  | "dispatched"
+  | "active"
+  | "completed"
   | "closed"
+  | "cancelled"
   | "unpaid"
   | "partial"
   | "paid"
@@ -45,19 +48,31 @@ const statusMap: Record<string, { label: string; className: string }> = {
   },
   draft: { 
     label: "Draft", 
-    className: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" 
-  },
-  active: { 
-    label: "Active", 
-    className: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800" 
+    className: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-700" 
   },
   confirmed: { 
     label: "Confirmed", 
     className: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800" 
   },
+  dispatched: {
+    label: "Dispatched",
+    className: "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800"
+  },
+  active: { 
+    label: "Active", 
+    className: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800" 
+  },
+  completed: {
+    label: "Completed",
+    className: "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-800"
+  },
   closed: { 
     label: "Closed", 
-    className: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" 
+    className: "bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800/40 dark:text-zinc-400 dark:border-zinc-700" 
+  },
+  cancelled: {
+    label: "Cancelled",
+    className: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800"
   },
   unpaid: { 
     label: "Unpaid", 
@@ -84,8 +99,11 @@ const numericStatusMap: Record<number, StatusType> = {
 const rentalNumericStatusMap: Record<number, StatusType> = {
   0: "draft",
   1: "confirmed",
-  2: "active",
-  3: "closed",
+  2: "dispatched",
+  3: "active",
+  4: "completed",
+  5: "closed",
+  6: "cancelled",
 }
 
 const invoiceNumericStatusMap: Record<number, StatusType> = {

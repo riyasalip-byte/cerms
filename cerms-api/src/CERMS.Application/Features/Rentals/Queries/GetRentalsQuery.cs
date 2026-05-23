@@ -50,7 +50,18 @@ public class GetRentalsHandler : IRequestHandler<GetRentalsQuery, Result<Paginat
                         StartOdometer = r.StartOdometer,
                         EndOdometer = r.EndOdometer,
                         TotalAmount = r.TotalAmount,
-                        IsInvoiced = r.IsInvoiced
+                        IsInvoiced = r.IsInvoiced,
+                        SiteName = r.SiteName,
+                        SiteAddress = r.SiteAddress,
+                        SiteLandmark = r.SiteLandmark,
+                        SiteContactPerson = r.SiteContactPerson,
+                        SiteContactNumber = r.SiteContactNumber,
+                        PickupTransportCharge = r.PickupTransportCharge,
+                        ReturnTransportCharge = r.ReturnTransportCharge,
+                        TransportNotes = r.TransportNotes,
+                        AdvanceAmount = r.AdvanceAmount,
+                        SecurityDepositAmount = r.SecurityDepositAmount,
+                        FuelResponsibilityType = r.FuelResponsibilityType
                     };
 
         var items = await query
@@ -102,7 +113,18 @@ public class GetRentalByIdHandler : IRequestHandler<GetRentalByIdQuery, Result<R
                                    StartOdometer = r.StartOdometer,
                                    EndOdometer = r.EndOdometer,
                                    TotalAmount = r.TotalAmount,
-                                   IsInvoiced = r.IsInvoiced
+                                   IsInvoiced = r.IsInvoiced,
+                                   SiteName = r.SiteName,
+                                   SiteAddress = r.SiteAddress,
+                                   SiteLandmark = r.SiteLandmark,
+                                   SiteContactPerson = r.SiteContactPerson,
+                                   SiteContactNumber = r.SiteContactNumber,
+                                   PickupTransportCharge = r.PickupTransportCharge,
+                                   ReturnTransportCharge = r.ReturnTransportCharge,
+                                   TransportNotes = r.TransportNotes,
+                                   AdvanceAmount = r.AdvanceAmount,
+                                   SecurityDepositAmount = r.SecurityDepositAmount,
+                                   FuelResponsibilityType = r.FuelResponsibilityType
                                }).FirstOrDefaultAsync(cancellationToken);
 
         if (rentalDto == null) return Result<RentalDto>.Failure("Rental not found.");

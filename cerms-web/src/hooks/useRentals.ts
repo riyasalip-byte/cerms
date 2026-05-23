@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { rentalService, type CloseRentalPayload } from '@/api/services'
+import { rentalService, type CompleteRentalPayload } from '@/api/services'
 import { toast } from 'sonner'
 
 function getErrorMessage(error: any, fallback: string) {
@@ -77,15 +77,46 @@ export function useStartRental() {
   })
 }
 
-export function useCloseRental() {
+export function useDispatchRental() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string } & CloseRentalPayload) => {
+    mutationFn: (id: string) => rentalService.dispatchRental(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['rentals'] })
+      queryClient.invalidateQueries({ queryKey: ['rentals', id] })
+      toast.success('Rental dispatched and out for delivery')
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to dispatch rental'))
+    }
+  })
+}
+
+export function useCancelRental() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => rentalService.cancelRental(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['rentals'] })
+      queryClient.invalidateQueries({ queryKey: ['rentals', id] })
+      queryClient.invalidateQueries({ queryKey: ['assets'] })
+      toast.success('Rental agreement cancelled successfully')
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to cancel rental'))
+    }
+  })
+}
+
+export function useCompleteRental() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string } & CompleteRentalPayload) => {
       try {
-        return await rentalService.closeRental(id, data)
+        return await rentalService.completeRental(id, data)
       } catch (error) {
         if (!navigator.onLine) {
-          toast.info('Offline: Close will sync automatically when back online')
+          toast.info('Offline: Completion will sync automatically when back online')
           return { offline: true }
         }
         throw error
@@ -97,11 +128,41 @@ export function useCloseRental() {
       queryClient.invalidateQueries({ queryKey: ['assets'] })
       
       if (!data?.offline) {
-        toast.success('Rental successfully closed and billing calculated')
+        toast.success('Rental successfully completed and billing finalized')
       }
     },
     onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to complete rental'))
+    }
+  })
+}
+
+export function useCloseRental() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => rentalService.closeRental(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['rentals'] })
+      queryClient.invalidateQueries({ queryKey: ['rentals', id] })
+      toast.success('Rental booking closed and archived')
+    },
+    onError: (error: any) => {
       toast.error(getErrorMessage(error, 'Failed to close rental'))
+    }
+  })
+}
+
+export function useUpdateRental() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => rentalService.updateRental(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['rentals'] })
+      queryClient.invalidateQueries({ queryKey: ['rentals', variables.id] })
+      toast.success('Rental details updated successfully')
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, 'Failed to update rental details'))
     }
   })
 }

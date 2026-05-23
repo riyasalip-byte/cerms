@@ -19,17 +19,29 @@ type RentalRecord = {
   startDateTime: string
   expectedEndDateTime: string
   status: number
+  siteName?: string
+  advanceAmount?: number
+  fuelResponsibilityType?: string | number
+}
+
+const formatFuelResponsibility = (type?: string | number) => {
+  if (type === 0 || type === "0" || type === "Customer") return "Customer"
+  if (type === 1 || type === "1" || type === "Company") return "Company"
+  if (type === 2 || type === "2" || type === "Shared") return "Shared"
+  return String(type || "Customer")
 }
 
 export function RentalList() {
   const navigate = useNavigate()
   
   const [statusFilter, setStatusFilter] = React.useState<string>("all")
+  const [fuelFilter, setFuelFilter] = React.useState<string>("all")
   const [dateFrom, setDateFrom] = React.useState<string>("")
   const [dateTo, setDateTo] = React.useState<string>("")
 
   const { data, isLoading, isError, refetch } = useRentals({
     status: statusFilter !== "all" ? statusFilter : undefined,
+    fuelResponsibilityType: fuelFilter !== "all" ? fuelFilter : undefined,
     startDate: dateFrom || undefined,
     endDate: dateTo || undefined
   })
@@ -60,6 +72,40 @@ export function RentalList() {
       ),
     },
     {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <StatusBadge status={row.original.status} className="rental" />
+      ),
+    },
+    {
+      accessorKey: "siteName",
+      header: "Site Name",
+      cell: ({ row }) => (
+        <span className="font-medium text-slate-700 dark:text-slate-350">{row.original.siteName || "-"}</span>
+      ),
+    },
+    {
+      accessorKey: "advanceAmount",
+      header: "Advance",
+      cell: ({ row }) => (
+        <span className="font-mono text-slate-600 dark:text-slate-400">
+          {row.original.advanceAmount !== undefined && row.original.advanceAmount !== null
+            ? `$${Number(row.original.advanceAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+            : "-"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "fuelResponsibilityType",
+      header: "Fuel Responsibility",
+      cell: ({ row }) => (
+        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
+          {formatFuelResponsibility(row.original.fuelResponsibilityType)}
+        </span>
+      ),
+    },
+    {
       accessorKey: "startDateTime",
       header: "Start Date",
       cell: ({ row }) => {
@@ -71,26 +117,6 @@ export function RentalList() {
           </div>
         )
       },
-    },
-    {
-      accessorKey: "expectedEndDateTime",
-      header: "End Date",
-      cell: ({ row }) => {
-        const end = new Date(row.original.expectedEndDateTime)
-        return (
-          <div className="flex items-center gap-1 text-sm">
-            <Calendar className="size-3 text-muted-foreground" />
-            {format(end, "MMM dd, yyyy")}
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => (
-        <StatusBadge status={row.original.status} className="rental" />
-      ),
     },
     {
       id: "actions",
@@ -137,7 +163,7 @@ export function RentalList() {
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end bg-card p-4 rounded-xl border border-border/50 shadow-sm">
-        <div className="space-y-1.5 flex-1 min-w-[200px]">
+        <div className="space-y-1.5 flex-1 min-w-[150px]">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</label>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger>
@@ -147,13 +173,31 @@ export function RentalList() {
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="0">Draft</SelectItem>
               <SelectItem value="1">Confirmed</SelectItem>
-              <SelectItem value="2">Active</SelectItem>
-              <SelectItem value="3">Closed</SelectItem>
+              <SelectItem value="2">Dispatched</SelectItem>
+              <SelectItem value="3">Active</SelectItem>
+              <SelectItem value="4">Completed</SelectItem>
+              <SelectItem value="5">Closed</SelectItem>
+              <SelectItem value="6">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5 flex-1 min-w-[150px]">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fuel Responsibility</label>
+          <Select value={fuelFilter} onValueChange={setFuelFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All Terms" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Terms</SelectItem>
+              <SelectItem value="0">Customer</SelectItem>
+              <SelectItem value="1">Company</SelectItem>
+              <SelectItem value="2">Shared</SelectItem>
             </SelectContent>
           </Select>
         </div>
         
-        <div className="space-y-1.5 flex-1 min-w-[200px]">
+        <div className="space-y-1.5 flex-1 min-w-[150px]">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">From Date</label>
           <Input 
             type="date" 
@@ -162,7 +206,7 @@ export function RentalList() {
           />
         </div>
         
-        <div className="space-y-1.5 flex-1 min-w-[200px]">
+        <div className="space-y-1.5 flex-1 min-w-[150px]">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">To Date</label>
           <Input 
             type="date" 
@@ -175,6 +219,7 @@ export function RentalList() {
           variant="outline" 
           onClick={() => {
             setStatusFilter("all")
+            setFuelFilter("all")
             setDateFrom("")
             setDateTo("")
           }}

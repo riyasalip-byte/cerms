@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useCloseRental } from "@/hooks/useRentals"
+import { useCompleteRental } from "@/hooks/useRentals"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -21,7 +21,7 @@ interface CloseRentalDialogProps {
 }
 
 export function CloseRentalDialog({ rentalId, startOdometer, isOpen, onOpenChange, onSuccess }: CloseRentalDialogProps) {
-  const closeRental = useCloseRental()
+  const completeRental = useCompleteRental()
   const [endOdometer, setEndOdometer] = React.useState("")
   const [actualEndDate, setActualEndDate] = React.useState(new Date().toISOString().split("T")[0])
   const [billingSummary, setBillingSummary] = React.useState<any>(null)
@@ -31,7 +31,7 @@ export function CloseRentalDialog({ rentalId, startOdometer, isOpen, onOpenChang
     if (!endOdometer) return
     
     try {
-      const response = await closeRental.mutateAsync({
+      const response = await completeRental.mutateAsync({
         id: rentalId,
         actualEndDateTime: new Date(actualEndDate).toISOString(),
         endOdometer: Number(endOdometer)
@@ -58,13 +58,15 @@ export function CloseRentalDialog({ rentalId, startOdometer, isOpen, onOpenChang
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         {!billingSummary ? (
           <form onSubmit={handleSubmit}>
             <DialogHeader>
-              <DialogTitle>Close Rental & Generate Invoice</DialogTitle>
+              <DialogTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                Complete Rental & Finalize Billing
+              </DialogTitle>
               <DialogDescription>
-                This will close the rental agreement, mark the asset as available again, and automatically compute the final invoice amount.
+                This will record the end odometer, calculate the final billable amount based on cycle rates, and safely release the asset back to Available.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-6">
@@ -76,6 +78,7 @@ export function CloseRentalDialog({ rentalId, startOdometer, isOpen, onOpenChang
                   value={endOdometer}
                   onChange={(e) => setEndOdometer(e.target.value)}
                   required
+                  className="h-11 text-base"
                 />
               </div>
               <div className="space-y-2">
@@ -85,13 +88,14 @@ export function CloseRentalDialog({ rentalId, startOdometer, isOpen, onOpenChang
                   value={actualEndDate}
                   onChange={(e) => setActualEndDate(e.target.value)}
                   required
+                  className="h-11 text-base"
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
-              <Button type="submit" variant="destructive" disabled={closeRental.isPending || !endOdometer}>
-                {closeRental.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : "Confirm Close"}
+              <Button type="button" variant="outline" className="h-11 px-5" onClick={handleClose}>Cancel</Button>
+              <Button type="submit" variant="destructive" className="h-11 px-6 font-semibold" disabled={completeRental.isPending || !endOdometer}>
+                {completeRental.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : "Confirm Completion"}
               </Button>
             </DialogFooter>
           </form>
@@ -101,34 +105,36 @@ export function CloseRentalDialog({ rentalId, startOdometer, isOpen, onOpenChang
               <CheckCircle className="size-6 text-emerald-600 dark:text-emerald-400" />
             </div>
             <DialogHeader>
-              <DialogTitle className="text-center">Rental Closed Successfully</DialogTitle>
+              <DialogTitle className="text-center text-xl font-bold">Rental Completed Successfully</DialogTitle>
               <DialogDescription className="text-center">
-                The asset has been returned and billing is complete.
+                The equipment has been returned and billing calculation is finalized.
               </DialogDescription>
             </DialogHeader>
             
             {billingSummary && !billingSummary.offline && (
-              <div className="mt-4 rounded-lg bg-muted/50 p-4 border text-left">
+              <div className="mt-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/40 p-4 border text-left">
                 <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-primary">
                   <FileText className="size-4" /> Billing Overview
                 </div>
                 {billingSummary.totalAmount !== undefined && (
-                  <div className="flex justify-between border-b border-border/50 pb-2 mb-2">
-                    <span className="text-muted-foreground">Total Amount</span>
-                    <span className="font-bold text-lg text-primary">${billingSummary.totalAmount.toFixed(2)}</span>
+                  <div className="flex justify-between border-b pb-2 mb-2">
+                    <span className="text-muted-foreground text-sm">Total Amount</span>
+                    <span className="font-extrabold text-lg text-emerald-600 dark:text-emerald-450">
+                      ${Number(billingSummary.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </span>
                   </div>
                 )}
                 {billingSummary.quantity !== undefined && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Billable Periods</span>
-                    <span className="font-medium">{billingSummary.quantity}</span>
+                    <span className="text-muted-foreground text-sm">Billable Periods</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{billingSummary.quantity}</span>
                   </div>
                 )}
               </div>
             )}
             
             <DialogFooter className="sm:justify-center mt-6">
-              <Button onClick={handleClose} className="w-full sm:w-auto">
+              <Button onClick={handleClose} className="w-full sm:w-auto h-11 px-8 font-semibold">
                 Refresh View
               </Button>
             </DialogFooter>

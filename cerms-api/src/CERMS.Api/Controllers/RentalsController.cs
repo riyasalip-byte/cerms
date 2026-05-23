@@ -2,6 +2,10 @@ using CERMS.Application.Features.Rentals.Commands.CloseRental;
 using CERMS.Application.Features.Rentals.Commands.ConfirmRental;
 using CERMS.Application.Features.Rentals.Commands.CreateRental;
 using CERMS.Application.Features.Rentals.Commands.StartRental;
+using CERMS.Application.Features.Rentals.Commands.DispatchRental;
+using CERMS.Application.Features.Rentals.Commands.CancelRental;
+using CERMS.Application.Features.Rentals.Commands.CompleteRental;
+using CERMS.Application.Features.Rentals.Commands.UpdateRental;
 using CERMS.Application.Features.Rentals.Queries;
 using CERMS.Domain.Enums;
 using MediatR;
@@ -43,10 +47,49 @@ public class RentalsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, result.Value);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRentalRequest request)
+    {
+        var result = await _mediator.Send(new UpdateRentalCommand(
+            id,
+            request.StartDateTime,
+            request.ExpectedEndDateTime,
+            request.RateType,
+            request.RateAmount,
+            request.SiteName,
+            request.SiteAddress,
+            request.SiteLandmark,
+            request.SiteContactPerson,
+            request.SiteContactNumber,
+            request.PickupTransportCharge,
+            request.ReturnTransportCharge,
+            request.TransportNotes,
+            request.AdvanceAmount,
+            request.SecurityDepositAmount,
+            request.FuelResponsibilityType
+        ));
+
+        return result.IsSuccess ? Ok() : BadRequest(new { error = result.Error });
+    }
+
     [HttpPost("{id}/confirm")]
     public async Task<IActionResult> Confirm(Guid id)
     {
         var result = await _mediator.Send(new ConfirmRentalCommand(id));
+        return result.IsSuccess ? Ok() : BadRequest(new { error = result.Error });
+    }
+
+    [HttpPost("{id}/dispatch")]
+    public async Task<IActionResult> Dispatch(Guid id)
+    {
+        var result = await _mediator.Send(new DispatchRentalCommand(id));
+        return result.IsSuccess ? Ok() : BadRequest(new { error = result.Error });
+    }
+
+    [HttpPost("{id}/cancel")]
+    public async Task<IActionResult> Cancel(Guid id)
+    {
+        var result = await _mediator.Send(new CancelRentalCommand(id));
         return result.IsSuccess ? Ok() : BadRequest(new { error = result.Error });
     }
 
@@ -57,10 +100,10 @@ public class RentalsController : ControllerBase
         return result.IsSuccess ? Ok() : BadRequest(new { error = result.Error });
     }
 
-    [HttpPost("{id}/close")]
-    public async Task<IActionResult> Close(Guid id, [FromBody] CloseRentalRequest request)
+    [HttpPost("{id}/complete")]
+    public async Task<IActionResult> Complete(Guid id, [FromBody] CompleteRentalRequest request)
     {
-        var result = await _mediator.Send(new CloseRentalCommand(
+        var result = await _mediator.Send(new CompleteRentalCommand(
             id,
             request.EndOdometer,
             request.ActualEndDateTime,
@@ -72,12 +115,38 @@ public class RentalsController : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : BadRequest(new { error = result.Error });
     }
 
+    [HttpPost("{id}/close")]
+    public async Task<IActionResult> Close(Guid id)
+    {
+        var result = await _mediator.Send(new CloseRentalCommand(id));
+        return result.IsSuccess ? Ok() : BadRequest(new { error = result.Error });
+    }
+
+    public class UpdateRentalRequest
+    {
+        public DateTime StartDateTime { get; set; }
+        public DateTime ExpectedEndDateTime { get; set; }
+        public RateType? RateType { get; set; }
+        public decimal? RateAmount { get; set; }
+        public string SiteName { get; set; } = string.Empty;
+        public string SiteAddress { get; set; } = string.Empty;
+        public string? SiteLandmark { get; set; }
+        public string? SiteContactPerson { get; set; }
+        public string? SiteContactNumber { get; set; }
+        public decimal? PickupTransportCharge { get; set; }
+        public decimal? ReturnTransportCharge { get; set; }
+        public string? TransportNotes { get; set; }
+        public decimal? AdvanceAmount { get; set; }
+        public decimal? SecurityDepositAmount { get; set; }
+        public FuelResponsibilityType FuelResponsibilityType { get; set; }
+    }
+
     public class StartRentalRequest
     {
         public decimal StartOdometer { get; set; }
     }
 
-    public class CloseRentalRequest
+    public class CompleteRentalRequest
     {
         public decimal EndOdometer { get; set; }
         public DateTime ActualEndDateTime { get; set; }

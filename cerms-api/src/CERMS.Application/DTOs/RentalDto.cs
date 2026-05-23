@@ -23,4 +23,23 @@ public class RentalDto
 
     public decimal? TotalAmount { get; set; }
     public bool IsInvoiced { get; set; }
+
+    // Site Details
+    public string SiteName { get; set; } = string.Empty;
+    public string SiteAddress { get; set; } = string.Empty;
+    public string? SiteLandmark { get; set; }
+    public string? SiteContactPerson { get; set; }
+    public string? SiteContactNumber { get; set; }
+
+    // Transportation
+    public decimal? PickupTransportCharge { get; set; }
+    public decimal? ReturnTransportCharge { get; set; }
+    public string? TransportNotes { get; set; }
+
+    // Financial
+    public decimal? AdvanceAmount { get; set; }
+    public decimal? SecurityDepositAmount { get; set; }
+
+    // Fuel Responsibility
+    public FuelResponsibilityType FuelResponsibilityType { get; set; }
 }

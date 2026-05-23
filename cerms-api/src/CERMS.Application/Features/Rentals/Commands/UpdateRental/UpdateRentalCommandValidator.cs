@@ -1,16 +1,13 @@
 using FluentValidation;
 
-namespace CERMS.Application.Features.Rentals.Commands.CreateRental;
+namespace CERMS.Application.Features.Rentals.Commands.UpdateRental;
 
-public class CreateRentalCommandValidator : AbstractValidator<CreateRentalCommand>
+public class UpdateRentalCommandValidator : AbstractValidator<UpdateRentalCommand>
 {
-    public CreateRentalCommandValidator()
+    public UpdateRentalCommandValidator()
     {
-        RuleFor(v => v.AssetId)
-            .NotEmpty().WithMessage("AssetId is required.");
-
-        RuleFor(v => v.CustomerId)
-            .NotEmpty().WithMessage("CustomerId is required.");
+        RuleFor(v => v.Id)
+            .NotEmpty().WithMessage("Rental Id is required.");
 
         RuleFor(v => v.StartDateTime)
             .NotEmpty().WithMessage("StartDateTime is required.");
