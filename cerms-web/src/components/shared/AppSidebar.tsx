@@ -71,7 +71,15 @@ export function AppSidebar() {
   const navigate = useNavigate()
   const { logout: logoutStore, user } = useAuthStore()
   const isOperator = user?.role === 'Operator'
-  const menuGroups = isOperator ? operatorMenuGroups : adminMenuGroups
+  const isAdmin = user?.role === 'Admin'
+  const menuGroups = isOperator
+    ? operatorMenuGroups
+    : adminMenuGroups.map((group) => ({
+        ...group,
+        items: group.items.filter(
+          (item) => item.to !== '/settings/users' || isAdmin,
+        ),
+      }))
 
   const handleNavClick = (path: string) => {
     console.log(`[Sidebar] Navigating to: ${path}`)
@@ -148,6 +156,14 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild size="sm">
+              <Link to="/profile" onClick={() => handleNavClick('/profile')}>
+                <Users className="size-4" />
+                <span>My Profile</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           {!isOperator && (
             <SidebarMenuItem>
               <SidebarMenuButton asChild size="sm">

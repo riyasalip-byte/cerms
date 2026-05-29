@@ -1,41 +1,66 @@
-using CERMS.Application.Features.Users.Commands.InviteUser;
+using CERMS.Application.Features.Users.Commands.CreateUser;
+using CERMS.Application.Features.Users.Commands.ResetPassword;
+using CERMS.Application.Features.Users.Commands.UpdateUser;
 using CERMS.Application.Features.Users.Queries;
-using CERMS.Domain.Enums;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CERMS.Api.Controllers;
 
 [Authorize]
-[ApiController]
 [Route("api/v1/users")]
-public class UsersController : ControllerBase
+public class UsersController : ApiControllerBase
 {
-    private readonly IMediator _mediator;
-
-    public UsersController(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-
     [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] UserRole? role = null)
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Get(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? roleName = null,
+        [FromQuery] string? searchTerm = null)
     {
-        var result = await _mediator.Send(new GetUsersQuery 
-        { 
-            PageNumber = pageNumber, 
-            PageSize = pageSize, 
-            Role = role 
-        });
-        
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return HandleResult(await Mediator.Send(new GetUsersQuery
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            RoleName = roleName,
+            SearchTerm = searchTerm
+        }));
     }
 
-    [HttpPost("invite")]
-    public async Task<IActionResult> Invite([FromBody] InviteUserCommand command)
+    [HttpGet("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetById(Guid id)
     {
-        var result = await _mediator.Send(command);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return HandleResult(await Mediator.Send(new GetUserByIdQuery(id)));
     }
+
+    [HttpPost]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Create([FromBody] CreateUserCommand command)
+    {
+        return HandleResult(await Mediator.Send(command));
+    }
+
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserCommand command)
+    {
+        if (id != command.Id)
+            return BadRequest(new ApiResponse<object> { Success = false, Errors = new[] { "ID mismatch" } });
+
+        return HandleResult(await Mediator.Send(command));
+    }
+
+    [HttpPost("{id}/reset-password")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ResetPassword(Guid id, [FromBody] ResetPasswordRequest request)
+    {
+        return HandleResult(await Mediator.Send(new ResetPasswordCommand(id, request.NewPassword)));
+    }
+}
+
+public class ResetPasswordRequest
+{
+    public string NewPassword { get; set; } = string.Empty;
 }

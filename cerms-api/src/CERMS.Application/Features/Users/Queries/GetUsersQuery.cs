@@ -4,20 +4,20 @@ using CERMS.Application.Common;
 using CERMS.Application.DTOs;
 using CERMS.Application.Interfaces;
 using CERMS.Domain.Entities;
-using CERMS.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace CERMS.Application.Features.Users.Queries;
 
-public record GetUsersQuery : IRequest<Result<PaginatedList<UserDto>>>
+public record GetUsersQuery : IRequest<Result<PagedResult<UserDto>>>
 {
     public int PageNumber { get; init; } = 1;
-    public int PageSize { get; init; } = 10;
-    public UserRole? Role { get; init; }
+    public int PageSize { get; init; } = 20;
+    public string? RoleName { get; init; }
+    public string? SearchTerm { get; init; }
 }
 
-public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<PaginatedList<UserDto>>>
+public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<PagedResult<UserDto>>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -28,13 +28,23 @@ public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<PaginatedLi
         _mapper = mapper;
     }
 
-    public async Task<Result<PaginatedList<UserDto>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<UserDto>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
     {
-        var query = _unitOfWork.Repository<User>().Entities;
+        var query = _unitOfWork.Repository<User>().Entities
+            .Include(u => u.Role)
+            .Include(u => u.Staff)
+            .AsQueryable();
 
-        if (request.Role.HasValue)
+        if (!string.IsNullOrWhiteSpace(request.RoleName))
+            query = query.Where(u => u.Role.Name == request.RoleName);
+
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
-            query = query.Where(x => x.Role == request.Role);
+            var term = request.SearchTerm.Trim().ToLower();
+            query = query.Where(u =>
+                u.Username.ToLower().Contains(term) ||
+                u.Email.ToLower().Contains(term) ||
+                u.Staff.DisplayName.ToLower().Contains(term));
         }
 
         var count = await query.CountAsync(cancellationToken);
@@ -45,7 +55,7 @@ public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<PaginatedLi
             .ProjectTo<UserDto>(_mapper.ConfigurationProvider)
             .ToListAsync(cancellationToken);
 
-        var paginatedList = new PaginatedList<UserDto>(items, count, request.PageNumber, request.PageSize);
-        return Result<PaginatedList<UserDto>>.Success(paginatedList);
+        return Result<PagedResult<UserDto>>.Success(
+            new PagedResult<UserDto>(items, count, request.PageNumber, request.PageSize));
     }
 }

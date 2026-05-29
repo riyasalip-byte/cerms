@@ -14,7 +14,7 @@ public class RemunerationRecord : BaseEntity
     public RemunerationRecord(Guid staffMemberId, DateTime period, decimal grossAmount, decimal advancesDeducted)
     {
         StaffMemberId = staffMemberId;
-        Period = new DateTime(period.Year, period.Month, 1);
+        Period = new DateTime(period.Year, period.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         GrossAmount = grossAmount;
         AdvancesDeducted = advancesDeducted;
         NetAmount = grossAmount - advancesDeducted;

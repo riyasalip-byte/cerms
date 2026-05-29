@@ -29,6 +29,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
             .Entities
             .IgnoreQueryFilters()
             .Include(r => r.User)
+                .ThenInclude(u => u.Role)
             .FirstOrDefaultAsync(r => r.TokenHash == tokenHash, cancellationToken);
 
         if (refreshTokenEntity == null || !refreshTokenEntity.IsActive)
@@ -63,7 +64,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
                 Id = user.Id,
                 Username = user.Username,
                 Email = user.Email,
-                Role = user.Role,
+                Role = user.Role.Name,
                 CompanyId = user.CompanyId,
                 BranchId = user.BranchId
             }

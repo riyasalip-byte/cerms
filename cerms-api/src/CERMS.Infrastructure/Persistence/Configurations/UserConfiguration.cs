@@ -21,11 +21,25 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.PasswordHash)
             .IsRequired();
 
-        builder.Property(u => u.Role)
-            .IsRequired()
-            .HasConversion<string>();
-            
+        builder.Property(u => u.IsActive)
+            .IsRequired();
+
+        builder.Property(u => u.LastLoginAt)
+            .IsRequired(false);
+
         builder.HasIndex(u => u.Username).IsUnique();
         builder.HasIndex(u => u.Email).IsUnique();
+
+        // One-to-One relationship: Staff -> User (One Staff = Max One User)
+        builder.HasOne(u => u.Staff)
+            .WithOne()
+            .HasForeignKey<User>(u => u.StaffId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // One-to-Many relationship: Role -> Users
+        builder.HasOne(u => u.Role)
+            .WithMany()
+            .HasForeignKey(u => u.RoleId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

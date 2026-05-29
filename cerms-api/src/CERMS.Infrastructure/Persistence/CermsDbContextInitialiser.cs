@@ -1,9 +1,12 @@
 using CERMS.Application.Interfaces;
 using CERMS.Domain.Entities;
 using CERMS.Domain.Enums;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CERMS.Infrastructure.Persistence;
 
@@ -64,15 +67,98 @@ public class CermsDbContextInitialiser
         var companyId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var branchId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
-        // Default User
-        var adminEmail = "admin@cerms.com";
-        if (!await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == adminEmail))
+        // 1. Seed Roles
+        var defaultRoles = new List<Role>
         {
-            var adminUser = new User(
+            new Role("Admin", "Full administrative permissions", true) { CompanyId = companyId, BranchId = branchId },
+            new Role("OfficeStaff", "Rental desk and coordination staff", true) { CompanyId = companyId, BranchId = branchId },
+            new Role("Operator", "Equipment machine operator", true) { CompanyId = companyId, BranchId = branchId },
+            new Role("Accounts", "Billing and invoice management", true) { CompanyId = companyId, BranchId = branchId },
+            new Role("Manager", "Management reviews and reports", true) { CompanyId = companyId, BranchId = branchId }
+        };
+
+        var existingRoles = await _context.Roles.IgnoreQueryFilters().ToListAsync();
+        var existingRoleNames = existingRoles.Select(r => r.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var missingRoles = defaultRoles.Where(r => !existingRoleNames.Contains(r.Name)).ToList();
+        if (missingRoles.Count > 0)
+        {
+            _context.Roles.AddRange(missingRoles);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} system roles.", missingRoles.Count);
+            existingRoles.AddRange(missingRoles);
+        }
+
+        var adminRole = existingRoles.First(r => r.Name == "Admin");
+        var operatorRole = existingRoles.First(r => r.Name == "Operator");
+
+        // 2. Seed Asset Classes
+        var defaultAssetClasses = new List<AssetClass>
+        {
+            new AssetClass("Excavator", "Tracked heavy excavator") { CompanyId = companyId, BranchId = branchId },
+            new AssetClass("Mini Excavator", "Compact excavator") { CompanyId = companyId, BranchId = branchId },
+            new AssetClass("Backhoe Loader", "Utility loader backhoe") { CompanyId = companyId, BranchId = branchId },
+            new AssetClass("Tipper", "Dumper tipper truck") { CompanyId = companyId, BranchId = branchId },
+            new AssetClass("Crane", "Mobile crane") { CompanyId = companyId, BranchId = branchId },
+            new AssetClass("Roller", "Soil compactor roller") { CompanyId = companyId, BranchId = branchId },
+            new AssetClass("Other", "General plant machinery") { CompanyId = companyId, BranchId = branchId }
+        };
+
+        var existingAssetClasses = await _context.AssetClasses.IgnoreQueryFilters().ToListAsync();
+        var existingAssetClassNames = existingAssetClasses.Select(ac => ac.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var missingAssetClasses = defaultAssetClasses.Where(ac => !existingAssetClassNames.Contains(ac.Name)).ToList();
+        if (missingAssetClasses.Count > 0)
+        {
+            _context.AssetClasses.AddRange(missingAssetClasses);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} asset classes.", missingAssetClasses.Count);
+            existingAssetClasses.AddRange(missingAssetClasses);
+        }
+
+        // 3. Seed default HR Staff profiles
+        var adminStaffCode = "STF-0001";
+        var adminStaff = await _context.Staffs.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.StaffCode == adminStaffCode || s.Email == "admin@cerms.com");
+        if (adminStaff == null)
+        {
+            adminStaff = new Staff(
+                adminStaffCode, "John", "Admin", "John Admin", "Male", new DateTime(1985, 5, 20, 0, 0, 0, DateTimeKind.Utc),
+                "9998887776", "admin@cerms.com", "Main Business Office Suite 1", "Tech City", "State A", "600001",
+                "Jane Admin", "9998887775", EmployeeCategory.Other, DateTime.UtcNow.AddYears(-2), "System Administrator", "IT & Management"
+            ) { CompanyId = companyId, BranchId = branchId };
+            _context.Staffs.Add(adminStaff);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded Admin Staff: {Code}", adminStaff.StaffCode);
+        }
+
+        var operatorStaffCode = "STF-0002";
+        var operatorStaff = await _context.Staffs.IgnoreQueryFilters().FirstOrDefaultAsync(s => s.StaffCode == operatorStaffCode || s.Email == "operator@cerms.com");
+        if (operatorStaff == null)
+        {
+            operatorStaff = new Staff(
+                operatorStaffCode, "Alex", "Operator", "Alex Operator", "Male", new DateTime(1990, 8, 12, 0, 0, 0, DateTimeKind.Utc),
+                "9876543210", "operator@cerms.com", "Operator Road 10", "City B", "State A", "600002",
+                "Anne Operator", "9876543211", EmployeeCategory.Operator, DateTime.UtcNow.AddMonths(-6), "Senior Machine Operator", "Operations"
+            ) { CompanyId = companyId, BranchId = branchId };
+            operatorStaff.ConfigureOperatorDetails("LIC-998811", "Heavy Machinery Permitted", DateTime.UtcNow.AddYears(3), 6, "A+ Grade");
+            operatorStaff.UpdateFinancialsAndIdentity(150.00m, 3500.00m, "123456789012", "ABCDE1234F", "Seeded Operator Account");
+            
+            _context.Staffs.Add(operatorStaff);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded Operator Staff: {Code}", operatorStaff.StaffCode);
+        }
+
+        // 4. Seed default Users
+        var adminEmail = "admin@cerms.com";
+        var adminUser = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == adminEmail);
+        if (adminUser == null)
+        {
+            adminUser = new User(
                 "admin",
                 adminEmail,
                 _passwordHasher.HashPassword("Admin@123"),
-                UserRole.Admin,
+                adminStaff.Id,
+                adminRole.Id,
                 companyId,
                 branchId
             );
@@ -80,6 +166,33 @@ public class CermsDbContextInitialiser
             _context.Users.Add(adminUser);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Seeded default admin user: {Email}", adminEmail);
+
+            adminStaff.UserId = adminUser.Id;
+            _context.Staffs.Update(adminStaff);
+            await _context.SaveChangesAsync();
+        }
+
+        var operatorEmail = "operator@cerms.com";
+        var opUser = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == operatorEmail);
+        if (opUser == null)
+        {
+            opUser = new User(
+                "operator",
+                operatorEmail,
+                _passwordHasher.HashPassword("Operator@123"),
+                operatorStaff.Id,
+                operatorRole.Id,
+                companyId,
+                branchId
+            );
+
+            _context.Users.Add(opUser);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded default operator user: {Email}", operatorEmail);
+
+            operatorStaff.UserId = opUser.Id;
+            _context.Staffs.Update(operatorStaff);
+            await _context.SaveChangesAsync();
         }
 
         // Seed Asset Categories
@@ -168,41 +281,6 @@ public class CermsDbContextInitialiser
             _context.Assets.AddRange(assets);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Seeded {Count} assets.", assets.Count);
-        }
-
-        // Seed Operator if none exist
-        var operatorEmail = "operator@cerms.com";
-        if (!await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == operatorEmail))
-        {
-            var opUser = new User(
-                "operator",
-                operatorEmail,
-                _passwordHasher.HashPassword("Operator@123"),
-                UserRole.Operator,
-                companyId,
-                branchId
-            );
-
-            _context.Users.Add(opUser);
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Seeded default operator user: {Email}", operatorEmail);
-
-            var testOperator = new Operator(
-                "OP-0001",
-                "Alex Operator",
-                "9876543210",
-                "LIC-998811",
-                DateTime.UtcNow.AddYears(3),
-                DateTime.UtcNow.AddMonths(-6),
-                150.00m,
-                alternateMobileNo: "9876543211",
-                address: "Operator Street 10, City B",
-                userId: opUser.Id
-            ) { CompanyId = companyId, BranchId = branchId };
-
-            _context.Operators.Add(testOperator);
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Seeded default operator profile linked to user: {Code}", testOperator.OperatorCode);
         }
     }
 }

@@ -1,29 +1,86 @@
 using CERMS.Domain.Common;
-using CERMS.Domain.Enums;
+using System;
+using System.Collections.Generic;
 
 namespace CERMS.Domain.Entities;
 
 public class User : BaseEntity
 {
     public string Username { get; private set; }
-    public string Email { get; private set; }
+    public string Email { get; private set; } // Kept for backward compatibility and notifications
     public string PasswordHash { get; private set; }
-    public UserRole Role { get; private set; }
+    
+    // References to dynamic Staff and Role Entities
+    public Guid StaffId { get; private set; }
+    public Staff Staff { get; private set; }
+
+    public Guid RoleId { get; private set; }
+    public Role Role { get; private set; }
+
+    public bool IsActive { get; private set; }
+    public DateTime? LastLoginAt { get; private set; }
+
     public ICollection<RefreshToken> RefreshTokens { get; private set; } = new List<RefreshToken>();
 
-    public User(string username, string email, string passwordHash, UserRole role, Guid companyId, Guid branchId)
+    protected User() { }
+
+    public User(string username, string email, string passwordHash, Guid staffId, Guid roleId, Guid companyId, Guid branchId)
     {
+        if (string.IsNullOrWhiteSpace(username)) throw new ArgumentException("Username is required.", nameof(username));
+        if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email is required.", nameof(email));
+        if (string.IsNullOrWhiteSpace(passwordHash)) throw new ArgumentException("Password hash is required.", nameof(passwordHash));
+        if (staffId == Guid.Empty) throw new ArgumentException("StaffId is required.", nameof(staffId));
+        if (roleId == Guid.Empty) throw new ArgumentException("RoleId is required.", nameof(roleId));
+
         Username = username;
         Email = email;
         PasswordHash = passwordHash;
-        Role = role;
+        StaffId = staffId;
+        RoleId = roleId;
         CompanyId = companyId;
         BranchId = branchId;
+        IsActive = true;
     }
 
-    public void UpdateRole(UserRole role)
+    public void UpdateProfile(string username, string email)
     {
-        Role = role;
+        if (string.IsNullOrWhiteSpace(username)) throw new ArgumentException("Username is required.", nameof(username));
+        if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email is required.", nameof(email));
+        
+        Username = username;
+        Email = email;
+        Update();
+    }
+
+    public void UpdateRole(Guid roleId)
+    {
+        if (roleId == Guid.Empty) throw new ArgumentException("RoleId is required.", nameof(roleId));
+        RoleId = roleId;
+        Update();
+    }
+
+    public void SetLastLogin()
+    {
+        LastLoginAt = DateTime.UtcNow;
+        Update();
+    }
+
+    public void UpdatePassword(string newHash)
+    {
+        if (string.IsNullOrWhiteSpace(newHash)) throw new ArgumentException("Password hash is required.", nameof(newHash));
+        PasswordHash = newHash;
+        Update();
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+        Update();
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
         Update();
     }
 }

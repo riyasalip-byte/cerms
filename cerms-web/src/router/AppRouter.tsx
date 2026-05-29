@@ -5,6 +5,7 @@ import { login as loginService, refresh as refreshService } from "@/api/services
 import { AppLayout } from "@/components/shared/AppLayout"
 import { useAuthStore } from "@/stores/authStore"
 import { ProtectedRoute } from "./ProtectedRoute"
+import { AdminRoute } from "./AdminRoute"
 import { GlobalLoading } from "@/components/shared/GlobalLoading"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -30,10 +31,12 @@ const ReportsOverview = lazy(() => import("@/features/reports/ReportsOverview").
 const RevenueReport = lazy(() => import("@/features/reports/RevenueReport").then(m => ({ default: m.RevenueReport })))
 const UtilisationReport = lazy(() => import("@/features/reports/UtilisationReport").then(m => ({ default: m.UtilisationReport })))
 const GeneralSettings = lazy(() => import("@/features/settings/GeneralSettings").then(m => ({ default: m.GeneralSettings })))
-const UserManagement = lazy(() => import("@/features/settings/UserManagement").then(m => ({ default: m.UserManagement })))
-const StaffDetail = lazy(() => import("@/features/staff/StaffDetail").then(m => ({ default: m.StaffDetail })))
-const StaffForm = lazy(() => import("@/features/staff/StaffForm").then(m => ({ default: m.StaffForm })))
-const StaffList = lazy(() => import("@/features/staff/StaffList").then(m => ({ default: m.StaffList })))
+const UserListPage = lazy(() => import("@/features/users/UserListPage").then(m => ({ default: m.UserListPage })))
+const UserFormPage = lazy(() => import("@/features/users/UserFormPage").then(m => ({ default: m.UserFormPage })))
+const StaffDetailPage = lazy(() => import("@/features/staff/StaffDetailPage").then(m => ({ default: m.StaffDetailPage })))
+const StaffFormPage = lazy(() => import("@/features/staff/StaffFormPage").then(m => ({ default: m.StaffFormPage })))
+const StaffListPage = lazy(() => import("@/features/staff/StaffListPage").then(m => ({ default: m.StaffListPage })))
+const MyProfilePage = lazy(() => import("@/features/profile/MyProfilePage").then(m => ({ default: m.MyProfilePage })))
 const OperatorDashboardPage = lazy(() => import("@/features/operators/OperatorDashboardPage").then(m => ({ default: m.OperatorDashboardPage })))
 
 function LoginPage() {
@@ -222,17 +225,22 @@ export function AppRouter() {
                 <Route path="/invoices/:id" element={<InvoiceDetail />} />
                 <Route path="/invoices/:id/payment" element={<PaymentForm />} />
                 
-                <Route path="/staff" element={<StaffList />} />
-                <Route path="/staff/new" element={<StaffForm />} />
-                <Route path="/staff/:id" element={<StaffDetail />} />
-                <Route path="/staff/:id/edit" element={<StaffForm />} />
+                <Route path="/staff" element={<StaffListPage />} />
+                <Route path="/staff/new" element={<StaffFormPage />} />
+                <Route path="/staff/:id" element={<StaffDetailPage />} />
+                <Route path="/staff/:id/edit" element={<StaffFormPage />} />
 
                 <Route path="/reports" element={<ReportsOverview />} />
                 <Route path="/reports/revenue" element={<RevenueReport />} />
                 <Route path="/reports/utilisation" element={<UtilisationReport />} />
                 
                 <Route path="/settings/general" element={<GeneralSettings />} />
-                <Route path="/settings/users" element={<UserManagement />} />
+                <Route path="/profile" element={<MyProfilePage />} />
+                <Route element={<AdminRoute />}>
+                  <Route path="/settings/users" element={<UserListPage />} />
+                  <Route path="/settings/users/new" element={<UserFormPage />} />
+                  <Route path="/settings/users/:id/edit" element={<UserFormPage />} />
+                </Route>
               </>
             ) : (
               <Route path="*" element={<Navigate to="/operator/dashboard" replace />} />

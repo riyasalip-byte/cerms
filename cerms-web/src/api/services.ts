@@ -162,9 +162,18 @@ export const reportService = {
   getPayroll: () => api.get<ChartDataDto[]>('/reports/payroll').then(r => r.data)
 }
 
+export { getUsers as getUsersList, createUser, updateUser, resetUserPassword, getRoles } from './users'
+export type { UserDto as AdminUserDto } from './users'
+
 export const userService = {
-  getAll: (params?: any) => api.get<PaginatedList<User>>('/users', { params }).then(r => r.data),
-  invite: (data: any) => api.post('/users/invite', data).then(r => r.data),
+  getAll: async (params?: any) => {
+    const { getUsers } = await import('./users')
+    return getUsers(params)
+  },
+  invite: async (data: any) => {
+    const { createUser } = await import('./users')
+    return createUser(data)
+  },
 }
 
 export const authService = {

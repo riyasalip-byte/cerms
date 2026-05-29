@@ -20,7 +20,7 @@ public class PayrollJob
 
     public async Task ProcessMonthlyPayroll(DateTime executionDate)
     {
-        var firstDayOfMonth = new DateTime(executionDate.Year, executionDate.Month, 1);
+        var firstDayOfMonth = new DateTime(executionDate.Year, executionDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         _logger.LogInformation("Starting payroll processing for {Period}", firstDayOfMonth.ToString("MMMM yyyy"));
 
         // Idempotency check

@@ -2,6 +2,7 @@ using CERMS.Application.Interfaces;
 using CERMS.Domain.Common;
 using CERMS.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Reflection;
 
 namespace CERMS.Infrastructure.Persistence;
@@ -31,6 +32,10 @@ public class CermsDbContext : DbContext
     public DbSet<FuelEntry> FuelEntries => Set<FuelEntry>();
     public DbSet<Operator> Operators => Set<Operator>();
     public DbSet<RentalAssignment> RentalAssignments => Set<RentalAssignment>();
+    public DbSet<Staff> Staffs => Set<Staff>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<AssetClass> AssetClasses => Set<AssetClass>();
+    public DbSet<StaffAssetClass> StaffAssetClasses => Set<StaffAssetClass>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +47,29 @@ public class CermsDbContext : DbContext
             {
                 modelBuilder.Entity(entityType.ClrType).HasQueryFilter(
                     CreateTenantAndDeletedFilter(entityType.ClrType));
+            }
+        }
+
+        var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
+            v => v.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v, DateTimeKind.Utc),
+            v => v.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        var nullableDateTimeConverter = new ValueConverter<DateTime?, DateTime?>(
+            v => !v.HasValue ? v : (v.Value.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v.Value, DateTimeKind.Utc)),
+            v => !v.HasValue ? v : (v.Value.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v.Value, DateTimeKind.Utc)));
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTime))
+                {
+                    property.SetValueConverter(dateTimeConverter);
+                }
+                else if (property.ClrType == typeof(DateTime?))
+                {
+                    property.SetValueConverter(nullableDateTimeConverter);
+                }
             }
         }
 
