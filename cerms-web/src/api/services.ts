@@ -45,6 +45,7 @@ export type Rental = {
   endDate?: string
   actualEndDate?: string
   actualEndDateTime?: string
+  actualStartDateTime?: string
   status: number
   rentalRate: number
   rateAmount?: number
@@ -64,6 +65,9 @@ export type Rental = {
   advanceAmount?: number
   securityDepositAmount?: number
   fuelResponsibilityType?: string | number
+  assignedOperatorId?: string
+  assignedOperatorName?: string
+  assignedOperatorCode?: string
 }
 
 export type CompleteRentalPayload = {

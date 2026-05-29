@@ -3,6 +3,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "./AppSidebar"
 import { AppTopbar } from "./AppTopbar"
 import { MobileNav } from "./MobileNav"
+import { ErrorBoundary } from "./ErrorBoundary"
 
 export function AppLayout() {
   const location = useLocation()
@@ -12,13 +13,16 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="max-h-screen overflow-hidden flex flex-col">
         <AppTopbar />
         <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6 overflow-x-hidden relative">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
         <MobileNav />
       </SidebarInset>
     </SidebarProvider>
   )
 }
+

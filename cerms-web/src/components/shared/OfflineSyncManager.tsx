@@ -7,15 +7,24 @@ export function OfflineSyncManager() {
   const [isOnline, setIsOnline] = useState(navigator.onLine)
 
   const checkQueue = async () => {
-    const queue = await offlineQueue.getQueue()
-    const unsynced = queue.filter(i => !i.synced)
-    setPendingCount(unsynced.length)
+    const billingQueue = await offlineQueue.getQueue()
+    const assignmentQueue = await offlineQueue.getAssignmentQueue()
     
-    if (unsynced.length > 0 && navigator.onLine) {
-      toast.info(`Syncing ${unsynced.length} pending billing requests...`)
+    const unsyncedBilling = billingQueue.filter(i => !i.synced).length
+    const unsyncedAssignments = assignmentQueue.filter(i => !i.synced).length
+    const totalUnsynced = unsyncedBilling + unsyncedAssignments
+    
+    setPendingCount(totalUnsynced)
+    
+    if (totalUnsynced > 0 && navigator.onLine) {
+      toast.info(`Syncing ${totalUnsynced} pending actions...`)
       await offlineQueue.syncQueue()
-      const updatedQueue = await offlineQueue.getQueue()
-      setPendingCount(updatedQueue.filter(i => !i.synced).length)
+      
+      const updatedBilling = await offlineQueue.getQueue()
+      const updatedAssignment = await offlineQueue.getAssignmentQueue()
+      const newTotalUnsynced = updatedBilling.filter(i => !i.synced).length + updatedAssignment.filter(i => !i.synced).length
+      
+      setPendingCount(newTotalUnsynced)
     }
   }
 

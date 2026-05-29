@@ -22,6 +22,7 @@ type RentalRecord = {
   siteName?: string
   advanceAmount?: number
   fuelResponsibilityType?: string | number
+  assignedOperatorName?: string
 }
 
 const formatFuelResponsibility = (type?: string | number) => {
@@ -68,6 +69,24 @@ export function RentalList() {
             <User className="size-3 text-primary" />
           </div>
           <span>{row.original.customerName}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "assignedOperatorName",
+      header: "Operator",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          {row.original.assignedOperatorName ? (
+            <>
+              <div className="size-6 rounded bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-450 flex items-center justify-center font-bold text-[10px]">
+                {row.original.assignedOperatorName.substring(0, 2).toUpperCase()}
+              </div>
+              <span className="font-medium text-slate-900 dark:text-slate-100">{row.original.assignedOperatorName}</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground text-xs italic">Unassigned</span>
+          )}
         </div>
       ),
     },

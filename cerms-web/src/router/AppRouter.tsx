@@ -34,6 +34,7 @@ const UserManagement = lazy(() => import("@/features/settings/UserManagement").t
 const StaffDetail = lazy(() => import("@/features/staff/StaffDetail").then(m => ({ default: m.StaffDetail })))
 const StaffForm = lazy(() => import("@/features/staff/StaffForm").then(m => ({ default: m.StaffForm })))
 const StaffList = lazy(() => import("@/features/staff/StaffList").then(m => ({ default: m.StaffList })))
+const OperatorDashboardPage = lazy(() => import("@/features/operators/OperatorDashboardPage").then(m => ({ default: m.OperatorDashboardPage })))
 
 function LoginPage() {
   const navigate = useNavigate()
@@ -47,7 +48,8 @@ function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/dashboard", { replace: true })
+      const isOperator = useAuthStore.getState().user?.role === 'Operator'
+      navigate(isOperator ? "/operator/dashboard" : "/dashboard", { replace: true })
     }
   }, [isAuthenticated, navigate])
 
@@ -69,7 +71,8 @@ function LoginPage() {
       login(response.user, response.accessToken)
       
       const redirectPath = (location.state as any)?.from?.pathname
-      navigate(redirectPath || "/dashboard", { replace: true })
+      const nextPath = response.user.role === 'Operator' ? "/operator/dashboard" : (redirectPath || "/dashboard")
+      navigate(nextPath, { replace: true })
     } catch (err: any) {
       console.error("[Login] Authentication failed. Status:", err.response?.status);
       console.error("[Login] Error data:", err.response?.data);
@@ -160,6 +163,8 @@ export function AppRouter() {
   const login = useAuthStore((state) => state.login)
   const setRefreshing = useAuthStore((state) => state.setRefreshing)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const user = useAuthStore((state) => state.user)
+  const isOperator = user?.role === 'Operator'
   const location = useLocation()
 
   // Track last visited page
@@ -191,42 +196,50 @@ export function AppRouter() {
         <Route path="/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
-            <Route index element={<Navigate to={localStorage.getItem("lastVisitedPage") || "/dashboard"} replace />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route index element={<Navigate to={isOperator ? "/operator/dashboard" : (localStorage.getItem("lastVisitedPage") || "/dashboard")} replace />} />
+            <Route path="/dashboard" element={isOperator ? <Navigate to="/operator/dashboard" replace /> : <DashboardPage />} />
             
-            <Route path="/assets" element={<AssetList />} />
-            <Route path="/assets/new" element={<AssetForm />} />
-            <Route path="/assets/:id" element={<AssetDetail />} />
-            <Route path="/assets/:id/edit" element={<AssetForm />} />
+            <Route path="/operator/dashboard" element={<OperatorDashboardPage />} />
 
-            <Route path="/customers" element={<CustomerListPage />} />
-            <Route path="/customers/new" element={<CustomerForm />} />
-            <Route path="/customers/:id" element={<CustomerDetailPage />} />
-            <Route path="/customers/:id/edit" element={<CustomerForm />} />
+            {!isOperator ? (
+              <>
+                <Route path="/assets" element={<AssetList />} />
+                <Route path="/assets/new" element={<AssetForm />} />
+                <Route path="/assets/:id" element={<AssetDetail />} />
+                <Route path="/assets/:id/edit" element={<AssetForm />} />
 
-            <Route path="/rentals" element={<RentalList />} />
-            <Route path="/rentals/new" element={<RentalForm />} />
-            <Route path="/rentals/:id" element={<RentalDetail />} />
-            <Route path="/rentals/:id/edit" element={<RentalForm />} />
+                <Route path="/customers" element={<CustomerListPage />} />
+                <Route path="/customers/new" element={<CustomerForm />} />
+                <Route path="/customers/:id" element={<CustomerDetailPage />} />
+                <Route path="/customers/:id/edit" element={<CustomerForm />} />
 
-            <Route path="/invoices" element={<InvoiceList />} />
-            <Route path="/invoices/:id" element={<InvoiceDetail />} />
-            <Route path="/invoices/:id/payment" element={<PaymentForm />} />
-            
-            <Route path="/staff" element={<StaffList />} />
-            <Route path="/staff/new" element={<StaffForm />} />
-            <Route path="/staff/:id" element={<StaffDetail />} />
-            <Route path="/staff/:id/edit" element={<StaffForm />} />
+                <Route path="/rentals" element={<RentalList />} />
+                <Route path="/rentals/new" element={<RentalForm />} />
+                <Route path="/rentals/:id" element={<RentalDetail />} />
+                <Route path="/rentals/:id/edit" element={<RentalForm />} />
 
-            <Route path="/reports" element={<ReportsOverview />} />
-            <Route path="/reports/revenue" element={<RevenueReport />} />
-            <Route path="/reports/utilisation" element={<UtilisationReport />} />
-            
-            <Route path="/settings/general" element={<GeneralSettings />} />
-            <Route path="/settings/users" element={<UserManagement />} />
+                <Route path="/invoices" element={<InvoiceList />} />
+                <Route path="/invoices/:id" element={<InvoiceDetail />} />
+                <Route path="/invoices/:id/payment" element={<PaymentForm />} />
+                
+                <Route path="/staff" element={<StaffList />} />
+                <Route path="/staff/new" element={<StaffForm />} />
+                <Route path="/staff/:id" element={<StaffDetail />} />
+                <Route path="/staff/:id/edit" element={<StaffForm />} />
+
+                <Route path="/reports" element={<ReportsOverview />} />
+                <Route path="/reports/revenue" element={<RevenueReport />} />
+                <Route path="/reports/utilisation" element={<UtilisationReport />} />
+                
+                <Route path="/settings/general" element={<GeneralSettings />} />
+                <Route path="/settings/users" element={<UserManagement />} />
+              </>
+            ) : (
+              <Route path="*" element={<Navigate to="/operator/dashboard" replace />} />
+            )}
           </Route>
         </Route>
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to={isOperator ? "/operator/dashboard" : "/dashboard"} replace />} />
       </Routes>
     </Suspense>
   )

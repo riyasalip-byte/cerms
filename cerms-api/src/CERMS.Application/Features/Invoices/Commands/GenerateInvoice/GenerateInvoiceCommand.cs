@@ -38,11 +38,16 @@ public class GenerateInvoiceCommandHandler : IRequestHandler<GenerateInvoiceComm
             throw new Exception($"Booking {request.BookingId} not found.");
         }
 
-        var endDate = booking.ActualEndDateTime ?? booking.ExpectedEndDateTime;
+        var assignment = await _unitOfWork.Repository<RentalAssignment>()
+            .Entities
+            .FirstOrDefaultAsync(ra => ra.RentalId == booking.Id && ra.ActualStartDateTime != null, cancellationToken);
+
+        var startDate = assignment?.ActualStartDateTime ?? booking.StartDateTime;
+        var endDate = assignment?.ActualEndDateTime ?? booking.ActualEndDateTime ?? booking.ExpectedEndDateTime;
         
         var billingResult = booking.RateAmount.HasValue && booking.RateType.HasValue
             ? _billingService.Calculate(
-                booking.StartDateTime,
+                startDate,
                 endDate,
                 booking.RateAmount.Value,
                 booking.RateType.Value)
@@ -55,7 +60,9 @@ public class GenerateInvoiceCommandHandler : IRequestHandler<GenerateInvoiceComm
                 BreakdownText = "Pending Calculation: rate amount is not set; automatic billing was skipped."
             };
 
-        var subtotal = billingResult.TotalAmount;
+        var pickupCharge = booking.PickupTransportCharge ?? 0m;
+        var returnCharge = booking.ReturnTransportCharge ?? 0m;
+        var subtotal = billingResult.TotalAmount + pickupCharge + returnCharge;
         var tax = subtotal * 0.10m; // 10% tax
         
         var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
@@ -82,6 +89,45 @@ public class GenerateInvoiceCommandHandler : IRequestHandler<GenerateInvoiceComm
 
         await _unitOfWork.Repository<Invoice>().AddAsync(invoice);
         await _unitOfWork.Repository<InvoiceLineItem>().AddAsync(lineItem);
+
+        if (!invoice.LineItems.Contains(lineItem))
+        {
+            invoice.LineItems.Add(lineItem);
+        }
+
+        if (pickupCharge > 0)
+        {
+            var pickupLineItem = new InvoiceLineItem(
+                invoice.Id,
+                "Transportation: Pickup Logistics Charge",
+                1,
+                pickupCharge
+            );
+            pickupLineItem.CompanyId = booking.CompanyId;
+            pickupLineItem.BranchId = booking.BranchId;
+            await _unitOfWork.Repository<InvoiceLineItem>().AddAsync(pickupLineItem);
+            if (!invoice.LineItems.Contains(pickupLineItem))
+            {
+                invoice.LineItems.Add(pickupLineItem);
+            }
+        }
+
+        if (returnCharge > 0)
+        {
+            var returnLineItem = new InvoiceLineItem(
+                invoice.Id,
+                "Transportation: Return Logistics Charge",
+                1,
+                returnCharge
+            );
+            returnLineItem.CompanyId = booking.CompanyId;
+            returnLineItem.BranchId = booking.BranchId;
+            await _unitOfWork.Repository<InvoiceLineItem>().AddAsync(returnLineItem);
+            if (!invoice.LineItems.Contains(returnLineItem))
+            {
+                invoice.LineItems.Add(returnLineItem);
+            }
+        }
         
         // Generate and Save PDF
         var customer = await _unitOfWork.Repository<Customer>()
@@ -90,9 +136,6 @@ public class GenerateInvoiceCommandHandler : IRequestHandler<GenerateInvoiceComm
             
         if (customer != null)
         {
-            // Add line items to invoice for PDF generation
-            invoice.LineItems.Add(lineItem);
-            
             var pdfBytes = _pdfService.GenerateInvoicePdf(invoice, customer);
             var fileName = $"{invoice.InvoiceNumber}.pdf";
             var savedPath = await _fileStorageService.SaveFileAsync(pdfBytes, fileName, "application/pdf");

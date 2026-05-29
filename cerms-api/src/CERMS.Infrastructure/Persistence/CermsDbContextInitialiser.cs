@@ -169,5 +169,40 @@ public class CermsDbContextInitialiser
             await _context.SaveChangesAsync();
             _logger.LogInformation("Seeded {Count} assets.", assets.Count);
         }
+
+        // Seed Operator if none exist
+        var operatorEmail = "operator@cerms.com";
+        if (!await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == operatorEmail))
+        {
+            var opUser = new User(
+                "operator",
+                operatorEmail,
+                _passwordHasher.HashPassword("Operator@123"),
+                UserRole.Operator,
+                companyId,
+                branchId
+            );
+
+            _context.Users.Add(opUser);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded default operator user: {Email}", operatorEmail);
+
+            var testOperator = new Operator(
+                "OP-0001",
+                "Alex Operator",
+                "9876543210",
+                "LIC-998811",
+                DateTime.UtcNow.AddYears(3),
+                DateTime.UtcNow.AddMonths(-6),
+                150.00m,
+                alternateMobileNo: "9876543211",
+                address: "Operator Street 10, City B",
+                userId: opUser.Id
+            ) { CompanyId = companyId, BranchId = branchId };
+
+            _context.Operators.Add(testOperator);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded default operator profile linked to user: {Code}", testOperator.OperatorCode);
+        }
     }
 }

@@ -30,7 +30,7 @@ import {
   SidebarGroupContent,
 } from "@/components/ui/sidebar"
 
-const menuGroups = [
+const adminMenuGroups = [
   {
     label: "Operations",
     items: [
@@ -57,10 +57,21 @@ const menuGroups = [
   },
 ]
 
+const operatorMenuGroups = [
+  {
+    label: "Field Operations",
+    items: [
+      { label: "My Jobs", to: "/operator/dashboard", icon: LayoutDashboard },
+    ],
+  },
+]
+
 export function AppSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { logout: logoutStore } = useAuthStore()
+  const { logout: logoutStore, user } = useAuthStore()
+  const isOperator = user?.role === 'Operator'
+  const menuGroups = isOperator ? operatorMenuGroups : adminMenuGroups
 
   const handleNavClick = (path: string) => {
     console.log(`[Sidebar] Navigating to: ${path}`)
@@ -86,7 +97,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link to="/dashboard" onClick={() => handleNavClick("/dashboard")}>
+              <Link to={isOperator ? "/operator/dashboard" : "/dashboard"} onClick={() => handleNavClick(isOperator ? "/operator/dashboard" : "/dashboard")}>
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Command className="size-4" />
                 </div>
@@ -109,6 +120,7 @@ export function AppSidebar() {
                   const isActive =
                     location.pathname === item.to ||
                     (item.to !== "/dashboard" &&
+                      item.to !== "/operator/dashboard" &&
                       location.pathname.startsWith(item.to))
                   return (
                     <SidebarMenuItem key={item.to}>
@@ -136,14 +148,16 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild size="sm">
-              <Link to="/settings/general" onClick={() => handleNavClick("/settings/general")}>
-                <Settings className="size-4" />
-                <span>Quick Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {!isOperator && (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild size="sm">
+                <Link to="/settings/general" onClick={() => handleNavClick("/settings/general")}>
+                  <Settings className="size-4" />
+                  <span>Quick Settings</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton 
               size="sm" 

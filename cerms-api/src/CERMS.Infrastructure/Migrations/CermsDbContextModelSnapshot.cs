@@ -810,6 +810,102 @@ namespace CERMS.Infrastructure.Migrations
                     b.ToTable("maintenance_types", (string)null);
                 });
 
+            modelBuilder.Entity("CERMS.Domain.Entities.Operator", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("address");
+
+                    b.Property<string>("AlternateMobileNo")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("alternate_mobile_no");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal>("DailyWage")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("daily_wage");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("full_name");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateTime>("JoiningDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("joining_date");
+
+                    b.Property<DateTime>("LicenseExpiryDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("license_expiry_date");
+
+                    b.Property<string>("LicenseNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("license_number");
+
+                    b.Property<string>("MobileNo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("mobile_no");
+
+                    b.Property<string>("OperatorCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("operator_code");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_operators");
+
+                    b.HasIndex("OperatorCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_operators_operator_code");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_operators_user_id");
+
+                    b.ToTable("operators", (string)null);
+                });
+
             modelBuilder.Entity("CERMS.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -919,6 +1015,106 @@ namespace CERMS.Infrastructure.Migrations
                         .HasName("pk_remuneration_records");
 
                     b.ToTable("remuneration_records", (string)null);
+                });
+
+            modelBuilder.Entity("CERMS.Domain.Entities.RentalAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("ActualEndDateTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actual_end_date_time");
+
+                    b.Property<DateTime?>("ActualStartDateTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actual_start_date_time");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("assigned_at");
+
+                    b.Property<Guid?>("AssignedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assigned_by");
+
+                    b.Property<int>("AssignmentStatus")
+                        .HasColumnType("integer")
+                        .HasColumnName("assignment_status");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<string>("CompletionRemarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("completion_remarks");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal?>("EndMeterReading")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("end_meter_reading");
+
+                    b.Property<DateTime?>("InvoiceGeneratedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("invoice_generated_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<bool>("IsInvoiceGenerated")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_invoice_generated");
+
+                    b.Property<DateTime?>("LastSyncedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_synced_at");
+
+                    b.Property<Guid>("OperatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("operator_id");
+
+                    b.Property<Guid>("RentalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("rental_id");
+
+                    b.Property<decimal?>("StartMeterReading")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("start_meter_reading");
+
+                    b.Property<string>("StartRemarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("start_remarks");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_rental_assignments");
+
+                    b.HasIndex("OperatorId")
+                        .HasDatabaseName("ix_rental_assignments_operator_id");
+
+                    b.HasIndex("RentalId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_rental_assignments_rental_id");
+
+                    b.ToTable("rental_assignments", (string)null);
                 });
 
             modelBuilder.Entity("CERMS.Domain.Entities.RentalBooking", b =>
@@ -1338,6 +1534,15 @@ namespace CERMS.Infrastructure.Migrations
                     b.Navigation("MaintenanceType");
                 });
 
+            modelBuilder.Entity("CERMS.Domain.Entities.Operator", b =>
+                {
+                    b.HasOne("CERMS.Domain.Entities.User", null)
+                        .WithOne()
+                        .HasForeignKey("CERMS.Domain.Entities.Operator", "UserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_operators_users_user_id");
+                });
+
             modelBuilder.Entity("CERMS.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("CERMS.Domain.Entities.User", "User")
@@ -1348,6 +1553,27 @@ namespace CERMS.Infrastructure.Migrations
                         .HasConstraintName("fk_refresh_tokens_users_user_id");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CERMS.Domain.Entities.RentalAssignment", b =>
+                {
+                    b.HasOne("CERMS.Domain.Entities.Operator", "Operator")
+                        .WithMany("Assignments")
+                        .HasForeignKey("OperatorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_rental_assignments_operators_operator_id");
+
+                    b.HasOne("CERMS.Domain.Entities.RentalBooking", "RentalBooking")
+                        .WithOne()
+                        .HasForeignKey("CERMS.Domain.Entities.RentalAssignment", "RentalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_rental_assignments_rental_bookings_rental_id");
+
+                    b.Navigation("Operator");
+
+                    b.Navigation("RentalBooking");
                 });
 
             modelBuilder.Entity("CERMS.Domain.Entities.RentalBooking", b =>
@@ -1399,6 +1625,11 @@ namespace CERMS.Infrastructure.Migrations
             modelBuilder.Entity("CERMS.Domain.Entities.MaintenanceType", b =>
                 {
                     b.Navigation("MaintenanceRecords");
+                });
+
+            modelBuilder.Entity("CERMS.Domain.Entities.Operator", b =>
+                {
+                    b.Navigation("Assignments");
                 });
 
             modelBuilder.Entity("CERMS.Domain.Entities.User", b =>

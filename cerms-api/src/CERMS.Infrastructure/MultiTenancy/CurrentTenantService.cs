@@ -1,5 +1,6 @@
 using CERMS.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
+using System;
 using System.Security.Claims;
 
 namespace CERMS.Infrastructure.MultiTenancy;
@@ -27,6 +28,15 @@ public class CurrentTenantService : ICurrentTenantService
         get
         {
             var claim = _httpContextAccessor.HttpContext?.User?.FindFirst("branch_id")?.Value;
+            return Guid.TryParse(claim, out var id) ? id : null;
+        }
+    }
+
+    public Guid? UserId
+    {
+        get
+        {
+            var claim = _httpContextAccessor.HttpContext?.User?.FindFirst("user_id")?.Value;
             return Guid.TryParse(claim, out var id) ? id : null;
         }
     }

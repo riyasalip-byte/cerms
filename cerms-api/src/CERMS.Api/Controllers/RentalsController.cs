@@ -6,6 +6,7 @@ using CERMS.Application.Features.Rentals.Commands.DispatchRental;
 using CERMS.Application.Features.Rentals.Commands.CancelRental;
 using CERMS.Application.Features.Rentals.Commands.CompleteRental;
 using CERMS.Application.Features.Rentals.Commands.UpdateRental;
+using CERMS.Application.Features.Assignments.Commands.AssignOperator;
 using CERMS.Application.Features.Rentals.Queries;
 using CERMS.Domain.Enums;
 using MediatR;
@@ -120,6 +121,18 @@ public class RentalsController : ControllerBase
     {
         var result = await _mediator.Send(new CloseRentalCommand(id));
         return result.IsSuccess ? Ok() : BadRequest(new { error = result.Error });
+    }
+
+    [HttpPost("{id}/assign-operator")]
+    public async Task<IActionResult> AssignOperator(Guid id, [FromBody] AssignOperatorRequest request)
+    {
+        var result = await _mediator.Send(new AssignOperatorCommand(id, request.OperatorId));
+        return result.IsSuccess ? Ok(new { id = result.Value }) : BadRequest(new { error = result.Error });
+    }
+
+    public class AssignOperatorRequest
+    {
+        public Guid OperatorId { get; set; }
     }
 
     public class UpdateRentalRequest

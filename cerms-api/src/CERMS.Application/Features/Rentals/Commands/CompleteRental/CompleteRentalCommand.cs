@@ -76,6 +76,11 @@ public class CompleteRentalHandler : IRequestHandler<CompleteRentalCommand, Resu
     {
         BillingResultDto billingResult;
 
+        var assignment = _unitOfWork.Repository<RentalAssignment>().Entities
+            .FirstOrDefault(ra => ra.RentalId == rental.Id && ra.ActualStartDateTime != null);
+
+        var startDate = assignment?.ActualStartDateTime ?? rental.StartDateTime;
+
         switch (request.BillingMode)
         {
             case BillingMode.Auto:
@@ -86,7 +91,7 @@ public class CompleteRentalHandler : IRequestHandler<CompleteRentalCommand, Resu
                 }
 
                 billingResult = _billingService.Calculate(
-                    rental.StartDateTime,
+                    startDate,
                     request.ActualEndDateTime,
                     rental.RateAmount.Value,
                     rental.RateType.Value);
@@ -100,7 +105,7 @@ public class CompleteRentalHandler : IRequestHandler<CompleteRentalCommand, Resu
                 }
 
                 billingResult = _billingService.Calculate(
-                    rental.StartDateTime,
+                    startDate,
                     request.ActualEndDateTime,
                     request.RateAmount.Value,
                     request.RateType.Value);

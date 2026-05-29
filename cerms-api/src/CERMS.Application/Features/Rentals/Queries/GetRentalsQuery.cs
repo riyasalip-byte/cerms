@@ -4,6 +4,7 @@ using CERMS.Application.Common;
 using CERMS.Application.DTOs;
 using CERMS.Application.Interfaces;
 using CERMS.Domain.Entities;
+using CERMS.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,12 +28,21 @@ public class GetRentalsHandler : IRequestHandler<GetRentalsQuery, Result<Paginat
         var rentalsQuery = _unitOfWork.Repository<RentalBooking>().Entities;
         var assetsQuery = _unitOfWork.Repository<Asset>().Entities;
         var customersQuery = _unitOfWork.Repository<Customer>().Entities;
+        var assignmentsQuery = _unitOfWork.Repository<RentalAssignment>().Entities;
+        var operatorsQuery = _unitOfWork.Repository<Operator>().Entities;
 
         var count = await rentalsQuery.CountAsync(cancellationToken);
         
         var query = from r in rentalsQuery
                     join a in assetsQuery on r.AssetId equals a.Id
                     join c in customersQuery on r.CustomerId equals c.Id
+                    
+                    join ra in assignmentsQuery on r.Id equals ra.RentalId into raGroup
+                    from activeRa in raGroup.DefaultIfEmpty()
+                    
+                    join o in operatorsQuery on activeRa.OperatorId equals o.Id into oGroup
+                    from activeOp in oGroup.DefaultIfEmpty()
+                    
                     orderby r.StartDateTime descending
                     select new RentalDto
                     {
@@ -45,6 +55,7 @@ public class GetRentalsHandler : IRequestHandler<GetRentalsQuery, Result<Paginat
                         StartDateTime = r.StartDateTime,
                         ExpectedEndDateTime = r.ExpectedEndDateTime,
                         ActualEndDateTime = r.ActualEndDateTime,
+                        ActualStartDateTime = activeRa != null ? activeRa.ActualStartDateTime : (DateTime?)null,
                         RateType = r.RateType,
                         RateAmount = r.RateAmount,
                         StartOdometer = r.StartOdometer,
@@ -61,7 +72,10 @@ public class GetRentalsHandler : IRequestHandler<GetRentalsQuery, Result<Paginat
                         TransportNotes = r.TransportNotes,
                         AdvanceAmount = r.AdvanceAmount,
                         SecurityDepositAmount = r.SecurityDepositAmount,
-                        FuelResponsibilityType = r.FuelResponsibilityType
+                        FuelResponsibilityType = r.FuelResponsibilityType,
+                        AssignedOperatorId = activeRa != null ? activeRa.OperatorId : (Guid?)null,
+                        AssignedOperatorName = activeOp != null ? activeOp.FullName : null,
+                        AssignedOperatorCode = activeOp != null ? activeOp.OperatorCode : null
                     };
 
         var items = await query
@@ -92,11 +106,20 @@ public class GetRentalByIdHandler : IRequestHandler<GetRentalByIdQuery, Result<R
         var rentalsQuery = _unitOfWork.Repository<RentalBooking>().Entities;
         var assetsQuery = _unitOfWork.Repository<Asset>().Entities;
         var customersQuery = _unitOfWork.Repository<Customer>().Entities;
+        var assignmentsQuery = _unitOfWork.Repository<RentalAssignment>().Entities;
+        var operatorsQuery = _unitOfWork.Repository<Operator>().Entities;
 
         var rentalDto = await (from r in rentalsQuery
                                join a in assetsQuery on r.AssetId equals a.Id
                                join c in customersQuery on r.CustomerId equals c.Id
                                where r.Id == request.Id
+                               
+                               join ra in assignmentsQuery on r.Id equals ra.RentalId into raGroup
+                               from activeRa in raGroup.DefaultIfEmpty()
+                               
+                               join o in operatorsQuery on activeRa.OperatorId equals o.Id into oGroup
+                               from activeOp in oGroup.DefaultIfEmpty()
+                               
                                select new RentalDto
                                {
                                    Id = r.Id,
@@ -108,6 +131,7 @@ public class GetRentalByIdHandler : IRequestHandler<GetRentalByIdQuery, Result<R
                                    StartDateTime = r.StartDateTime,
                                    ExpectedEndDateTime = r.ExpectedEndDateTime,
                                    ActualEndDateTime = r.ActualEndDateTime,
+                                   ActualStartDateTime = activeRa != null ? activeRa.ActualStartDateTime : (DateTime?)null,
                                    RateType = r.RateType,
                                    RateAmount = r.RateAmount,
                                    StartOdometer = r.StartOdometer,
@@ -124,7 +148,10 @@ public class GetRentalByIdHandler : IRequestHandler<GetRentalByIdQuery, Result<R
                                    TransportNotes = r.TransportNotes,
                                    AdvanceAmount = r.AdvanceAmount,
                                    SecurityDepositAmount = r.SecurityDepositAmount,
-                                   FuelResponsibilityType = r.FuelResponsibilityType
+                                   FuelResponsibilityType = r.FuelResponsibilityType,
+                                   AssignedOperatorId = activeRa != null ? activeRa.OperatorId : (Guid?)null,
+                                   AssignedOperatorName = activeOp != null ? activeOp.FullName : null,
+                                   AssignedOperatorCode = activeOp != null ? activeOp.OperatorCode : null
                                }).FirstOrDefaultAsync(cancellationToken);
 
         if (rentalDto == null) return Result<RentalDto>.Failure("Rental not found.");

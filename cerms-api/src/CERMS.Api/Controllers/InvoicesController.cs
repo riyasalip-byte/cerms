@@ -1,4 +1,5 @@
 using CERMS.Application.Interfaces;
+using CERMS.Application.Features.Invoices.Queries;
 using CERMS.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,20 @@ public class InvoicesController : ApiControllerBase
     {
         _unitOfWork = unitOfWork;
         _fileStorageService = fileStorageService;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetInvoices([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        var result = await Mediator.Send(new GetInvoicesQuery(pageNumber, pageSize));
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(new { error = result.Error });
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetInvoiceById(Guid id)
+    {
+        var result = await Mediator.Send(new GetInvoiceByIdQuery(id));
+        return result.IsSuccess ? Ok(result.Value) : NotFound(new { error = result.Error });
     }
 
     [HttpGet("{id}/pdf")]

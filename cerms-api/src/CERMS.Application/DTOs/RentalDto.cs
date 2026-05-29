@@ -14,6 +14,7 @@ public class RentalDto
     public DateTime StartDateTime { get; set; }
     public DateTime ExpectedEndDateTime { get; set; }
     public DateTime? ActualEndDateTime { get; set; }
+    public DateTime? ActualStartDateTime { get; set; }
 
     public RateType? RateType { get; set; }
     public decimal? RateAmount { get; set; }
@@ -42,4 +43,9 @@ public class RentalDto
 
     // Fuel Responsibility
     public FuelResponsibilityType FuelResponsibilityType { get; set; }
+
+    // Operator Details
+    public Guid? AssignedOperatorId { get; set; }
+    public string? AssignedOperatorName { get; set; }
+    public string? AssignedOperatorCode { get; set; }
 }

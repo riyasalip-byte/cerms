@@ -9,6 +9,7 @@ import {
   useDispatchRental, 
   useCancelRental 
 } from "@/hooks/useRentals"
+import { useOperators, useAssignOperator } from "@/hooks/useOperators"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,6 +28,7 @@ import {
 import { CloseRentalDialog } from "./CloseRentalDialog"
 import { 
   Loader2, 
+  AlertCircle,
   ArrowLeft, 
   CheckCircle, 
   Play, 
@@ -55,6 +57,11 @@ export function RentalDetail() {
   const dispatchRental = useDispatchRental()
   const cancelRental = useCancelRental()
   const closeRental = useCloseRental()
+
+  // Operators hooks and state
+  const { data: operators, isLoading: isLoadingOperators } = useOperators()
+  const assignOperatorMutation = useAssignOperator()
+  const [selectedOperatorId, setSelectedOperatorId] = React.useState("")
 
   const [startOdometer, setStartOdometer] = React.useState("")
   const [showStartForm, setShowStartForm] = React.useState(false)
@@ -127,6 +134,17 @@ export function RentalDetail() {
 
   const handleClose = async () => {
     await closeRental.mutateAsync(rental.id)
+    refetch()
+  }
+
+  const handleAssignOperator = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedOperatorId) return
+    await assignOperatorMutation.mutateAsync({
+      rentalId: rental.id,
+      operatorId: selectedOperatorId
+    })
+    setSelectedOperatorId("")
     refetch()
   }
 
@@ -513,6 +531,84 @@ export function RentalDetail() {
               </CardContent>
             </Card>
 
+            {/* Operator Assignment Card */}
+            <Card className="bg-card/60 backdrop-blur-sm border-none shadow-sm sm:col-span-2 overflow-hidden">
+              <CardHeader className="pb-3 border-b border-border/50 bg-slate-50/50 dark:bg-slate-900/50">
+                <CardTitle className="text-base font-bold flex items-center gap-2 text-slate-800 dark:text-slate-200">
+                  <User className="size-4 text-emerald-600 dark:text-emerald-450" /> Operator Assignment
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-4 text-sm">
+                {rental.assignedOperatorName ? (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4 animate-in fade-in duration-300">
+                    <div className="flex items-start gap-3">
+                      <div className="size-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-450 flex items-center justify-center font-bold text-sm shrink-0">
+                        {rental.assignedOperatorName.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Assigned Operator</span>
+                        <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm mt-0.5">{rental.assignedOperatorName}</h4>
+                        <span className="text-xs text-slate-500 block font-mono mt-0.5">Code: {rental.assignedOperatorCode || "N/A"}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      {statusVal >= 4 ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-805 border border-slate-200 dark:border-slate-700">
+                          ● Completed
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-450 px-2 py-0.5 rounded-full bg-emerald-100/40 border border-emerald-550/20">
+                          ● Assigned & Dispatched
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-dashed border-amber-250 bg-amber-500/5 p-4 text-xs flex gap-2">
+                      <AlertCircle className="size-4 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold text-amber-850 dark:text-amber-450">No Operator Assigned</span>
+                        <p className="text-slate-500 mt-1">An operator is required to accept field dispatches, log odometer readings, and coordinate return/handover logistics via the operator app portal.</p>
+                      </div>
+                    </div>
+                    
+                    {/* Select Form */}
+                    {statusVal < 4 ? (
+                      <form onSubmit={handleAssignOperator} className="flex flex-col sm:flex-row gap-3 items-end sm:items-center">
+                        <div className="flex-1 w-full space-y-1.5">
+                          <label className="text-xs font-bold text-muted-foreground">Select Active Operator</label>
+                          <select
+                            value={selectedOperatorId}
+                            onChange={(e) => setSelectedOperatorId(e.target.value)}
+                            disabled={isLoadingOperators || assignOperatorMutation.isPending}
+                            className="w-full h-10 rounded-xl border border-slate-200 bg-background/50 pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                          >
+                            <option value="">-- Select Operator --</option>
+                            {operators?.filter((op: any) => op.isActive).map((op: any) => (
+                              <option key={op.id} value={op.id}>
+                                {op.fullName} ({op.operatorCode})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <Button 
+                          type="submit" 
+                          disabled={!selectedOperatorId || assignOperatorMutation.isPending}
+                          className="h-10 px-5 font-bold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 w-full sm:w-auto mt-2 sm:mt-0 flex items-center justify-center gap-1.5"
+                        >
+                          {assignOperatorMutation.isPending && <Loader2 className="size-4 animate-spin" />}
+                          Assign to Contract
+                        </Button>
+                      </form>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">Operator assignment is closed for this completed/cancelled booking.</p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Section 6 - Fuel & Assets info */}
             <Card className="bg-card/60 backdrop-blur-sm border-none shadow-sm">
               <CardHeader className="pb-3 border-b border-border/50">
@@ -544,10 +640,20 @@ export function RentalDetail() {
                   <span className="text-muted-foreground">Expected End:</span>
                   <span className="font-medium text-right">{format(new Date(rental.expectedEndDateTime), "PPP")}</span>
                 </div>
+                {rental.actualStartDateTime && (
+                  <div className="grid grid-cols-2 border-b border-border/50 pb-2">
+                    <span className="text-muted-foreground">Actual Start:</span>
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-450 text-right">
+                      {format(new Date(rental.actualStartDateTime), "PPP p")}
+                    </span>
+                  </div>
+                )}
                 {rental.actualEndDateTime && (
                   <div className="grid grid-cols-2">
                     <span className="text-muted-foreground">Actual End:</span>
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-450 text-right">{format(new Date(rental.actualEndDateTime), "PPP")}</span>
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-450 text-right">
+                      {format(new Date(rental.actualEndDateTime), "PPP p")}
+                    </span>
                   </div>
                 )}
               </CardContent>
