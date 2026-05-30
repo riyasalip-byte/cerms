@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { usePermission } from "@/hooks/usePermission"
+import { useSidebar } from "@/components/ui/sidebar"
 
 import {
   Sidebar,
@@ -47,6 +48,7 @@ export function AppSidebar() {
   const isOperator = user?.role === 'Operator'
   const isAdmin = user?.role?.toLowerCase() === 'admin'
   const { hasPermission } = usePermission()
+  const { setOpenMobile } = useSidebar()
 
   // Build menu groups dynamically based on permissions
   const menuGroups = [
@@ -92,6 +94,7 @@ export function AppSidebar() {
 
   const handleNavClick = (path: string) => {
     console.log(`[Sidebar] Navigating to: ${path}`)
+    setOpenMobile(false)
   }
 
   const handleLogout = async () => {
@@ -115,8 +118,8 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link to={isOperator ? "/operator/dashboard" : "/dashboard"} onClick={() => handleNavClick(isOperator ? "/operator/dashboard" : "/dashboard")}>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Command className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-0.5 shadow-sm">
+                  <img src="/favicon.png" alt="CERMS Logo" className="size-full object-contain" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">CERMS</span>

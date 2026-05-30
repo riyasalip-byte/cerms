@@ -14,7 +14,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.png'],
       manifest: {
         name: 'CERMS - Construction Equipment Rental Management System',
         short_name: 'CERMS',
@@ -22,14 +22,14 @@ export default defineConfig({
         theme_color: '#0f172a',
         icons: [
           {
-            src: 'favicon.svg',
+            src: 'favicon.png',
             sizes: '192x192',
-            type: 'image/svg+xml'
+            type: 'image/png'
           },
           {
-            src: 'favicon.svg',
+            src: 'favicon.png',
             sizes: '512x512',
-            type: 'image/svg+xml'
+            type: 'image/png'
           }
         ]
       }

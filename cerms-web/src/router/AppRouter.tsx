@@ -112,76 +112,171 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 px-4">
-      <Card className="w-full max-w-md border-none shadow-2xl overflow-hidden">
-        <div className="h-2 bg-primary w-full" />
-        <CardHeader className="space-y-1 text-center pt-8">
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-            <Command className="size-6" />
+    <div className="flex min-h-screen w-full bg-slate-950 text-slate-100">
+      {/* Left side: Premium branding & text (hidden on mobile) */}
+      <div className="hidden lg:flex w-7/12 flex-col justify-between p-12 bg-slate-950 border-r border-slate-800/50 relative overflow-hidden">
+        {/* Decorative background grid and gradients */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-35" />
+        <div className="absolute -top-40 -left-40 h-80 w-80 rounded-full bg-emerald-500/10 blur-[120px]" />
+        <div className="absolute top-1/2 right-0 h-96 w-96 rounded-full bg-cyan-500/10 blur-[150px]" />
+
+        {/* Top Header */}
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-slate-900 border border-slate-800 p-1.5 shadow-md">
+            <img src="/favicon.png" alt="CERMS Logo" className="size-full object-contain" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">System Login</CardTitle>
-          <CardDescription>
-            Access the CERMS Management Dashboard
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pb-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@cerms.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-11 focus-visible:ring-primary/20"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <button type="button" className="text-xs font-medium text-primary hover:underline">
-                  Forgot password?
-                </button>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-11 focus-visible:ring-primary/20"
-              />
-            </div>
-            
-            {error && (
-              <div className="flex items-center gap-2 rounded-xl bg-destructive/10 p-4 text-sm font-medium text-destructive animate-in fade-in slide-in-from-top-1">
-                <AlertCircle className="size-4 shrink-0" />
-                <p>{error}</p>
-              </div>
-            )}
-            
-            <Button type="submit" className="w-full h-11 text-base font-bold shadow-lg shadow-primary/20" disabled={isLoading}>
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                  Authenticating...
-                </div>
-              ) : (
-                "Sign In"
-              )}
-            </Button>
-          </form>
-          
-          <div className="mt-8 text-center">
-            <p className="text-xs text-muted-foreground italic">
-              Authorized personnel only. All access attempts are logged.
+          <span className="text-xl font-black tracking-wider bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+            CERMS
+          </span>
+        </div>
+
+        {/* Product Pitch Section */}
+        <div className="my-auto max-w-xl relative z-10 space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-4xl xl:text-5xl font-black tracking-tight leading-none bg-gradient-to-br from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+              Construction Equipment Rental Management System
+            </h1>
+            <p className="text-base text-slate-400 leading-relaxed font-medium">
+              Streamline operations, optimize fleet utilization, and safeguard your revenues with our premium database-driven dynamic management console.
             </p>
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="space-y-4">
+            <div className="flex gap-4 items-start p-4 rounded-2xl bg-slate-900/40 border border-slate-850/40 hover:bg-slate-900/60 hover:border-slate-800/60 transition-all duration-300">
+              <span className="text-2xl mt-0.5">⚡</span>
+              <div>
+                <h3 className="font-bold text-slate-250 text-sm xl:text-base">Real-Time Asset Tracking</h3>
+                <p className="text-xs xl:text-sm text-slate-400 mt-0.5 leading-normal">
+                  Monitor machinery locations, active work states, and critical maintenance schedules instantly.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 items-start p-4 rounded-2xl bg-slate-900/40 border border-slate-850/40 hover:bg-slate-900/60 hover:border-slate-800/60 transition-all duration-300">
+              <span className="text-2xl mt-0.5">📅</span>
+              <div>
+                <h3 className="font-bold text-slate-250 text-sm xl:text-base">Seamless Rental Bookings</h3>
+                <p className="text-xs xl:text-sm text-slate-400 mt-0.5 leading-normal">
+                  Coordinate allocations, manage reservations, and track operational handovers effortlessly.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 items-start p-4 rounded-2xl bg-slate-900/40 border border-slate-850/40 hover:bg-slate-900/60 hover:border-slate-800/60 transition-all duration-300">
+              <span className="text-2xl mt-0.5">🧾</span>
+              <div>
+                <h3 className="font-bold text-slate-250 text-sm xl:text-base">Dynamic Invoicing & Finance</h3>
+                <p className="text-xs xl:text-sm text-slate-400 mt-0.5 leading-normal">
+                  Automate billing cycles, capture utilization-based charges, and minimize revenue leaks.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-xs text-slate-500 font-medium relative z-10 flex justify-between items-center border-t border-slate-900/60 pt-6">
+          <div className="flex items-center gap-2">
+            <span>&copy; {new Date().getFullYear()} CERMS. All rights reserved.</span>
+            <span className="text-slate-800">|</span>
+            <div className="flex items-center gap-1 text-slate-400">
+              <span>Developed by</span>
+              <a href="https://gridmind.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-emerald-400 transition-colors font-bold">
+                <img src="/gridmind-icon.svg" alt="GridMind Logo" className="h-3.5 w-3.5 object-contain" />
+                <span>GridMind</span>
+              </a>
+            </div>
+          </div>
+          <span className="bg-slate-900/60 px-3 py-1 rounded-full border border-slate-900 text-slate-400 text-[10px] uppercase tracking-widest font-black">
+            SaaS Enterprise
+          </span>
+        </div>
+      </div>
+
+      {/* Right side: Login Form Panel */}
+      <div className="flex w-full lg:w-5/12 flex-col justify-center bg-slate-950 px-6 sm:px-12 md:px-20 lg:px-16 xl:px-24 py-12 relative overflow-hidden">
+        {/* Glow behind card on mobile */}
+        <div className="lg:hidden absolute top-10 left-10 h-80 w-80 rounded-full bg-emerald-500/5 blur-[100px]" />
+        
+        <div className="mx-auto w-full max-w-md space-y-8 relative z-10">
+          <div className="flex flex-col items-center text-center space-y-4">
+            {/* Show big standalone logo centered above the form */}
+            <div className="flex h-36 w-36 items-center justify-center p-1 rounded-3xl bg-slate-900/30 border border-slate-800/50 shadow-2xl">
+              <img src="/favicon.png" alt="CERMS Logo" className="size-full object-contain animate-pulse-slow" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-3xl font-black tracking-tight text-white">System Login</h2>
+              <p className="text-sm text-slate-400 font-medium">
+                Enter your administrative credentials to access the console
+              </p>
+            </div>
+          </div>
+
+          <div className="p-1 rounded-2xl bg-gradient-to-b from-slate-800/30 to-transparent">
+            <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800/60 rounded-[15px] p-6 shadow-2xl shadow-black/50">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-slate-300 font-bold text-sm">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="admin@cerms.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="h-11 bg-slate-950 border-slate-800 text-white placeholder-slate-600 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 transition-all rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-slate-300 font-bold text-sm">Password</Label>
+                    <button type="button" className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
+                      Forgot password?
+                    </button>
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="h-11 bg-slate-950 border-slate-800 text-white placeholder-slate-600 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 transition-all rounded-xl"
+                  />
+                </div>
+                
+                {error && (
+                  <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 p-4 text-xs xl:text-sm font-semibold text-red-400 animate-in fade-in slide-in-from-top-1">
+                    <AlertCircle className="size-4 shrink-0 mt-0.5" />
+                    <p>{error}</p>
+                  </div>
+                )}
+                
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 text-base font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/10 active:scale-[0.99] transition-all rounded-xl cursor-pointer" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
+                      Authenticating...
+                    </div>
+                  ) : (
+                    "Sign In to Dashboard"
+                  )}
+                </Button>
+              </form>
+            </div>
+          </div>
+          
+          <div className="text-center">
+            <p className="text-xs text-slate-500 font-semibold italic">
+              Authorized personnel only. All access sessions are dynamically audited.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
