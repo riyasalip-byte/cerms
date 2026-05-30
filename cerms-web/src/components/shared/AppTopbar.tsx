@@ -34,6 +34,15 @@ export function AppTopbar() {
   const { user, logout: logoutStore } = useAuthStore()
   const pathnames = location.pathname.split("/").filter((x) => x)
 
+  const getInitials = (username?: string) => {
+    if (!username) return "US"
+    const parts = username.trim().split(/\s+/)
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[1][0]).toUpperCase()
+    }
+    return username.slice(0, 2).toUpperCase()
+  }
+
   const handleNavClick = (path: string) => {
     console.log(`[Navigation] Navigating to: ${path}`)
   }
@@ -120,7 +129,7 @@ export function AppTopbar() {
             <Button variant="ghost" className="relative size-8 rounded-full">
               <Avatar className="size-8">
                 <AvatarImage src="/avatars/01.png" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarFallback>{getInitials(user?.username)}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>

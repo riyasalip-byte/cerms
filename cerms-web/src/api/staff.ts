@@ -172,3 +172,14 @@ export const getStaffWithoutUser = async () => {
   const { data } = await api.get<ApiResponse<StaffLookupDto[]>>('/staffs/without-user')
   return data.data
 }
+
+export const uploadDocument = async (file: File) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  const { data } = await api.post<ApiResponse<string>>('/uploads', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+  return data.data
+}

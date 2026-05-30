@@ -17,7 +17,6 @@ public class CreateStaffCommandValidator : AbstractValidator<CreateStaffCommand>
         RuleFor(x => x.EmployeeCategory).IsInEnum();
         RuleFor(x => x.JoiningDate).NotEmpty();
         RuleFor(x => x.Designation).NotEmpty();
-        RuleFor(x => x.Department).NotEmpty();
 
         When(x => x.EmployeeCategory == EmployeeCategory.Operator, () =>
         {

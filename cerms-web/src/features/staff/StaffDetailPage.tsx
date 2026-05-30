@@ -14,6 +14,8 @@ import {
   UserRound,
   Wrench,
   Calendar,
+  FileText,
+  Eye,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -22,27 +24,56 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ErrorState } from "@/components/shared/ErrorState"
 import { useDeactivateStaff, useStaff } from "@/hooks/useStaff"
 
-const employeeCategoryLabels: Record<number, string> = {
+const employeeCategoryLabels: Record<string | number, string> = {
   0: "Operator",
   1: "Office Staff",
   2: "Manager",
   3: "Mechanic",
   4: "Helper",
   5: "Other",
+  "0": "Operator",
+  "1": "Office Staff",
+  "2": "Manager",
+  "3": "Mechanic",
+  "4": "Helper",
+  "5": "Other",
+  "Operator": "Operator",
+  "OfficeStaff": "Office Staff",
+  "Office Staff": "Office Staff",
+  "Manager": "Manager",
+  "Mechanic": "Mechanic",
+  "Helper": "Helper",
+  "Other": "Other",
 }
 
-const employmentStatusLabels: Record<number, string> = {
+const employmentStatusLabels: Record<string | number, string> = {
   0: "Active",
   1: "Inactive",
   2: "Suspended",
   3: "Resigned",
+  "0": "Active",
+  "1": "Inactive",
+  "2": "Suspended",
+  "3": "Resigned",
+  "Active": "Active",
+  "Inactive": "Inactive",
+  "Suspended": "Suspended",
+  "Resigned": "Resigned",
 }
 
-const statusClasses: Record<number, string> = {
+const statusClasses: Record<string | number, string> = {
   0: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
   1: "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
   2: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
   3: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+  "0": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  "1": "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  "2": "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  "3": "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+  "Active": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  "Inactive": "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  "Suspended": "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  "Resigned": "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
 }
 
 export function StaffDetailPage() {
@@ -74,8 +105,8 @@ export function StaffDetailPage() {
     )
   }
 
-  const isOperator = staff.employeeCategory === 0
-  const isActive = staff.employmentStatus === 0
+  const isOperator = staff.employeeCategory === 0 || staff.employeeCategory === "0" || staff.employeeCategory === "Operator"
+  const isActive = staff.employmentStatus === 0 || staff.employmentStatus === "0" || staff.employmentStatus === "Active"
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
@@ -251,6 +282,66 @@ export function StaffDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {(staff.licenseDocumentUrl || staff.idProofUrl) && (
+        <Card className="shadow-sm border-muted">
+          <CardHeader className="bg-slate-50/50 dark:bg-slate-900/10 border-b pb-4">
+            <div className="flex items-center gap-2">
+              <FileText className="size-5 text-primary" />
+              <CardTitle className="text-lg">Uploaded Documents</CardTitle>
+            </div>
+            <CardDescription>Click to view uploaded credential or identification documents.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {staff.licenseDocumentUrl && (
+                <div className="flex items-center justify-between p-4 rounded-xl border bg-slate-50/30 dark:bg-slate-900/10 hover:bg-slate-50 dark:hover:bg-slate-900/20 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-full bg-amber-50 dark:bg-amber-950/20 p-2.5 text-amber-500 border border-amber-100 dark:border-amber-900/30">
+                      <FileText className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">License Document</p>
+                      <p className="text-xs text-muted-foreground">Uploaded credential</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="font-bold border-slate-200 text-slate-700 hover:text-primary dark:text-slate-300"
+                    onClick={() => window.open(`http://localhost:5000${staff.licenseDocumentUrl}`, "_blank")}
+                  >
+                    <Eye className="size-3.5 mr-1.5" />
+                    View Document
+                  </Button>
+                </div>
+              )}
+              {staff.idProofUrl && (
+                <div className="flex items-center justify-between p-4 rounded-xl border bg-slate-50/30 dark:bg-slate-900/10 hover:bg-slate-50 dark:hover:bg-slate-900/20 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-full bg-blue-50 dark:bg-blue-950/20 p-2.5 text-blue-500 border border-blue-100 dark:border-blue-900/30">
+                      <FileText className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">ID Proof Document</p>
+                      <p className="text-xs text-muted-foreground">Uploaded identity proof</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="font-bold border-slate-200 text-slate-700 hover:text-primary dark:text-slate-300"
+                    onClick={() => window.open(`http://localhost:5000${staff.idProofUrl}`, "_blank")}
+                  >
+                    <Eye className="size-3.5 mr-1.5" />
+                    View Document
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="shadow-sm border-muted border-dashed">
         <CardHeader className="bg-slate-50/50 dark:bg-slate-900/10 border-b pb-4">

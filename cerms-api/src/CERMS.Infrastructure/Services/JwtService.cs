@@ -32,10 +32,10 @@ public class JwtService : IJwtService
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role.ToString()),
+            new Claim(ClaimTypes.Role, user.Role.Name),
             new Claim("user_id", user.Id.ToString()),
             new Claim("email", user.Email),
-            new Claim("role", user.Role.ToString()),
+            new Claim("role", user.Role.Name),
             new Claim("company_id", user.CompanyId.ToString()),
             new Claim("branch_id", user.BranchId.ToString())
         };

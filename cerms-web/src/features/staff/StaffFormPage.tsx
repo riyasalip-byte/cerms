@@ -12,7 +12,12 @@ import {
   Save,
   UserPlus,
   Wrench,
+  Upload,
+  CheckCircle2,
+  Eye,
+  Trash2,
 } from "lucide-react"
+import { uploadDocument } from "@/api/staff"
 
 import {
   Form,
@@ -35,12 +40,40 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 import {
   useAssetClasses,
   useCreateStaff,
   useStaff,
   useUpdateStaff,
 } from "@/hooks/useStaff"
+
+const employeeCategoryToValue: Record<string | number, string> = {
+  "Operator": "0",
+  "OfficeStaff": "1",
+  "Office Staff": "1",
+  "Manager": "2",
+  "Mechanic": "3",
+  "Helper": "4",
+  "Other": "5",
+  0: "0",
+  1: "1",
+  2: "2",
+  3: "3",
+  4: "4",
+  5: "5",
+}
+
+const employmentStatusToValue: Record<string | number, string> = {
+  "Active": "0",
+  "Inactive": "1",
+  "Suspended": "2",
+  "Resigned": "3",
+  0: "0",
+  1: "1",
+  2: "2",
+  3: "3",
+}
 
 const employeeCategoryLabels: Record<number, string> = {
   0: "Operator",
@@ -86,7 +119,7 @@ const staffFormSchema = z
     relievingDate: z.string().optional(),
     employmentStatus: z.enum(["0", "1", "2", "3"]),
     designation: z.string().trim().min(1, "Designation is required."),
-    department: z.string().trim().min(1, "Department is required."),
+    department: z.string().trim().optional(),
     licenseNumber: z.string().trim().optional(),
     licenseCategory: z.string().trim().optional(),
     licenseExpiryDate: z.string().optional(),
@@ -97,6 +130,8 @@ const staffFormSchema = z
     aadhaarNo: z.string().trim().optional(),
     panNo: z.string().trim().optional(),
     remarks: z.string().trim().optional(),
+    licenseDocumentUrl: z.string().trim().optional(),
+    idProofUrl: z.string().trim().optional(),
     allowedAssetClassIds: z.array(z.string()),
   })
   .superRefine((data, ctx) => {
@@ -159,6 +194,8 @@ const defaultValues: StaffFormValues = {
   aadhaarNo: "",
   panNo: "",
   remarks: "",
+  licenseDocumentUrl: "",
+  idProofUrl: "",
   allowedAssetClassIds: [],
 }
 
@@ -200,10 +237,10 @@ export function StaffFormPage() {
       pincode: existingStaff.pincode ?? "",
       emergencyContactName: existingStaff.emergencyContactName ?? "",
       emergencyContactNumber: existingStaff.emergencyContactNumber ?? "",
-      employeeCategory: String(existingStaff.employeeCategory) as StaffFormValues["employeeCategory"],
+      employeeCategory: (employeeCategoryToValue[existingStaff.employeeCategory] ?? "1") as StaffFormValues["employeeCategory"],
       joiningDate: toDateInputValue(existingStaff.joiningDate),
       relievingDate: existingStaff.relievingDate ? toDateInputValue(existingStaff.relievingDate) : "",
-      employmentStatus: String(existingStaff.employmentStatus) as StaffFormValues["employmentStatus"],
+      employmentStatus: (employmentStatusToValue[existingStaff.employmentStatus] ?? "0") as StaffFormValues["employmentStatus"],
       designation: existingStaff.designation ?? "",
       department: existingStaff.department ?? "",
       licenseNumber: existingStaff.licenseNumber ?? "",
@@ -218,9 +255,48 @@ export function StaffFormPage() {
       aadhaarNo: existingStaff.aadhaarNo ?? "",
       panNo: existingStaff.panNo ?? "",
       remarks: existingStaff.remarks ?? "",
+      licenseDocumentUrl: existingStaff.licenseDocumentUrl ?? "",
+      idProofUrl: existingStaff.idProofUrl ?? "",
       allowedAssetClassIds: existingStaff.allowedAssetClasses?.map((ac) => ac.id) ?? [],
     })
   }, [existingStaff, form])
+
+  const [isUploadingLicense, setIsUploadingLicense] = React.useState(false)
+  const [isUploadingId, setIsUploadingId] = React.useState(false)
+
+  const handleLicenseUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingLicense(true)
+    try {
+      const url = await uploadDocument(file)
+      form.setValue("licenseDocumentUrl", url)
+      toast.success("License document uploaded successfully")
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to upload license document")
+    } finally {
+      setIsUploadingLicense(false)
+    }
+  }
+
+  const handleIdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingId(true)
+    try {
+      const url = await uploadDocument(file)
+      form.setValue("idProofUrl", url)
+      toast.success("ID proof document uploaded successfully")
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to upload ID proof document")
+    } finally {
+      setIsUploadingId(false)
+    }
+  }
 
   const isSaving = createStaff.isPending || updateStaff.isPending
 
@@ -246,7 +322,7 @@ export function StaffFormPage() {
       relievingDate: normalizeOptional(values.relievingDate),
       employmentStatus: Number(values.employmentStatus),
       designation: values.designation.trim(),
-      department: values.department.trim(),
+      department: "General",
       licenseNumber: isOperator ? normalizeOptional(values.licenseNumber) : null,
       licenseCategory: isOperator ? normalizeOptional(values.licenseCategory) : null,
       licenseExpiryDate: isOperator ? normalizeOptional(values.licenseExpiryDate) : null,
@@ -257,6 +333,8 @@ export function StaffFormPage() {
       aadhaarNo: normalizeOptional(values.aadhaarNo),
       panNo: normalizeOptional(values.panNo),
       remarks: normalizeOptional(values.remarks),
+      licenseDocumentUrl: normalizeOptional(values.licenseDocumentUrl),
+      idProofUrl: normalizeOptional(values.idProofUrl),
       allowedAssetClassIds: values.allowedAssetClassIds,
     }
 
@@ -270,6 +348,11 @@ export function StaffFormPage() {
     }
 
     navigate("/staff", { replace: true })
+  }
+
+  const onInvalid = (errors: any) => {
+    console.warn("Validation errors:", errors)
+    toast.error("Please fill in all mandatory fields correctly.")
   }
 
   if (isEditMode && isStaffLoading) {
@@ -299,7 +382,7 @@ export function StaffFormPage() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit as any, onInvalid)} className="space-y-6">
           <Card className="shadow-sm border-muted">
             <CardHeader className="bg-slate-50/50 dark:bg-slate-900/10 border-b pb-4">
               <div className="flex items-center gap-2 text-primary">
@@ -632,20 +715,6 @@ export function StaffFormPage() {
 
               <FormField
                 control={form.control as any}
-                name="department"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-bold">Department</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Department" {...field} className="h-10" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control as any}
                 name="joiningDate"
                 render={({ field }) => (
                   <FormItem>
@@ -893,20 +962,135 @@ export function StaffFormPage() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-muted border-dashed">
+          <Card className="shadow-sm border-muted">
             <CardHeader className="bg-slate-50/50 dark:bg-slate-900/10 border-b pb-4">
               <CardTitle className="text-lg">Documents</CardTitle>
-              <CardDescription>Document upload will be available in a future release.</CardDescription>
+              <CardDescription>Upload license and identification documents.</CardDescription>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
-                  <p className="text-sm font-medium">License Document</p>
-                  <p className="text-xs mt-1">Upload placeholder</p>
+              <div className="grid gap-6 sm:grid-cols-2">
+                {/* License Document Upload */}
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-6 bg-slate-50/50 dark:bg-slate-900/5 hover:bg-slate-100/50 dark:hover:bg-slate-900/10 transition-colors relative">
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">License Document</p>
+                  
+                  {form.watch("licenseDocumentUrl") ? (
+                    <div className="flex flex-col items-center gap-3 w-full">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-3 py-1.5 rounded-full border border-emerald-100 dark:border-emerald-900/30 text-xs font-semibold">
+                        <CheckCircle2 className="size-4" />
+                        <span>Uploaded</span>
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 font-semibold text-slate-700 border-slate-200"
+                          onClick={() => window.open(`http://localhost:5000${form.watch("licenseDocumentUrl")}`, "_blank")}
+                        >
+                          <Eye className="size-3.5 mr-1.5" />
+                          View
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                          onClick={() => form.setValue("licenseDocumentUrl", "")}
+                        >
+                          <Trash2 className="size-3.5 mr-1.5" />
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-3 text-slate-400">
+                        <Upload className="size-5" />
+                      </div>
+                      <label className="cursor-pointer">
+                        <span className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-xs font-bold text-primary-foreground shadow transition-colors hover:bg-primary/95">
+                          {isUploadingLicense ? (
+                            <>
+                              <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            "Select File"
+                          )}
+                        </span>
+                        <input
+                          type="file"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          className="hidden"
+                          onChange={handleLicenseUpload}
+                          disabled={isUploadingLicense}
+                        />
+                      </label>
+                      <p className="text-[10px] text-muted-foreground">PDF, PNG, JPG up to 5MB</p>
+                    </div>
+                  )}
                 </div>
-                <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
-                  <p className="text-sm font-medium">ID Proof</p>
-                  <p className="text-xs mt-1">Upload placeholder</p>
+
+                {/* ID Proof Upload */}
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-6 bg-slate-50/50 dark:bg-slate-900/5 hover:bg-slate-100/50 dark:hover:bg-slate-900/10 transition-colors relative">
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">ID Proof Document</p>
+                  
+                  {form.watch("idProofUrl") ? (
+                    <div className="flex flex-col items-center gap-3 w-full">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-3 py-1.5 rounded-full border border-emerald-100 dark:border-emerald-900/30 text-xs font-semibold">
+                        <CheckCircle2 className="size-4" />
+                        <span>Uploaded</span>
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 font-semibold text-slate-700 border-slate-200"
+                          onClick={() => window.open(`http://localhost:5000${form.watch("idProofUrl")}`, "_blank")}
+                        >
+                          <Eye className="size-3.5 mr-1.5" />
+                          View
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                          onClick={() => form.setValue("idProofUrl", "")}
+                        >
+                          <Trash2 className="size-3.5 mr-1.5" />
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-3 text-slate-400">
+                        <Upload className="size-5" />
+                      </div>
+                      <label className="cursor-pointer">
+                        <span className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-xs font-bold text-primary-foreground shadow transition-colors hover:bg-primary/95">
+                          {isUploadingId ? (
+                            <>
+                              <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            "Select File"
+                          )}
+                        </span>
+                        <input
+                          type="file"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          className="hidden"
+                          onChange={handleIdUpload}
+                          disabled={isUploadingId}
+                        />
+                      </label>
+                      <p className="text-[10px] text-muted-foreground">PDF, PNG, JPG up to 5MB</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

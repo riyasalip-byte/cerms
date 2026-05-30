@@ -30,36 +30,78 @@ import {
 import { useStaffList } from "@/hooks/useStaff"
 import type { StaffDto } from "@/api/staff"
 
-const employeeCategoryLabels: Record<number, string> = {
+const employeeCategoryLabels: Record<string | number, string> = {
   0: "Operator",
   1: "Office Staff",
   2: "Manager",
   3: "Mechanic",
   4: "Helper",
   5: "Other",
+  "0": "Operator",
+  "1": "Office Staff",
+  "2": "Manager",
+  "3": "Mechanic",
+  "4": "Helper",
+  "5": "Other",
+  "Operator": "Operator",
+  "OfficeStaff": "Office Staff",
+  "Office Staff": "Office Staff",
+  "Manager": "Manager",
+  "Mechanic": "Mechanic",
+  "Helper": "Helper",
+  "Other": "Other",
 }
 
-const employmentStatusLabels: Record<number, string> = {
+const employmentStatusLabels: Record<string | number, string> = {
   0: "Active",
   1: "Inactive",
   2: "Suspended",
   3: "Resigned",
+  "0": "Active",
+  "1": "Inactive",
+  "2": "Suspended",
+  "3": "Resigned",
+  "Active": "Active",
+  "Inactive": "Inactive",
+  "Suspended": "Suspended",
+  "Resigned": "Resigned",
 }
 
-const categoryIcons: Record<number, typeof UserRound> = {
+const categoryIcons: Record<string | number, typeof UserRound> = {
   0: HardHat,
   1: Briefcase,
   2: Users,
   3: Wrench,
   4: UserRound,
   5: UserRound,
+  "0": HardHat,
+  "1": Briefcase,
+  "2": Users,
+  "3": Wrench,
+  "4": UserRound,
+  "5": UserRound,
+  "Operator": HardHat,
+  "OfficeStaff": Briefcase,
+  "Office Staff": Briefcase,
+  "Manager": Users,
+  "Mechanic": Wrench,
+  "Helper": UserRound,
+  "Other": UserRound,
 }
 
-const statusClasses: Record<number, string> = {
+const statusClasses: Record<string | number, string> = {
   0: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/50",
   1: "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
   2: "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200/50",
   3: "bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200/50",
+  "0": "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/50",
+  "1": "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  "2": "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200/50",
+  "3": "bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200/50",
+  "Active": "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/50",
+  "Inactive": "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  "Suspended": "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200/50",
+  "Resigned": "bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200/50",
 }
 
 export function StaffListPage() {
@@ -148,7 +190,7 @@ export function StaffListPage() {
       header: "Status",
       cell: ({ row }) => {
         const status = row.original.employmentStatus
-        const isActive = status === 0
+        const isActive = status === 0 || status === "0" || status === "Active"
         return (
           <span
             className={[
