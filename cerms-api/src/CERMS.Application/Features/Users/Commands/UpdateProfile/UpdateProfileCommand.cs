@@ -37,7 +37,8 @@ public class UpdateProfileHandler : IRequestHandler<UpdateProfileCommand, Result
             return Result<ProfileDto>.Failure("Unauthorized.");
 
         var user = await _unitOfWork.Repository<User>().Entities
-            .Include(u => u.Role)
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
             .Include(u => u.Staff)
             .FirstOrDefaultAsync(u => u.Id == _tenantService.UserId, cancellationToken);
 

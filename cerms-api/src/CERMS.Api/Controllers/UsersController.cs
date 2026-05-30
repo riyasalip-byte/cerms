@@ -2,8 +2,11 @@ using CERMS.Application.Features.Users.Commands.CreateUser;
 using CERMS.Application.Features.Users.Commands.ResetPassword;
 using CERMS.Application.Features.Users.Commands.UpdateUser;
 using CERMS.Application.Features.Users.Queries;
+using CERMS.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace CERMS.Api.Controllers;
 
@@ -12,7 +15,7 @@ namespace CERMS.Api.Controllers;
 public class UsersController : ApiControllerBase
 {
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [AuthorizePermission("Users.View")]
     public async Task<IActionResult> Get(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 20,
@@ -29,21 +32,21 @@ public class UsersController : ApiControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin")]
+    [AuthorizePermission("Users.View")]
     public async Task<IActionResult> GetById(Guid id)
     {
         return HandleResult(await Mediator.Send(new GetUserByIdQuery(id)));
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [AuthorizePermission("Users.Create")]
     public async Task<IActionResult> Create([FromBody] CreateUserCommand command)
     {
         return HandleResult(await Mediator.Send(command));
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    [AuthorizePermission("Users.Edit")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserCommand command)
     {
         if (id != command.Id)
@@ -53,7 +56,7 @@ public class UsersController : ApiControllerBase
     }
 
     [HttpPost("{id}/reset-password")]
-    [Authorize(Roles = "Admin")]
+    [AuthorizePermission("Users.ResetPassword")]
     public async Task<IActionResult> ResetPassword(Guid id, [FromBody] ResetPasswordRequest request)
     {
         return HandleResult(await Mediator.Send(new ResetPasswordCommand(id, request.NewPassword)));

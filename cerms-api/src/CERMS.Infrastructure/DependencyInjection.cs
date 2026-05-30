@@ -35,6 +35,10 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString,
                 builder => builder.MigrationsAssembly(typeof(CermsDbContext).Assembly.FullName)));
 
+        // Register Dynamic Permission-Based Authorization Services
+        services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider, CERMS.Infrastructure.Security.PermissionPolicyProvider>();
+        services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, CERMS.Infrastructure.Security.PermissionAuthorizationHandler>();
+
         return services;
     }
 }

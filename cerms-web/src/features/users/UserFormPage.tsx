@@ -253,14 +253,16 @@ export function UserFormPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {roles.map((role) => (
-                          <SelectItem key={role.id} value={role.id}>
-                            {role.name}
-                            {role.description && (
-                              <span className="text-muted-foreground"> — {role.description}</span>
-                            )}
-                          </SelectItem>
-                        ))}
+                        {roles
+                          .filter((role) => role.isActive !== false || (isEditMode && role.id === existingUser?.roleId))
+                          .map((role) => (
+                            <SelectItem key={role.id} value={role.id}>
+                              {role.name}
+                              {role.description && (
+                                <span className="text-muted-foreground"> — {role.description}</span>
+                              )}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />

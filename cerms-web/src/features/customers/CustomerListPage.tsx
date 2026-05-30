@@ -15,10 +15,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useCustomers } from "@/hooks/useCustomers"
+import { usePermission } from "@/hooks/usePermission"
 import type { CustomerDto } from "@/api/customers"
 
 export function CustomerListPage() {
   const navigate = useNavigate()
+  const { canCreateCustomer, canEditCustomer } = usePermission()
   const [searchTerm, setSearchTerm] = React.useState("")
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState("all")
@@ -167,11 +169,13 @@ export function CustomerListPage() {
               <Eye className="size-4 text-slate-600 dark:text-slate-400" />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" className="hover:bg-primary/10 size-8" asChild>
-            <Link to={`/customers/${row.original.id}/edit`} aria-label={`Edit ${row.original.customerName}`}>
-              <Edit2 className="size-4 text-primary" />
-            </Link>
-          </Button>
+          {canEditCustomer && (
+            <Button variant="ghost" size="icon" className="hover:bg-primary/10 size-8" asChild>
+              <Link to={`/customers/${row.original.id}/edit`} aria-label={`Edit ${row.original.customerName}`}>
+                <Edit2 className="size-4 text-primary" />
+              </Link>
+            </Button>
+          )}
         </div>
       ),
     },
@@ -195,10 +199,12 @@ export function CustomerListPage() {
             Search, filter, and manage enterprise accounts and individual rental customer profiles.
           </p>
         </div>
-        <Button onClick={() => navigate("/customers/new")} className="shadow-lg shadow-primary/20 bg-primary font-semibold">
-          <Plus className="mr-2 size-4" />
-          Add Customer
-        </Button>
+        {canCreateCustomer && (
+          <Button onClick={() => navigate("/customers/new")} className="shadow-lg shadow-primary/20 bg-primary font-semibold">
+            <Plus className="mr-2 size-4" />
+            Add Customer
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-muted bg-card p-4 shadow-sm sm:flex-row sm:items-center">

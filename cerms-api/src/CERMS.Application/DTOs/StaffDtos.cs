@@ -58,13 +58,7 @@ public class AssetClassDto
     public bool IsActive { get; set; }
 }
 
-public class RoleDto
-{
-    public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public bool IsSystemRole { get; set; }
-}
+
 
 public class StaffLookupDto
 {
@@ -98,4 +92,5 @@ public class ProfileDto
     public EmployeeCategory EmployeeCategory { get; set; }
     public string Designation { get; set; } = string.Empty;
     public string Department { get; set; } = string.Empty;
+    public List<string> Permissions { get; set; } = new();
 }

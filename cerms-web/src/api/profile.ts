@@ -21,6 +21,7 @@ export type ProfileDto = {
   employeeCategory: number
   designation: string
   department: string
+  permissions: string[]
 }
 
 export type UpdateProfilePayload = {

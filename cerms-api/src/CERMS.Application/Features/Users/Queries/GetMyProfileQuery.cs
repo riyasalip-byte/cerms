@@ -26,12 +26,24 @@ public class GetMyProfileHandler : IRequestHandler<GetMyProfileQuery, Result<Pro
             return Result<ProfileDto>.Failure("Unauthorized.");
 
         var user = await _unitOfWork.Repository<User>().Entities
-            .Include(u => u.Role)
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
             .Include(u => u.Staff)
             .FirstOrDefaultAsync(u => u.Id == _tenantService.UserId, cancellationToken);
 
         if (user is null)
             return Result<ProfileDto>.Failure("User not found.");
+
+        var permissions = new List<string>();
+        if (user.Role != null)
+        {
+            permissions = await _unitOfWork.Repository<RolePermission>().Entities
+                .AsNoTracking()
+                .Include(rp => rp.Permission)
+                .Where(rp => rp.RoleId == user.Role.Id && !rp.Permission.IsDeleted)
+                .Select(rp => rp.Permission.PermissionCode)
+                .ToListAsync(cancellationToken);
+        }
 
         var staff = user.Staff;
         return Result<ProfileDto>.Success(new ProfileDto
@@ -39,7 +51,7 @@ public class GetMyProfileHandler : IRequestHandler<GetMyProfileQuery, Result<Pro
             UserId = user.Id,
             Username = user.Username,
             Email = user.Email,
-            Role = user.Role.Name,
+            Role = user.Role?.Name ?? string.Empty,
             StaffId = staff.Id,
             StaffCode = staff.StaffCode,
             DisplayName = staff.DisplayName,
@@ -49,7 +61,8 @@ public class GetMyProfileHandler : IRequestHandler<GetMyProfileQuery, Result<Pro
             PhotoUrl = staff.PhotoUrl,
             EmployeeCategory = staff.EmployeeCategory,
             Designation = staff.Designation,
-            Department = staff.Department
+            Department = staff.Department,
+            Permissions = permissions
         });
     }
 }

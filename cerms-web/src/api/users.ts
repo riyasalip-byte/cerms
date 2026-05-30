@@ -26,6 +26,7 @@ export type RoleDto = {
   name: string
   description?: string | null
   isSystemRole: boolean
+  isActive?: boolean
 }
 
 export type CreateUserPayload = {

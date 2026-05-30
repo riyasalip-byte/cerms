@@ -23,14 +23,9 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { useDeactivateStaff, useStaff } from "@/hooks/useStaff"
+import { usePermission } from "@/hooks/usePermission"
 
 const employeeCategoryLabels: Record<string | number, string> = {
-  0: "Operator",
-  1: "Office Staff",
-  2: "Manager",
-  3: "Mechanic",
-  4: "Helper",
-  5: "Other",
   "0": "Operator",
   "1": "Office Staff",
   "2": "Manager",
@@ -47,10 +42,6 @@ const employeeCategoryLabels: Record<string | number, string> = {
 }
 
 const employmentStatusLabels: Record<string | number, string> = {
-  0: "Active",
-  1: "Inactive",
-  2: "Suspended",
-  3: "Resigned",
   "0": "Active",
   "1": "Inactive",
   "2": "Suspended",
@@ -62,10 +53,6 @@ const employmentStatusLabels: Record<string | number, string> = {
 }
 
 const statusClasses: Record<string | number, string> = {
-  0: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
-  1: "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  2: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
-  3: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
   "0": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
   "1": "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
   "2": "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
@@ -81,6 +68,7 @@ export function StaffDetailPage() {
   const navigate = useNavigate()
   const { data: staff, isLoading, isError, refetch } = useStaff(id)
   const deactivateStaff = useDeactivateStaff()
+  const { canEditStaff } = usePermission()
 
   const handleDeactivate = async () => {
     if (!id || !window.confirm("Are you sure you want to deactivate this staff member?")) return
@@ -105,8 +93,8 @@ export function StaffDetailPage() {
     )
   }
 
-  const isOperator = staff.employeeCategory === 0 || staff.employeeCategory === "0" || staff.employeeCategory === "Operator"
-  const isActive = staff.employmentStatus === 0 || staff.employmentStatus === "0" || staff.employmentStatus === "Active"
+  const isOperator = String(staff.employeeCategory) === "0" || String(staff.employeeCategory) === "Operator"
+  const isActive = String(staff.employmentStatus) === "0" || String(staff.employmentStatus) === "Active"
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
@@ -148,25 +136,29 @@ export function StaffDetailPage() {
               Back to List
             </Link>
           </Button>
-          <Button variant="outline" asChild className="font-semibold">
-            <Link to={`/staff/${staff.id}/edit`}>
-              <Edit2 className="mr-2 size-4 text-primary" />
-              Edit Staff
-            </Link>
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDeactivate}
-            disabled={!isActive || deactivateStaff.isPending}
-            className="font-semibold"
-          >
-            {deactivateStaff.isPending ? (
-              <Loader2 className="mr-2 size-4 animate-spin" />
-            ) : (
-              <Power className="mr-2 size-4" />
-            )}
-            Deactivate
-          </Button>
+          {canEditStaff && (
+            <>
+              <Button variant="outline" asChild className="font-semibold">
+                <Link to={`/staff/${staff.id}/edit`}>
+                  <Edit2 className="mr-2 size-4 text-primary" />
+                  Edit Staff
+                </Link>
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeactivate}
+                disabled={!isActive || deactivateStaff.isPending}
+                className="font-semibold"
+              >
+                {deactivateStaff.isPending ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : (
+                  <Power className="mr-2 size-4" />
+                )}
+                Deactivate
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

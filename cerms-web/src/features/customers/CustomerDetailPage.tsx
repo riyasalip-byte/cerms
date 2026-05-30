@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { useCustomer, useDeactivateCustomer } from "@/hooks/useCustomers"
+import { usePermission } from "@/hooks/usePermission"
 
 const rentalStatusLabels: Record<number, string> = {
   0: "Draft",
@@ -34,6 +35,7 @@ export function CustomerDetailPage() {
   const navigate = useNavigate()
   const { data: customer, isLoading, isError, refetch } = useCustomer(id)
   const deactivateCustomer = useDeactivateCustomer()
+  const { canEditCustomer, canCreateRental } = usePermission()
 
   const handleDeactivate = async () => {
     if (!id || !window.confirm("Are you sure you want to deactivate this customer account?")) return
@@ -113,25 +115,29 @@ export function CustomerDetailPage() {
               Back to List
             </Link>
           </Button>
-          <Button variant="outline" asChild className="font-semibold">
-            <Link to={`/customers/${customer.id}/edit`}>
-              <Edit2 className="mr-2 size-4 text-primary" />
-              Edit Customer
-            </Link>
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDeactivate}
-            disabled={!customer.isActive || deactivateCustomer.isPending}
-            className="font-semibold"
-          >
-            {deactivateCustomer.isPending ? (
-              <Loader2 className="mr-2 size-4 animate-spin" />
-            ) : (
-              <Power className="mr-2 size-4" />
-            )}
-            Deactivate
-          </Button>
+          {canEditCustomer && (
+            <>
+              <Button variant="outline" asChild className="font-semibold">
+                <Link to={`/customers/${customer.id}/edit`}>
+                  <Edit2 className="mr-2 size-4 text-primary" />
+                  Edit Customer
+                </Link>
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeactivate}
+                disabled={!customer.isActive || deactivateCustomer.isPending}
+                className="font-semibold"
+              >
+                {deactivateCustomer.isPending ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : (
+                  <Power className="mr-2 size-4" />
+                )}
+                Deactivate
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -408,11 +414,13 @@ export function CustomerDetailPage() {
             <Button variant="outline" onClick={() => navigate("/customers")} className="font-semibold">
               Back to Customers List
             </Button>
-            <Button asChild className="font-bold bg-primary shadow-sm">
-              <Link to={`/rentals/new?customerId=${customer.id}`}>
-                New Rental Booking
-              </Link>
-            </Button>
+            {canCreateRental && (
+              <Button asChild className="font-bold bg-primary shadow-sm">
+                <Link to={`/rentals/new?customerId=${customer.id}`}>
+                  New Rental Booking
+                </Link>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

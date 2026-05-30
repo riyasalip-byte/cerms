@@ -28,14 +28,16 @@ public class JwtService : IJwtService
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
+        var roleName = user.Role?.Name ?? "NoRole";
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role.Name),
+            new Claim(ClaimTypes.Role, roleName),
             new Claim("user_id", user.Id.ToString()),
             new Claim("email", user.Email),
-            new Claim("role", user.Role.Name),
+            new Claim("role_id", user.RoleId.ToString()),
+            new Claim("role", roleName),
             new Claim("company_id", user.CompanyId.ToString()),
             new Claim("branch_id", user.BranchId.ToString())
         };

@@ -36,10 +36,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasForeignKey<User>(u => u.StaffId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // One-to-Many relationship: Role -> Users
-        builder.HasOne(u => u.Role)
-            .WithMany()
-            .HasForeignKey(u => u.RoleId)
-            .OnDelete(DeleteBehavior.Restrict);
+        // Ignore computed backward-compatibility properties so EF doesn't create implicit columns
+        builder.Ignore(u => u.RoleId);
+        builder.Ignore(u => u.Role);
     }
 }

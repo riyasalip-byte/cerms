@@ -28,7 +28,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResult>
         var user = await _unitOfWork.Repository<User>()
             .Entities
             .IgnoreQueryFilters()
-            .Include(u => u.Role)
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
             .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
         if (user == null || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
@@ -62,7 +63,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResult>
                 Id = user.Id,
                 Username = user.Username,
                 Email = user.Email,
-                Role = user.Role.Name,
+                Role = user.Role?.Name ?? "NoRole",
                 CompanyId = user.CompanyId,
                 BranchId = user.BranchId
             }

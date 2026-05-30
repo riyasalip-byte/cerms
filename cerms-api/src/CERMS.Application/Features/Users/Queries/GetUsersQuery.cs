@@ -31,12 +31,13 @@ public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<PagedResult
     public async Task<Result<PagedResult<UserDto>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
     {
         var query = _unitOfWork.Repository<User>().Entities
-            .Include(u => u.Role)
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
             .Include(u => u.Staff)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.RoleName))
-            query = query.Where(u => u.Role.Name == request.RoleName);
+            query = query.Where(u => u.UserRoles.Any(ur => ur.Role.Name == request.RoleName));
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {

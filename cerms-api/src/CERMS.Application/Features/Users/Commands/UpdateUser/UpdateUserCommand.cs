@@ -31,7 +31,8 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result<UserD
     public async Task<Result<UserDto>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
         var user = await _unitOfWork.Repository<User>().Entities
-            .Include(u => u.Role)
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
             .Include(u => u.Staff)
             .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
 

@@ -24,8 +24,7 @@ public class InvoiceReminderJob
         var today = DateTime.UtcNow.Date;
         
         var overdueInvoices = await _unitOfWork.Repository<Invoice>().Entities
-            .Include(i => i.BookingId) // In a real app we might join with Customer via Booking
-            .Where(i => i.Status != InvoiceStatus.Paid && i.DueDate < today && i.BalanceDue > 0)
+            .Where(i => i.Status != InvoiceStatus.Paid && i.DueDate < today && (i.Total - i.AmountPaid) > 0)
             .ToListAsync();
 
         _logger.LogInformation("Found {Count} overdue invoices", overdueInvoices.Count);

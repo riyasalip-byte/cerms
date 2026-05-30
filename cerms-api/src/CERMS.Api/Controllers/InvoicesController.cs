@@ -1,11 +1,17 @@
 using CERMS.Application.Interfaces;
 using CERMS.Application.Features.Invoices.Queries;
 using CERMS.Domain.Entities;
+using CERMS.Infrastructure.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace CERMS.Api.Controllers;
 
+[Authorize]
 [Route("api/v1/[controller]")]
 public class InvoicesController : ApiControllerBase
 {
@@ -19,6 +25,7 @@ public class InvoicesController : ApiControllerBase
     }
 
     [HttpGet]
+    [AuthorizePermission("Invoice.View")]
     public async Task<IActionResult> GetInvoices([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         var result = await Mediator.Send(new GetInvoicesQuery(pageNumber, pageSize));
@@ -26,6 +33,7 @@ public class InvoicesController : ApiControllerBase
     }
 
     [HttpGet("{id}")]
+    [AuthorizePermission("Invoice.View")]
     public async Task<IActionResult> GetInvoiceById(Guid id)
     {
         var result = await Mediator.Send(new GetInvoiceByIdQuery(id));
@@ -33,6 +41,7 @@ public class InvoicesController : ApiControllerBase
     }
 
     [HttpGet("{id}/pdf")]
+    [AuthorizePermission("Invoice.View")]
     public async Task<IActionResult> GetInvoicePdf(Guid id)
     {
         var invoice = await _unitOfWork.Repository<Invoice>()

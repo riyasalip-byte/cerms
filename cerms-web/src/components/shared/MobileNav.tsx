@@ -19,7 +19,14 @@ export function MobileNav() {
   const location = useLocation()
   const { user } = useAuthStore()
   const isOperator = user?.role === 'Operator'
-  const navItems = isOperator ? operatorNavItems : adminNavItems
+  const isAdmin = user?.role?.toLowerCase() === 'admin'
+  const rawNavItems = isOperator ? operatorNavItems : adminNavItems
+  const navItems = rawNavItems.filter((item) => {
+    if (item.label === "Settings") {
+      return isAdmin
+    }
+    return true
+  })
 
   return (
     <div className="fixed bottom-0 left-0 z-50 w-full border-t bg-background/95 backdrop-blur md:hidden">

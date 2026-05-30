@@ -36,6 +36,10 @@ public class CermsDbContext : DbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<AssetClass> AssetClasses => Set<AssetClass>();
     public DbSet<StaffAssetClass> StaffAssetClasses => Set<StaffAssetClass>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -112,8 +116,94 @@ public class CermsDbContext : DbContext
         base.OnConfiguring(optionsBuilder);
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        var auditEntries = new List<AuditLog>();
+        
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.Entity is AuditLog) continue;
+
+            if (entry.State == EntityState.Added || entry.State == EntityState.Modified || entry.State == EntityState.Deleted)
+            {
+                var entityType = entry.Entity.GetType().Name;
+                if (entityType == "Role" || entityType == "RolePermission" || entityType == "UserRole")
+                {
+                    string action = entry.State.ToString() + entityType;
+                    string tableName = entityType + "s";
+                    
+                    string primaryKey = "";
+                    if (entry.Entity is BaseEntity baseEntity)
+                    {
+                        primaryKey = baseEntity.Id.ToString();
+                    }
+                    else if (entry.Entity is RolePermission rp)
+                    {
+                        primaryKey = $"Role:{rp.RoleId}-Perm:{rp.PermissionId}";
+                    }
+                    else if (entry.Entity is UserRole ur)
+                    {
+                        primaryKey = $"User:{ur.UserId}-Role:{ur.RoleId}";
+                    }
+
+                    string changedBy = "System";
+
+                    string? oldValues = null;
+                    string? newValues = null;
+
+                    if (entry.State == EntityState.Modified)
+                    {
+                        var oldDict = new Dictionary<string, object>();
+                        var newDict = new Dictionary<string, object>();
+
+                        foreach (var prop in entry.OriginalValues.Properties)
+                        {
+                            var originalValue = entry.OriginalValues[prop];
+                            var currentValue = entry.CurrentValues[prop];
+
+                            if (originalValue?.ToString() != currentValue?.ToString())
+                            {
+                                oldDict[prop.Name] = originalValue;
+                                newDict[prop.Name] = currentValue;
+                            }
+                        }
+
+                        if (oldDict.Count > 0)
+                        {
+                            oldValues = System.Text.Json.JsonSerializer.Serialize(oldDict);
+                            newValues = System.Text.Json.JsonSerializer.Serialize(newDict);
+                        }
+                    }
+                    else if (entry.State == EntityState.Added)
+                    {
+                        var newDict = new Dictionary<string, object>();
+                        foreach (var prop in entry.CurrentValues.Properties)
+                        {
+                            newDict[prop.Name] = entry.CurrentValues[prop];
+                        }
+                        newValues = System.Text.Json.JsonSerializer.Serialize(newDict);
+                    }
+                    else if (entry.State == EntityState.Deleted)
+                    {
+                        var oldDict = new Dictionary<string, object>();
+                        foreach (var prop in entry.OriginalValues.Properties)
+                        {
+                            oldDict[prop.Name] = entry.OriginalValues[prop];
+                        }
+                        oldValues = System.Text.Json.JsonSerializer.Serialize(oldDict);
+                    }
+
+                    if (newValues != null || oldValues != null)
+                    {
+                        var audit = new AuditLog(action, tableName, primaryKey, changedBy, oldValues, newValues);
+                        audit.CompanyId = _currentTenantService.CompanyId ?? Guid.Empty;
+                        audit.BranchId = _currentTenantService.BranchId ?? Guid.Empty;
+                        auditEntries.Add(audit);
+                    }
+                }
+            }
+        }
+
         foreach (var entry in ChangeTracker.Entries<BaseEntity>())
         {
             switch (entry.State)
@@ -130,6 +220,11 @@ public class CermsDbContext : DbContext
             }
         }
 
-        return base.SaveChangesAsync(cancellationToken);
+        if (auditEntries.Count > 0)
+        {
+            await AuditLogs.AddRangeAsync(auditEntries, cancellationToken);
+        }
+
+        return await base.SaveChangesAsync(cancellationToken);
     }
 }

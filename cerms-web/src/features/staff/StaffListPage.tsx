@@ -14,6 +14,7 @@ import {
   HardHat,
   Users,
 } from "lucide-react"
+import { usePermission } from "@/hooks/usePermission"
 
 import { DataTable } from "@/components/shared/DataTable"
 import { ErrorState } from "@/components/shared/ErrorState"
@@ -31,12 +32,6 @@ import { useStaffList } from "@/hooks/useStaff"
 import type { StaffDto } from "@/api/staff"
 
 const employeeCategoryLabels: Record<string | number, string> = {
-  0: "Operator",
-  1: "Office Staff",
-  2: "Manager",
-  3: "Mechanic",
-  4: "Helper",
-  5: "Other",
   "0": "Operator",
   "1": "Office Staff",
   "2": "Manager",
@@ -53,10 +48,6 @@ const employeeCategoryLabels: Record<string | number, string> = {
 }
 
 const employmentStatusLabels: Record<string | number, string> = {
-  0: "Active",
-  1: "Inactive",
-  2: "Suspended",
-  3: "Resigned",
   "0": "Active",
   "1": "Inactive",
   "2": "Suspended",
@@ -68,12 +59,6 @@ const employmentStatusLabels: Record<string | number, string> = {
 }
 
 const categoryIcons: Record<string | number, typeof UserRound> = {
-  0: HardHat,
-  1: Briefcase,
-  2: Users,
-  3: Wrench,
-  4: UserRound,
-  5: UserRound,
   "0": HardHat,
   "1": Briefcase,
   "2": Users,
@@ -90,10 +75,6 @@ const categoryIcons: Record<string | number, typeof UserRound> = {
 }
 
 const statusClasses: Record<string | number, string> = {
-  0: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/50",
-  1: "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  2: "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200/50",
-  3: "bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200/50",
   "0": "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/50",
   "1": "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
   "2": "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200/50",
@@ -106,6 +87,7 @@ const statusClasses: Record<string | number, string> = {
 
 export function StaffListPage() {
   const navigate = useNavigate()
+  const { canCreateStaff, canEditStaff } = usePermission()
   const [searchTerm, setSearchTerm] = React.useState("")
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
   const [categoryFilter, setCategoryFilter] = React.useState("all")
@@ -190,7 +172,7 @@ export function StaffListPage() {
       header: "Status",
       cell: ({ row }) => {
         const status = row.original.employmentStatus
-        const isActive = status === 0 || status === "0" || status === "Active"
+        const isActive = String(status) === "0" || String(status) === "Active"
         return (
           <span
             className={[
@@ -218,11 +200,13 @@ export function StaffListPage() {
               <Eye className="size-4 text-slate-600 dark:text-slate-400" />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" className="size-8 hover:bg-primary/10" asChild>
-            <Link to={`/staff/${row.original.id}/edit`} aria-label={`Edit ${row.original.displayName}`}>
-              <Edit2 className="size-4 text-primary" />
-            </Link>
-          </Button>
+          {canEditStaff && (
+            <Button variant="ghost" size="icon" className="size-8 hover:bg-primary/10" asChild>
+              <Link to={`/staff/${row.original.id}/edit`} aria-label={`Edit ${row.original.displayName}`}>
+                <Edit2 className="size-4 text-primary" />
+              </Link>
+            </Button>
+          )}
         </div>
       ),
     },
@@ -248,13 +232,15 @@ export function StaffListPage() {
             Search, filter, and manage staff profiles, licenses, and employment records.
           </p>
         </div>
-        <Button
-          onClick={() => navigate("/staff/new")}
-          className="shadow-lg shadow-primary/20 bg-primary font-semibold"
-        >
-          <Plus className="mr-2 size-4" />
-          New Staff
-        </Button>
+        {canCreateStaff && (
+          <Button
+            onClick={() => navigate("/staff/new")}
+            className="shadow-lg shadow-primary/20 bg-primary font-semibold"
+          >
+            <Plus className="mr-2 size-4" />
+            New Staff
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-muted bg-card p-4 shadow-sm sm:flex-row sm:items-center">

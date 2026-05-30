@@ -2,13 +2,19 @@ using CERMS.Api.Contracts.Assets;
 using CERMS.Application.Features.Assets.Commands;
 using CERMS.Application.Features.Assets.Queries;
 using CERMS.Domain.Enums;
+using CERMS.Infrastructure.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace CERMS.Api.Controllers;
 
+[Authorize]
 public class AssetsController : ApiControllerBase
 {
     [HttpGet]
+    [AuthorizePermission("Asset.View")]
     public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchTerm = null, [FromQuery] AssetStatus? status = null, [FromQuery] Guid? assetCategoryId = null)
     {
         var query = new GetAssetsQuery
@@ -23,24 +29,28 @@ public class AssetsController : ApiControllerBase
     }
 
     [HttpGet("expiring")]
+    [AuthorizePermission("Asset.View")]
     public async Task<IActionResult> GetExpiring([FromQuery] int days = 30)
     {
         return HandleResult(await Mediator.Send(new GetExpiringAssetsQuery(days)));
     }
 
     [HttpGet("{id}")]
+    [AuthorizePermission("Asset.View")]
     public async Task<IActionResult> GetById(Guid id)
     {
         return HandleResult(await Mediator.Send(new GetAssetByIdQuery(id)));
     }
 
     [HttpPost]
+    [AuthorizePermission("Asset.Create")]
     public async Task<IActionResult> Create([FromBody] CreateAssetRequest request)
     {
         return HandleResult(await Mediator.Send(request.ToCommand()));
     }
 
     [HttpPut("{id}")]
+    [AuthorizePermission("Asset.Edit")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAssetRequest request)
     {
         var command = request.ToCommand(id);
@@ -51,12 +61,14 @@ public class AssetsController : ApiControllerBase
     }
 
     [HttpDelete("{id}")]
+    [AuthorizePermission("Asset.Delete")]
     public async Task<IActionResult> Delete(Guid id)
     {
         return HandleResult(await Mediator.Send(new DeleteAssetCommand(id)));
     }
 
     [HttpPost("{id}/maintenance")]
+    [AuthorizePermission("Maintenance.Create")]
     public async Task<IActionResult> AddMaintenance(Guid id, [FromBody] AddMaintenanceCommand command)
     {
         if (id != command.AssetId)
@@ -66,6 +78,7 @@ public class AssetsController : ApiControllerBase
     }
 
     [HttpPost("{id}/maintenance/complete")]
+    [AuthorizePermission("Maintenance.Close")]
     public async Task<IActionResult> CompleteMaintenance(Guid id, [FromBody] CERMS.Application.DTOs.CompleteMaintenanceDto dto)
     {
         return HandleResult(await Mediator.Send(new CompleteMaintenanceCommand(id, dto.MaintenanceId, dto.SparePartsCost, dto.LabourCost, dto.Notes, dto.ServiceDate, dto.NextServiceDueDate, dto.NextServiceOdometer)));

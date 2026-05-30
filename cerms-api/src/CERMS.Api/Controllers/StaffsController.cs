@@ -1,8 +1,11 @@
 using CERMS.Application.Features.Staff.Commands;
 using CERMS.Application.Features.Staff.Queries;
 using CERMS.Domain.Enums;
+using CERMS.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace CERMS.Api.Controllers;
 
@@ -11,6 +14,7 @@ namespace CERMS.Api.Controllers;
 public class StaffsController : ApiControllerBase
 {
     [HttpGet]
+    [AuthorizePermission("Staff.View")]
     public async Task<IActionResult> Get(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 20,
@@ -29,38 +33,42 @@ public class StaffsController : ApiControllerBase
     }
 
     [HttpGet("insights")]
+    [AuthorizePermission("Staff.View")]
     public async Task<IActionResult> GetInsights()
     {
         return HandleResult(await Mediator.Send(new GetStaffInsightsQuery()));
     }
 
     [HttpGet("without-user")]
+    [AuthorizePermission("Staff.View")]
     public async Task<IActionResult> GetWithoutUser()
     {
         return HandleResult(await Mediator.Send(new GetStaffWithoutUserQuery()));
     }
 
     [HttpGet("asset-classes")]
+    [AuthorizePermission("Staff.View")]
     public async Task<IActionResult> GetAssetClasses()
     {
         return HandleResult(await Mediator.Send(new GetAssetClassesQuery()));
     }
 
     [HttpGet("{id}")]
+    [AuthorizePermission("Staff.View")]
     public async Task<IActionResult> GetById(Guid id)
     {
         return HandleResult(await Mediator.Send(new GetStaffByIdQuery(id)));
     }
 
     [HttpPost]
-  [Authorize(Roles = "Admin,Manager")]
+    [AuthorizePermission("Staff.Create")]
     public async Task<IActionResult> Create([FromBody] CreateStaffCommand command)
     {
         return HandleResult(await Mediator.Send(command));
     }
 
     [HttpPut("{id}")]
-  [Authorize(Roles = "Admin,Manager")]
+    [AuthorizePermission("Staff.Edit")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateStaffCommand command)
     {
         if (id != command.Id)
@@ -70,7 +78,7 @@ public class StaffsController : ApiControllerBase
     }
 
     [HttpPost("{id}/deactivate")]
-  [Authorize(Roles = "Admin,Manager")]
+    [AuthorizePermission("Staff.Edit")]
     public async Task<IActionResult> Deactivate(Guid id)
     {
         return HandleResult(await Mediator.Send(new DeactivateStaffCommand(id)));

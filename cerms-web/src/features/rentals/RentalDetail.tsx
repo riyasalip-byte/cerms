@@ -9,6 +9,7 @@ import {
   useDispatchRental, 
   useCancelRental 
 } from "@/hooks/useRentals"
+import { usePermission } from "@/hooks/usePermission"
 import { useOperators, useAssignOperator } from "@/hooks/useOperators"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -52,6 +53,7 @@ export function RentalDetail() {
   const navigate = useNavigate()
   
   const { data: rental, isLoading, isError, refetch } = useRental(id!)
+  const { canEditRental, canStartRental, canCompleteRental, canCloseRental } = usePermission()
   const confirmRental = useConfirmRental()
   const startRental = useStartRental()
   const dispatchRental = useDispatchRental()
@@ -293,31 +295,37 @@ export function RentalDetail() {
                 <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
                   <p className="text-xs text-muted-foreground">This lease contract is a Draft. Verify site details and billing rates to confirm the order.</p>
                   
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button className="w-full h-10 font-semibold" disabled={isAnyLoading}>
-                        Confirm Booking
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirm Rental Agreement?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Confirming reserves this wide-load equipment. It will transition to Confirmed status awaiting transport dispatch coordination.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirm} disabled={confirmRental.isPending}>
-                          Yes, Confirm
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  {canEditRental ? (
+                    <>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button className="w-full h-10 font-semibold" disabled={isAnyLoading}>
+                            Confirm Booking
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirm Rental Agreement?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Confirming reserves this wide-load equipment. It will transition to Confirmed status awaiting transport dispatch coordination.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleConfirm} disabled={confirmRental.isPending}>
+                              Yes, Confirm
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
 
-                  <Button variant="outline" className="w-full text-rose-600 border-rose-200 hover:bg-rose-50" onClick={handleCancel} disabled={isAnyLoading}>
-                    Cancel Agreement
-                  </Button>
+                      <Button variant="outline" className="w-full text-rose-600 border-rose-200 hover:bg-rose-50" onClick={handleCancel} disabled={isAnyLoading}>
+                        Cancel Agreement
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-xs text-amber-600 font-semibold">You do not have permission to confirm or cancel this booking.</p>
+                  )}
                 </div>
               )}
 
@@ -326,14 +334,20 @@ export function RentalDetail() {
                 <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
                   <p className="text-xs text-muted-foreground">The agreement is Confirmed. Coordinate Wide-Load Flatbed dispatch logistics to send the asset to the site.</p>
                   
-                  <Button className="w-full h-10 font-semibold" onClick={handleDispatch} disabled={isAnyLoading}>
-                    {dispatchRental.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Truck className="mr-2 size-4" />}
-                    Dispatch Equipment
-                  </Button>
+                  {canEditRental ? (
+                    <>
+                      <Button className="w-full h-10 font-semibold" onClick={handleDispatch} disabled={isAnyLoading}>
+                        {dispatchRental.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Truck className="mr-2 size-4" />}
+                        Dispatch Equipment
+                      </Button>
 
-                  <Button variant="outline" className="w-full text-rose-600 border-rose-200 hover:bg-rose-50" onClick={handleCancel} disabled={isAnyLoading}>
-                    Cancel Agreement
-                  </Button>
+                      <Button variant="outline" className="w-full text-rose-600 border-rose-200 hover:bg-rose-50" onClick={handleCancel} disabled={isAnyLoading}>
+                        Cancel Agreement
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-xs text-amber-600 font-semibold">You do not have permission to dispatch or cancel this booking.</p>
+                  )}
                 </div>
               )}
 
@@ -342,32 +356,36 @@ export function RentalDetail() {
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                   <p className="text-xs text-muted-foreground">Equipment has been Dispatched. Upon arrival at the work site, input the hand-over start odometer to activate the billing cycle.</p>
                   
-                  {!showStartForm ? (
-                    <Button className="w-full h-10 font-semibold" onClick={() => setShowStartForm(true)} disabled={isAnyLoading}>
-                      <Play className="mr-2 size-4" />
-                      Start Lease (Activate)
-                    </Button>
+                  {canStartRental ? (
+                    !showStartForm ? (
+                      <Button className="w-full h-10 font-semibold" onClick={() => setShowStartForm(true)} disabled={isAnyLoading}>
+                        <Play className="mr-2 size-4" />
+                        Start Lease (Activate)
+                      </Button>
+                    ) : (
+                      <form onSubmit={handleStart} className="space-y-3 rounded-xl border p-4 bg-muted/20 animate-in slide-in-from-top-2">
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-slate-700 dark:text-slate-350">Hand-over Start Odometer</label>
+                          <Input 
+                            type="number" 
+                            placeholder="Current machine meter" 
+                            value={startOdometer}
+                            onChange={(e) => setStartOdometer(e.target.value)}
+                            disabled={isAnyLoading}
+                            required
+                            className="h-10 text-base"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button type="submit" className="flex-1 font-semibold" disabled={isAnyLoading || !startOdometer}>
+                            {startRental.isPending ? <Loader2 className="size-4 animate-spin" /> : "Activate"}
+                          </Button>
+                          <Button type="button" variant="outline" onClick={() => setShowStartForm(false)} disabled={isAnyLoading}>Cancel</Button>
+                        </div>
+                      </form>
+                    )
                   ) : (
-                    <form onSubmit={handleStart} className="space-y-3 rounded-xl border p-4 bg-muted/20 animate-in slide-in-from-top-2">
-                      <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-350">Hand-over Start Odometer</label>
-                        <Input 
-                          type="number" 
-                          placeholder="Current machine meter" 
-                          value={startOdometer}
-                          onChange={(e) => setStartOdometer(e.target.value)}
-                          disabled={isAnyLoading}
-                          required
-                          className="h-10 text-base"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button type="submit" className="flex-1 font-semibold" disabled={isAnyLoading || !startOdometer}>
-                          {startRental.isPending ? <Loader2 className="size-4 animate-spin" /> : "Activate"}
-                        </Button>
-                        <Button type="button" variant="outline" onClick={() => setShowStartForm(false)} disabled={isAnyLoading}>Cancel</Button>
-                      </div>
-                    </form>
+                    <p className="text-xs text-amber-600 font-semibold">You do not have permission to activate this lease.</p>
                   )}
                 </div>
               )}
@@ -377,18 +395,24 @@ export function RentalDetail() {
                 <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
                   <p className="text-xs text-muted-foreground">Equipment is currently Active on-site. When work is completed and the machine is returned, trigger complete to compute calculations.</p>
                   
-                  <Button variant="destructive" className="w-full h-10 font-semibold" onClick={() => setShowCompleteForm(true)} disabled={isAnyLoading}>
-                    <Square className="mr-2 size-4" />
-                    Complete Rental
-                  </Button>
+                  {canCompleteRental ? (
+                    <>
+                      <Button variant="destructive" className="w-full h-10 font-semibold" onClick={() => setShowCompleteForm(true)} disabled={isAnyLoading}>
+                        <Square className="mr-2 size-4" />
+                        Complete Rental
+                      </Button>
 
-                  <CloseRentalDialog 
-                    rentalId={rental.id}
-                    startOdometer={rental.startOdometer}
-                    isOpen={showCompleteForm}
-                    onOpenChange={setShowCompleteForm}
-                    onSuccess={refetch}
-                  />
+                      <CloseRentalDialog 
+                        rentalId={rental.id}
+                        startOdometer={rental.startOdometer}
+                        isOpen={showCompleteForm}
+                        onOpenChange={setShowCompleteForm}
+                        onSuccess={refetch}
+                      />
+                    </>
+                  ) : (
+                    <p className="text-xs text-amber-600 font-semibold">You do not have permission to complete this rental.</p>
+                  )}
                 </div>
               )}
 
@@ -397,9 +421,13 @@ export function RentalDetail() {
                 <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
                   <p className="text-xs text-muted-foreground">Equipment is returned and billing calculations are complete. Close the contract to archive the lease.</p>
                   
-                  <Button className="w-full h-10 font-semibold" onClick={handleClose} disabled={isAnyLoading}>
-                    {closeRental.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : "Close Agreement"}
-                  </Button>
+                  {canCloseRental ? (
+                    <Button className="w-full h-10 font-semibold" onClick={handleClose} disabled={isAnyLoading}>
+                      {closeRental.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : "Close Agreement"}
+                    </Button>
+                  ) : (
+                    <p className="text-xs text-amber-600 font-semibold">You do not have permission to close this agreement.</p>
+                  )}
                 </div>
               )}
 
@@ -575,32 +603,36 @@ export function RentalDetail() {
                     
                     {/* Select Form */}
                     {statusVal < 4 ? (
-                      <form onSubmit={handleAssignOperator} className="flex flex-col sm:flex-row gap-3 items-end sm:items-center">
-                        <div className="flex-1 w-full space-y-1.5">
-                          <label className="text-xs font-bold text-muted-foreground">Select Active Operator</label>
-                          <select
-                            value={selectedOperatorId}
-                            onChange={(e) => setSelectedOperatorId(e.target.value)}
-                            disabled={isLoadingOperators || assignOperatorMutation.isPending}
-                            className="w-full h-10 rounded-xl border border-slate-200 bg-background/50 pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      canEditRental ? (
+                        <form onSubmit={handleAssignOperator} className="flex flex-col sm:flex-row gap-3 items-end sm:items-center">
+                          <div className="flex-1 w-full space-y-1.5">
+                            <label className="text-xs font-bold text-muted-foreground">Select Active Operator</label>
+                            <select
+                              value={selectedOperatorId}
+                              onChange={(e) => setSelectedOperatorId(e.target.value)}
+                              disabled={isLoadingOperators || assignOperatorMutation.isPending}
+                              className="w-full h-10 rounded-xl border border-slate-200 bg-background/50 pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            >
+                              <option value="">-- Select Operator --</option>
+                              {operators?.filter((op: any) => op.isActive).map((op: any) => (
+                                <option key={op.id} value={op.id}>
+                                  {op.fullName} ({op.operatorCode})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <Button 
+                            type="submit" 
+                            disabled={!selectedOperatorId || assignOperatorMutation.isPending}
+                            className="h-10 px-5 font-bold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 w-full sm:w-auto mt-2 sm:mt-0 flex items-center justify-center gap-1.5"
                           >
-                            <option value="">-- Select Operator --</option>
-                            {operators?.filter((op: any) => op.isActive).map((op: any) => (
-                              <option key={op.id} value={op.id}>
-                                {op.fullName} ({op.operatorCode})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <Button 
-                          type="submit" 
-                          disabled={!selectedOperatorId || assignOperatorMutation.isPending}
-                          className="h-10 px-5 font-bold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 w-full sm:w-auto mt-2 sm:mt-0 flex items-center justify-center gap-1.5"
-                        >
-                          {assignOperatorMutation.isPending && <Loader2 className="size-4 animate-spin" />}
-                          Assign to Contract
-                        </Button>
-                      </form>
+                            {assignOperatorMutation.isPending && <Loader2 className="size-4 animate-spin" />}
+                            Assign to Contract
+                          </Button>
+                        </form>
+                      ) : (
+                        <p className="text-xs text-amber-600 font-semibold">You do not have permission to assign operators.</p>
+                      )
                     ) : (
                       <p className="text-xs text-muted-foreground italic">Operator assignment is closed for this completed/cancelled booking.</p>
                     )}

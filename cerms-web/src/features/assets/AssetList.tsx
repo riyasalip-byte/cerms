@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAssetCategories, useAssets } from "@/hooks/useAssets"
+import { usePermission } from "@/hooks/usePermission"
 import { cn } from "@/lib/utils"
 
 const defaultAssetColumnVisibility = {
@@ -84,6 +85,7 @@ function ExpiryCell({ value }: { value?: string }) {
 
 export function AssetList() {
   const navigate = useNavigate()
+  const { canCreateAsset, canEditAsset } = usePermission()
 
   const [searchTerm, setSearchTerm] = React.useState("")
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
@@ -224,11 +226,13 @@ export function AssetList() {
               <Eye className="size-4" />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" asChild>
-            <Link to={`/assets/${row.original.id}/edit`} aria-label={`Edit ${row.original.assetName}`}>
-              <Edit2 className="size-4 text-primary" />
-            </Link>
-          </Button>
+          {canEditAsset && (
+            <Button variant="ghost" size="icon" asChild>
+              <Link to={`/assets/${row.original.id}/edit`} aria-label={`Edit ${row.original.assetName}`}>
+                <Edit2 className="size-4 text-primary" />
+              </Link>
+            </Button>
+          )}
         </div>
       ),
     },
@@ -252,10 +256,12 @@ export function AssetList() {
             Search, filter, and monitor fleet documents from one view.
           </p>
         </div>
-        <Button onClick={() => navigate("/assets/new")} className="shadow-lg shadow-primary/20">
-          <Plus className="mr-2 size-4" />
-          New Asset
-        </Button>
+        {canCreateAsset && (
+          <Button onClick={() => navigate("/assets/new")} className="shadow-lg shadow-primary/20">
+            <Plus className="mr-2 size-4" />
+            New Asset
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-muted/60 bg-card p-4 shadow-sm lg:flex-row lg:items-center">

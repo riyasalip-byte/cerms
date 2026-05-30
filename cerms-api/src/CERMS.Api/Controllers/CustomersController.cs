@@ -1,13 +1,19 @@
 using CERMS.Application.Features.Customers.Commands;
 using CERMS.Application.Features.Customers.Queries;
 using CERMS.Domain.Enums;
+using CERMS.Infrastructure.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace CERMS.Api.Controllers;
 
+[Authorize]
 public class CustomersController : ApiControllerBase
 {
     [HttpGet]
+    [AuthorizePermission("Customer.View")]
     public async Task<IActionResult> Get(
         [FromQuery] int pageNumber = 1, 
         [FromQuery] int pageSize = 10, 
@@ -28,18 +34,21 @@ public class CustomersController : ApiControllerBase
     }
 
     [HttpGet("{id}")]
+    [AuthorizePermission("Customer.View")]
     public async Task<IActionResult> GetById(Guid id)
     {
         return HandleResult(await Mediator.Send(new GetCustomerByIdQuery(id)));
     }
 
     [HttpPost]
+    [AuthorizePermission("Customer.Create")]
     public async Task<IActionResult> Create([FromBody] CreateCustomerCommand command)
     {
         return HandleResult(await Mediator.Send(command));
     }
 
     [HttpPut("{id}")]
+    [AuthorizePermission("Customer.Edit")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCustomerCommand command)
     {
         if (id != command.Id)
@@ -49,6 +58,7 @@ public class CustomersController : ApiControllerBase
     }
 
     [HttpPost("{id}/deactivate")]
+    [AuthorizePermission("Customer.Edit")]
     public async Task<IActionResult> Deactivate(Guid id)
     {
         return HandleResult(await Mediator.Send(new DeactivateCustomerCommand(id)));

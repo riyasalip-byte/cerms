@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useInvoice, useInvoicePdf } from '@/hooks/useInvoices'
+import { usePermission } from '@/hooks/usePermission'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
@@ -29,6 +30,7 @@ export function InvoiceDetail() {
   const { id } = useParams()
   const { data: invoice, isLoading, isError } = useInvoice(id!)
   const { refetch: fetchPdf, isFetching: isPdfLoading } = useInvoicePdf(id!)
+  const { canCreateInvoice } = usePermission()
   
   const [showPreview, setShowPreview] = useState(false)
   const [numPages, setNumPages] = useState<number>()
@@ -99,12 +101,14 @@ export function InvoiceDetail() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            to={`/invoices/${invoice.id}/payment`}
-            className="inline-flex items-center rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
-          >
-            Add Payment
-          </Link>
+          {canCreateInvoice && (
+            <Link
+              to={`/invoices/${invoice.id}/payment`}
+              className="inline-flex items-center rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+            >
+              Add Payment
+            </Link>
+          )}
           <button
             onClick={handleView}
             disabled={isPdfLoading}

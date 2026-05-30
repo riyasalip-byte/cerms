@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react"
+import { usePermission } from "@/hooks/usePermission"
 
 import { DataTable } from "@/components/shared/DataTable"
 import { ErrorState } from "@/components/shared/ErrorState"
@@ -32,6 +33,7 @@ import type { UserDto } from "@/api/users"
 
 export function UserListPage() {
   const navigate = useNavigate()
+  const { canCreateUser, canEditUser, canResetPassword } = usePermission()
   const [searchTerm, setSearchTerm] = React.useState("")
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
   const [resetUser, setResetUser] = React.useState<UserDto | null>(null)
@@ -135,26 +137,30 @@ export function UserListPage() {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
-          <Button variant="ghost" size="icon" className="size-8 hover:bg-primary/10" asChild>
-            <Link
-              to={`/settings/users/${row.original.id}/edit`}
-              aria-label={`Edit ${row.original.username}`}
+          {canEditUser && (
+            <Button variant="ghost" size="icon" className="size-8 hover:bg-primary/10" asChild>
+              <Link
+                to={`/settings/users/${row.original.id}/edit`}
+                aria-label={`Edit ${row.original.username}`}
+              >
+                <Edit2 className="size-4 text-primary" />
+              </Link>
+            </Button>
+          )}
+          {canResetPassword && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 hover:bg-amber-100 dark:hover:bg-amber-900/20"
+              onClick={() => {
+                setResetUser(row.original)
+                setNewPassword("")
+              }}
+              aria-label={`Reset password for ${row.original.username}`}
             >
-              <Edit2 className="size-4 text-primary" />
-            </Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 hover:bg-amber-100 dark:hover:bg-amber-900/20"
-            onClick={() => {
-              setResetUser(row.original)
-              setNewPassword("")
-            }}
-            aria-label={`Reset password for ${row.original.username}`}
-          >
-            <KeyRound className="size-4 text-amber-600 dark:text-amber-400" />
-          </Button>
+              <KeyRound className="size-4 text-amber-600 dark:text-amber-400" />
+            </Button>
+          )}
         </div>
       ),
     },
@@ -180,13 +186,15 @@ export function UserListPage() {
             Manage system user accounts, roles, and access permissions.
           </p>
         </div>
-        <Button
-          onClick={() => navigate("/settings/users/new")}
-          className="shadow-lg shadow-primary/20 bg-primary font-semibold"
-        >
-          <Plus className="mr-2 size-4" />
-          New User
-        </Button>
+        {canCreateUser && (
+          <Button
+            onClick={() => navigate("/settings/users/new")}
+            className="shadow-lg shadow-primary/20 bg-primary font-semibold"
+          >
+            <Plus className="mr-2 size-4" />
+            New User
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-muted bg-card p-4 shadow-sm sm:flex-row sm:items-center">

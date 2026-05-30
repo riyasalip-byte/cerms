@@ -99,26 +99,34 @@ app.UseAuthorization();
 app.UseHangfire();
 
 // Schedule Recurring Jobs
-using (var scope = app.Services.CreateScope())
+try
 {
-    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
-    recurringJobManager.AddOrUpdate<CERMS.Infrastructure.Jobs.PayrollJob>(
-        "monthly-payroll",
-        job => job.ProcessMonthlyPayroll(DateTime.UtcNow),
-        Cron.Monthly(1) // Run on the 1st of every month
-    );
+    using (var scope = app.Services.CreateScope())
+    {
+        var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+        recurringJobManager.AddOrUpdate<CERMS.Infrastructure.Jobs.PayrollJob>(
+            "monthly-payroll",
+            job => job.ProcessMonthlyPayroll(DateTime.UtcNow),
+            Cron.Monthly(1) // Run on the 1st of every month
+        );
 
-    recurringJobManager.AddOrUpdate<CERMS.Infrastructure.Jobs.InvoiceReminderJob>(
-        "invoice-reminders",
-        job => job.SendOverdueReminders(),
-        Cron.Daily() // Run every day
-    );
+        recurringJobManager.AddOrUpdate<CERMS.Infrastructure.Jobs.InvoiceReminderJob>(
+            "invoice-reminders",
+            job => job.SendOverdueReminders(),
+            Cron.Daily() // Run every day
+        );
 
-    recurringJobManager.AddOrUpdate<CERMS.Infrastructure.Jobs.LicenceExpiryAlertJob>(
-        "licence-expiry-alerts",
-        job => job.CheckLicenceExpiries(),
-        Cron.Daily() // Run every day
-    );
+        recurringJobManager.AddOrUpdate<CERMS.Infrastructure.Jobs.LicenceExpiryAlertJob>(
+            "licence-expiry-alerts",
+            job => job.CheckLicenceExpiries(),
+            Cron.Daily() // Run every day
+        );
+    }
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogWarning(ex, "Failed to schedule recurring Hangfire jobs. The application will continue to boot.");
 }
 
 app.MapControllers();

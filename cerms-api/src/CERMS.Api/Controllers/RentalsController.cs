@@ -9,11 +9,16 @@ using CERMS.Application.Features.Rentals.Commands.UpdateRental;
 using CERMS.Application.Features.Assignments.Commands.AssignOperator;
 using CERMS.Application.Features.Rentals.Queries;
 using CERMS.Domain.Enums;
+using CERMS.Infrastructure.Security;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace CERMS.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/rentals")]
 public class RentalsController : ControllerBase
@@ -26,6 +31,7 @@ public class RentalsController : ControllerBase
     }
 
     [HttpGet]
+    [AuthorizePermission("Rental.View")]
     public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         var result = await _mediator.Send(new GetRentalsQuery(pageNumber, pageSize));
@@ -33,6 +39,7 @@ public class RentalsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AuthorizePermission("Rental.View")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var result = await _mediator.Send(new GetRentalByIdQuery(id));
@@ -40,6 +47,7 @@ public class RentalsController : ControllerBase
     }
 
     [HttpPost]
+    [AuthorizePermission("Rental.Create")]
     public async Task<IActionResult> Create([FromBody] CreateRentalCommand command)
     {
         var result = await _mediator.Send(command);
@@ -49,6 +57,7 @@ public class RentalsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [AuthorizePermission("Rental.Edit")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRentalRequest request)
     {
         var result = await _mediator.Send(new UpdateRentalCommand(
@@ -74,6 +83,7 @@ public class RentalsController : ControllerBase
     }
 
     [HttpPost("{id}/confirm")]
+    [AuthorizePermission("Rental.Edit")]
     public async Task<IActionResult> Confirm(Guid id)
     {
         var result = await _mediator.Send(new ConfirmRentalCommand(id));
@@ -81,6 +91,7 @@ public class RentalsController : ControllerBase
     }
 
     [HttpPost("{id}/dispatch")]
+    [AuthorizePermission("Rental.Edit")]
     public async Task<IActionResult> Dispatch(Guid id)
     {
         var result = await _mediator.Send(new DispatchRentalCommand(id));
@@ -88,6 +99,7 @@ public class RentalsController : ControllerBase
     }
 
     [HttpPost("{id}/cancel")]
+    [AuthorizePermission("Rental.Edit")]
     public async Task<IActionResult> Cancel(Guid id)
     {
         var result = await _mediator.Send(new CancelRentalCommand(id));
@@ -95,6 +107,7 @@ public class RentalsController : ControllerBase
     }
 
     [HttpPost("{id}/start")]
+    [AuthorizePermission("Rental.Start")]
     public async Task<IActionResult> Start(Guid id, [FromBody] StartRentalRequest request)
     {
         var result = await _mediator.Send(new StartRentalCommand(id, request.StartOdometer));
@@ -102,6 +115,7 @@ public class RentalsController : ControllerBase
     }
 
     [HttpPost("{id}/complete")]
+    [AuthorizePermission("Rental.Complete")]
     public async Task<IActionResult> Complete(Guid id, [FromBody] CompleteRentalRequest request)
     {
         var result = await _mediator.Send(new CompleteRentalCommand(
@@ -117,6 +131,7 @@ public class RentalsController : ControllerBase
     }
 
     [HttpPost("{id}/close")]
+    [AuthorizePermission("Rental.Close")]
     public async Task<IActionResult> Close(Guid id)
     {
         var result = await _mediator.Send(new CloseRentalCommand(id));
@@ -124,6 +139,7 @@ public class RentalsController : ControllerBase
     }
 
     [HttpPost("{id}/assign-operator")]
+    [AuthorizePermission("Rental.Edit")]
     public async Task<IActionResult> AssignOperator(Guid id, [FromBody] AssignOperatorRequest request)
     {
         var result = await _mediator.Send(new AssignOperatorCommand(id, request.OperatorId));

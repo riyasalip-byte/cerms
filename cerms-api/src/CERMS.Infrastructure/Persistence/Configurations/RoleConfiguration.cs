@@ -20,6 +20,10 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
         builder.Property(r => r.IsSystemRole)
             .IsRequired();
 
+        builder.Property(r => r.IsActive)
+            .IsRequired()
+            .HasDefaultValue(true);
+
         builder.HasIndex(r => r.Name).IsUnique();
     }
 }

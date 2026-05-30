@@ -39,6 +39,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useAsset, useCompleteMaintenance, useDeleteAsset } from "@/hooks/useAssets"
+import { usePermission } from "@/hooks/usePermission"
 import { cn } from "@/lib/utils"
 import { MaintenanceCloseDialog } from "./MaintenanceCloseDialog"
 import { MaintenanceDialog } from "./MaintenanceDialog"
@@ -157,6 +158,7 @@ export function AssetDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { data: asset, isLoading, isError, refetch } = useAsset(id!)
+  const { canEditAsset, canDeleteAsset, canCreateMaintenance, canCloseMaintenance } = usePermission()
   const [isMaintenanceDialogOpen, setIsMaintenanceDialogOpen] = React.useState(false)
   const [isMaintenanceCloseDialogOpen, setIsMaintenanceCloseDialogOpen] = React.useState(false)
   const [selectedMaintenance, setSelectedMaintenance] = React.useState<MaintenanceRecordDto | null>(null)
@@ -223,42 +225,50 @@ export function AssetDetail() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {isAssetInMaintenance ? (
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setSelectedMaintenance(activeMaintenanceRecord)
-                setIsMaintenanceCloseDialogOpen(true)
-              }}
-              disabled={!activeMaintenanceRecord}
-            >
-              <CheckCircle className="mr-2 size-4 text-emerald-500" />
-              Complete Maintenance
-            </Button>
+            canCloseMaintenance && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setSelectedMaintenance(activeMaintenanceRecord)
+                  setIsMaintenanceCloseDialogOpen(true)
+                }}
+                disabled={!activeMaintenanceRecord}
+              >
+                <CheckCircle className="mr-2 size-4 text-emerald-500" />
+                Complete Maintenance
+              </Button>
+            )
           ) : (
-            <Button variant="outline" onClick={() => setIsMaintenanceDialogOpen(true)}>
-              <Wrench className="mr-2 size-4 text-primary" />
-              Add Maintenance
+            canCreateMaintenance && (
+              <Button variant="outline" onClick={() => setIsMaintenanceDialogOpen(true)}>
+                <Wrench className="mr-2 size-4 text-primary" />
+                Add Maintenance
+              </Button>
+            )
+          )}
+          {canEditAsset && (
+            <Button variant="outline" asChild>
+              <Link to={`/assets/${id}/edit`}>
+                <Edit2 className="mr-2 size-4 text-primary" />
+                Edit Asset
+              </Link>
             </Button>
           )}
-          <Button variant="outline" asChild>
-            <Link to={`/assets/${id}/edit`}>
-              <Edit2 className="mr-2 size-4 text-primary" />
-              Edit Asset
-            </Link>
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem className="font-bold text-destructive" onClick={handleDelete}>
-                <Trash2 className="mr-2 size-4" />
-                Delete Asset
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {canDeleteAsset && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="font-bold text-destructive" onClick={handleDelete}>
+                  <Trash2 className="mr-2 size-4" />
+                  Delete Asset
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
@@ -387,23 +397,27 @@ export function AssetDetail() {
             Maintenance History
           </CardTitle>
           {isAssetInMaintenance ? (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={() => {
-                setSelectedMaintenance(activeMaintenanceRecord)
-                setIsMaintenanceCloseDialogOpen(true)
-              }}
-              disabled={!activeMaintenanceRecord}
-            >
-              <CheckCircle className="mr-2 size-3.5 text-emerald-500" />
-              Complete
-            </Button>
+            canCloseMaintenance && (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => {
+                  setSelectedMaintenance(activeMaintenanceRecord)
+                  setIsMaintenanceCloseDialogOpen(true)
+                }}
+                disabled={!activeMaintenanceRecord}
+              >
+                <CheckCircle className="mr-2 size-3.5 text-emerald-500" />
+                Complete
+              </Button>
+            )
           ) : (
-            <Button size="sm" variant="outline" onClick={() => setIsMaintenanceDialogOpen(true)}>
-              <Wrench className="mr-2 size-3.5" />
-              Add
-            </Button>
+            canCreateMaintenance && (
+              <Button size="sm" variant="outline" onClick={() => setIsMaintenanceDialogOpen(true)}>
+                <Wrench className="mr-2 size-3.5" />
+                Add
+              </Button>
+            )
           )}
         </CardHeader>
         <CardContent className="p-0">
@@ -444,18 +458,24 @@ export function AssetDetail() {
                         <TableCell className="text-right font-mono">{currencyFormatter.format(totalCost)}</TableCell>
                         <TableCell className="text-right">
                           {isPending ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedMaintenance(record)
-                                setIsMaintenanceCloseDialogOpen(true)
-                              }}
-                              disabled={completeMaintenance.isPending}
-                            >
-                              <CheckCircle className="mr-2 size-3" />
-                              Complete
-                            </Button>
+                            canCloseMaintenance ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedMaintenance(record)
+                                  setIsMaintenanceCloseDialogOpen(true)
+                                }}
+                                disabled={completeMaintenance.isPending}
+                              >
+                                <CheckCircle className="mr-2 size-3" />
+                                Complete
+                              </Button>
+                            ) : (
+                              <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-300">
+                                Pending
+                              </Badge>
+                            )
                           ) : (
                             <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
                               <FileCheck2 className="mr-1 size-3" />
@@ -490,21 +510,25 @@ export function AssetDetail() {
               <Wrench className="mx-auto mb-4 size-12 text-muted-foreground/40" />
               <p className="text-sm font-semibold text-muted-foreground">No maintenance history recorded.</p>
               {isAssetInMaintenance ? (
-                <Button 
-                  variant="outline" 
-                  className="mt-4" 
-                  onClick={() => {
-                    setSelectedMaintenance(activeMaintenanceRecord)
-                    setIsMaintenanceCloseDialogOpen(true)
-                  }}
-                  disabled={!activeMaintenanceRecord}
-                >
-                  Complete Maintenance
-                </Button>
+                canCloseMaintenance && (
+                  <Button 
+                    variant="outline" 
+                    className="mt-4" 
+                    onClick={() => {
+                      setSelectedMaintenance(activeMaintenanceRecord)
+                      setIsMaintenanceCloseDialogOpen(true)
+                    }}
+                    disabled={!activeMaintenanceRecord}
+                  >
+                    Complete Maintenance
+                  </Button>
+                )
               ) : (
-                <Button variant="outline" className="mt-4" onClick={() => setIsMaintenanceDialogOpen(true)}>
-                  Add Maintenance
-                </Button>
+                canCreateMaintenance && (
+                  <Button variant="outline" className="mt-4" onClick={() => setIsMaintenanceDialogOpen(true)}>
+                    Add Maintenance
+                  </Button>
+                )
               )}
             </div>
           )}

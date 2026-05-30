@@ -3,6 +3,7 @@ import { useRentals } from "@/hooks/useRentals"
 import { Link, useNavigate } from "react-router-dom"
 import type { ColumnDef } from "@tanstack/react-table"
 import { Plus, Eye, Edit2, Calendar, User, Package } from "lucide-react"
+import { usePermission } from "@/hooks/usePermission"
 
 import { DataTable } from "@/components/shared/DataTable"
 import { Button } from "@/components/ui/button"
@@ -34,6 +35,7 @@ const formatFuelResponsibility = (type?: string | number) => {
 
 export function RentalList() {
   const navigate = useNavigate()
+  const { canCreateRental, canEditRental } = usePermission()
   
   const [statusFilter, setStatusFilter] = React.useState<string>("all")
   const [fuelFilter, setFuelFilter] = React.useState<string>("all")
@@ -147,11 +149,13 @@ export function RentalList() {
               <Eye className="size-4" />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" asChild>
-            <Link to={`/rentals/${row.original.id}/edit`}>
-              <Edit2 className="size-4 text-primary" />
-            </Link>
-          </Button>
+          {canEditRental && (
+            <Button variant="ghost" size="icon" asChild>
+              <Link to={`/rentals/${row.original.id}/edit`}>
+                <Edit2 className="size-4 text-primary" />
+              </Link>
+            </Button>
+          )}
         </div>
       ),
     },
@@ -175,10 +179,12 @@ export function RentalList() {
             Manage your rental agreements and equipment assignments.
           </p>
         </div>
-        <Button onClick={() => navigate("/rentals/new")} className="shadow-lg shadow-primary/20">
-          <Plus className="mr-2 size-4" />
-          Create Rental
-        </Button>
+        {canCreateRental && (
+          <Button onClick={() => navigate("/rentals/new")} className="shadow-lg shadow-primary/20">
+            <Plus className="mr-2 size-4" />
+            Create Rental
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end bg-card p-4 rounded-xl border border-border/50 shadow-sm">

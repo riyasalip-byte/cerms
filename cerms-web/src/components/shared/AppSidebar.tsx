@@ -16,6 +16,7 @@ import { authService } from "@/api/services"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { usePermission } from "@/hooks/usePermission"
 
 import {
   Sidebar,
@@ -29,33 +30,6 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar"
-
-const adminMenuGroups = [
-  {
-    label: "Operations",
-    items: [
-      { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-      { label: "Assets", to: "/assets", icon: Box },
-      { label: "Customers", to: "/customers", icon: Users },
-      { label: "Rentals", to: "/rentals", icon: Key },
-    ],
-  },
-  {
-    label: "Finance",
-    items: [
-      { label: "Invoices", to: "/invoices", icon: FileText },
-      { label: "Reports", to: "/reports", icon: PieChart },
-    ],
-  },
-  {
-    label: "Admin",
-    items: [
-      { label: "Staff", to: "/staff", icon: ShieldCheck },
-      { label: "Users", to: "/settings/users", icon: Users },
-      { label: "Settings", to: "/settings/general", icon: Settings },
-    ],
-  },
-]
 
 const operatorMenuGroups = [
   {
@@ -71,15 +45,50 @@ export function AppSidebar() {
   const navigate = useNavigate()
   const { logout: logoutStore, user } = useAuthStore()
   const isOperator = user?.role === 'Operator'
-  const isAdmin = user?.role === 'Admin'
-  const menuGroups = isOperator
-    ? operatorMenuGroups
-    : adminMenuGroups.map((group) => ({
-        ...group,
-        items: group.items.filter(
-          (item) => item.to !== '/settings/users' || isAdmin,
-        ),
-      }))
+  const isAdmin = user?.role?.toLowerCase() === 'admin'
+  const { hasPermission } = usePermission()
+
+  // Build menu groups dynamically based on permissions
+  const menuGroups = [
+    ...(isOperator
+      ? [
+          {
+            label: "Field Operations",
+            items: [
+              { label: "My Jobs", to: "/operator/dashboard", icon: LayoutDashboard },
+            ],
+          },
+        ]
+      : []),
+    {
+      label: "Operations",
+      items: [
+        { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, permission: "Dashboard.View" },
+        { label: "Assets", to: "/assets", icon: Box, permission: "Asset.View" },
+        { label: "Customers", to: "/customers", icon: Users, permission: "Customer.View" },
+        { label: "Rentals", to: "/rentals", icon: Key, permission: "Rental.View" },
+      ].filter(item => hasPermission(item.permission)),
+    },
+    {
+      label: "Finance",
+      items: [
+        { label: "Invoices", to: "/invoices", icon: FileText, permission: "Invoice.View" },
+        { label: "Reports", to: "/reports", icon: PieChart, permission: "Reports.View" },
+      ].filter(item => hasPermission(item.permission)),
+    },
+    {
+      label: "Administration",
+      items: [
+        { label: "Staff", to: "/staff", icon: ShieldCheck, permission: "Staff.View" },
+        { label: "Roles", to: "/roles", icon: ShieldCheck, permission: "Roles.View" },
+        { label: "Users", to: "/settings/users", icon: Users, permission: "Users.View" },
+        { label: "Settings", to: "/settings/general", icon: Settings, adminOnly: true },
+      ].filter(item => {
+        if (item.adminOnly && !isAdmin) return false
+        return !item.permission || hasPermission(item.permission)
+      }),
+    },
+  ].filter(group => group.items.length > 0)
 
   const handleNavClick = (path: string) => {
     console.log(`[Sidebar] Navigating to: ${path}`)
@@ -164,7 +173,7 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          {!isOperator && (
+          {isAdmin && (
             <SidebarMenuItem>
               <SidebarMenuButton asChild size="sm">
                 <Link to="/settings/general" onClick={() => handleNavClick("/settings/general")}>

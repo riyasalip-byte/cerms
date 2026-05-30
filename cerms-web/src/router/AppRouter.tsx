@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Command, AlertCircle } from "lucide-react"
+import { usePermission } from "@/hooks/usePermission"
 
 // Lazy load feature pages
 const AssetDetail = lazy(() => import("@/features/assets/AssetDetail").then(m => ({ default: m.AssetDetail })))
@@ -38,6 +39,29 @@ const StaffFormPage = lazy(() => import("@/features/staff/StaffFormPage").then(m
 const StaffListPage = lazy(() => import("@/features/staff/StaffListPage").then(m => ({ default: m.StaffListPage })))
 const MyProfilePage = lazy(() => import("@/features/profile/MyProfilePage").then(m => ({ default: m.MyProfilePage })))
 const OperatorDashboardPage = lazy(() => import("@/features/operators/OperatorDashboardPage").then(m => ({ default: m.OperatorDashboardPage })))
+
+// Lazy load new Role management pages
+const RoleListPage = lazy(() => import("@/features/roles/RoleListPage").then(m => ({ default: m.RoleListPage })))
+const RoleFormPage = lazy(() => import("@/features/roles/RoleFormPage").then(m => ({ default: m.RoleFormPage })))
+const RoleDetailPage = lazy(() => import("@/features/roles/RoleDetailPage").then(m => ({ default: m.RoleDetailPage })))
+
+// Route Guard Component based on dynamic permissions
+function PermissionGuard({ permission, children }: { permission: string; children: React.ReactNode }) {
+  const { hasPermission } = usePermission()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const user = useAuthStore((state) => state.user)
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Admin bypasses all checks, otherwise verify code
+  if (user?.role === 'Admin' || hasPermission(permission)) {
+    return <>{children}</>
+  }
+
+  return <Navigate to={user?.role === 'Operator' ? "/operator/dashboard" : "/dashboard"} replace />
+}
 
 function LoginPage() {
   const navigate = useNavigate()
@@ -204,47 +228,54 @@ export function AppRouter() {
             
             <Route path="/operator/dashboard" element={<OperatorDashboardPage />} />
 
-            {!isOperator ? (
-              <>
-                <Route path="/assets" element={<AssetList />} />
-                <Route path="/assets/new" element={<AssetForm />} />
-                <Route path="/assets/:id" element={<AssetDetail />} />
-                <Route path="/assets/:id/edit" element={<AssetForm />} />
+            {/* Assets */}
+            <Route path="/assets" element={<PermissionGuard permission="Asset.View"><AssetList /></PermissionGuard>} />
+            <Route path="/assets/new" element={<PermissionGuard permission="Asset.Create"><AssetForm /></PermissionGuard>} />
+            <Route path="/assets/:id" element={<PermissionGuard permission="Asset.View"><AssetDetail /></PermissionGuard>} />
+            <Route path="/assets/:id/edit" element={<PermissionGuard permission="Asset.Edit"><AssetForm /></PermissionGuard>} />
 
-                <Route path="/customers" element={<CustomerListPage />} />
-                <Route path="/customers/new" element={<CustomerForm />} />
-                <Route path="/customers/:id" element={<CustomerDetailPage />} />
-                <Route path="/customers/:id/edit" element={<CustomerForm />} />
+            {/* Customers */}
+            <Route path="/customers" element={<PermissionGuard permission="Customer.View"><CustomerListPage /></PermissionGuard>} />
+            <Route path="/customers/new" element={<PermissionGuard permission="Customer.Create"><CustomerForm /></PermissionGuard>} />
+            <Route path="/customers/:id" element={<PermissionGuard permission="Customer.View"><CustomerDetailPage /></PermissionGuard>} />
+            <Route path="/customers/:id/edit" element={<PermissionGuard permission="Customer.Edit"><CustomerForm /></PermissionGuard>} />
 
-                <Route path="/rentals" element={<RentalList />} />
-                <Route path="/rentals/new" element={<RentalForm />} />
-                <Route path="/rentals/:id" element={<RentalDetail />} />
-                <Route path="/rentals/:id/edit" element={<RentalForm />} />
+            {/* Rentals */}
+            <Route path="/rentals" element={<PermissionGuard permission="Rental.View"><RentalList /></PermissionGuard>} />
+            <Route path="/rentals/new" element={<PermissionGuard permission="Rental.Create"><RentalForm /></PermissionGuard>} />
+            <Route path="/rentals/:id" element={<PermissionGuard permission="Rental.View"><RentalDetail /></PermissionGuard>} />
+            <Route path="/rentals/:id/edit" element={<PermissionGuard permission="Rental.Edit"><RentalForm /></PermissionGuard>} />
 
-                <Route path="/invoices" element={<InvoiceList />} />
-                <Route path="/invoices/:id" element={<InvoiceDetail />} />
-                <Route path="/invoices/:id/payment" element={<PaymentForm />} />
-                
-                <Route path="/staff" element={<StaffListPage />} />
-                <Route path="/staff/new" element={<StaffFormPage />} />
-                <Route path="/staff/:id" element={<StaffDetailPage />} />
-                <Route path="/staff/:id/edit" element={<StaffFormPage />} />
+            {/* Invoices */}
+            <Route path="/invoices" element={<PermissionGuard permission="Invoice.View"><InvoiceList /></PermissionGuard>} />
+            <Route path="/invoices/:id" element={<PermissionGuard permission="Invoice.View"><InvoiceDetail /></PermissionGuard>} />
+            <Route path="/invoices/:id/payment" element={<PermissionGuard permission="Invoice.Create"><PaymentForm /></PermissionGuard>} />
+            
+            {/* Staff */}
+            <Route path="/staff" element={<PermissionGuard permission="Staff.View"><StaffListPage /></PermissionGuard>} />
+            <Route path="/staff/new" element={<PermissionGuard permission="Staff.Create"><StaffFormPage /></PermissionGuard>} />
+            <Route path="/staff/:id" element={<PermissionGuard permission="Staff.View"><StaffDetailPage /></PermissionGuard>} />
+            <Route path="/staff/:id/edit" element={<PermissionGuard permission="Staff.Edit"><StaffFormPage /></PermissionGuard>} />
 
-                <Route path="/reports" element={<ReportsOverview />} />
-                <Route path="/reports/revenue" element={<RevenueReport />} />
-                <Route path="/reports/utilisation" element={<UtilisationReport />} />
-                
-                <Route path="/settings/general" element={<GeneralSettings />} />
-                <Route path="/profile" element={<MyProfilePage />} />
-                <Route element={<AdminRoute />}>
-                  <Route path="/settings/users" element={<UserListPage />} />
-                  <Route path="/settings/users/new" element={<UserFormPage />} />
-                  <Route path="/settings/users/:id/edit" element={<UserFormPage />} />
-                </Route>
-              </>
-            ) : (
-              <Route path="*" element={<Navigate to="/operator/dashboard" replace />} />
-            )}
+            {/* Reports */}
+            <Route path="/reports" element={<PermissionGuard permission="Reports.View"><ReportsOverview /></PermissionGuard>} />
+            <Route path="/reports/revenue" element={<PermissionGuard permission="Reports.View"><RevenueReport /></PermissionGuard>} />
+            <Route path="/reports/utilisation" element={<PermissionGuard permission="Reports.View"><UtilisationReport /></PermissionGuard>} />
+            
+            {/* Profile */}
+            <Route path="/profile" element={<MyProfilePage />} />
+            <Route path="/settings/general" element={<GeneralSettings />} />
+
+            {/* Users Management */}
+            <Route path="/settings/users" element={<PermissionGuard permission="Users.View"><UserListPage /></PermissionGuard>} />
+            <Route path="/settings/users/new" element={<PermissionGuard permission="Users.Create"><UserFormPage /></PermissionGuard>} />
+            <Route path="/settings/users/:id/edit" element={<PermissionGuard permission="Users.Edit"><UserFormPage /></PermissionGuard>} />
+
+            {/* Roles Management */}
+            <Route path="/roles" element={<PermissionGuard permission="Roles.View"><RoleListPage /></PermissionGuard>} />
+            <Route path="/roles/new" element={<PermissionGuard permission="Roles.Create"><RoleFormPage /></PermissionGuard>} />
+            <Route path="/roles/:id" element={<PermissionGuard permission="Roles.View"><RoleDetailPage /></PermissionGuard>} />
+            <Route path="/roles/:id/edit" element={<PermissionGuard permission="Roles.Edit"><RoleFormPage /></PermissionGuard>} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to={isOperator ? "/operator/dashboard" : "/dashboard"} replace />} />

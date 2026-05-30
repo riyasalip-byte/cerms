@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button"
 export function AppTopbar() {
   const navigate = useNavigate()
   const { user, logout: logoutStore } = useAuthStore()
+  const isAdmin = user?.role?.toLowerCase() === 'admin'
   const pathnames = location.pathname.split("/").filter((x) => x)
 
   const getInitials = (username?: string) => {
@@ -150,12 +151,14 @@ export function AppTopbar() {
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/settings/general" className="flex w-full items-center" onClick={() => handleNavClick("/settings/general")}>
-                  <Settings className="mr-2 size-4" />
-                  <span>Settings</span>
-                </Link>
-              </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem asChild>
+                  <Link to="/settings/general" className="flex w-full items-center" onClick={() => handleNavClick("/settings/general")}>
+                    <Settings className="mr-2 size-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive cursor-pointer" onClick={handleLogout}>

@@ -92,6 +92,122 @@ public class CermsDbContextInitialiser
         var adminRole = existingRoles.First(r => r.Name == "Admin");
         var operatorRole = existingRoles.First(r => r.Name == "Operator");
 
+        // 1b. Seed Permissions
+        var defaultPermissions = new List<Permission>
+        {
+            // Asset Module
+            new Permission("Asset", "Asset.View", "View Assets", "Allows viewing assets list and details"),
+            new Permission("Asset", "Asset.Create", "Create Asset", "Allows creating new assets"),
+            new Permission("Asset", "Asset.Edit", "Edit Asset", "Allows editing existing assets"),
+            new Permission("Asset", "Asset.Delete", "Delete Asset", "Allows deleting assets"),
+
+            // Customer Module
+            new Permission("Customer", "Customer.View", "View Customers", "Allows viewing customers list and details"),
+            new Permission("Customer", "Customer.Create", "Create Customer", "Allows creating new customers"),
+            new Permission("Customer", "Customer.Edit", "Edit Customer", "Allows editing existing customers"),
+            new Permission("Customer", "Customer.Delete", "Delete Customer", "Allows deleting customers"),
+
+            // Rental Module
+            new Permission("Rental", "Rental.View", "View Rentals", "Allows viewing rental bookings list and details"),
+            new Permission("Rental", "Rental.Create", "Create Rental", "Allows creating new rental bookings"),
+            new Permission("Rental", "Rental.Edit", "Edit Rental", "Allows editing existing rental bookings"),
+            new Permission("Rental", "Rental.Close", "Close Rental", "Allows closing or completing rental bookings"),
+            new Permission("Rental", "Rental.Start", "Start Rental", "Allows starting dispatch operations"),
+            new Permission("Rental", "Rental.Complete", "Complete Rental", "Allows completing operator dispatch tasks"),
+
+            // Maintenance Module
+            new Permission("Maintenance", "Maintenance.View", "View Maintenance", "Allows viewing maintenance records"),
+            new Permission("Maintenance", "Maintenance.Create", "Create Maintenance", "Allows creating new maintenance records"),
+            new Permission("Maintenance", "Maintenance.Edit", "Edit Maintenance", "Allows editing existing maintenance records"),
+            new Permission("Maintenance", "Maintenance.Close", "Close Maintenance", "Allows closing maintenance records"),
+
+            // Fuel Module
+            new Permission("Fuel", "Fuel.View", "View Fuel Entries", "Allows viewing fuel entries"),
+            new Permission("Fuel", "Fuel.Create", "Create Fuel Entry", "Allows creating new fuel entries"),
+            new Permission("Fuel", "Fuel.Edit", "Edit Fuel Entry", "Allows editing existing fuel entries"),
+
+            // Invoice Module
+            new Permission("Invoice", "Invoice.View", "View Invoices", "Allows viewing invoices"),
+            new Permission("Invoice", "Invoice.Create", "Create Invoice", "Allows creating new invoices"),
+            new Permission("Invoice", "Invoice.Approve", "Approve Invoice", "Allows approving draft invoices"),
+
+            // Reports Module
+            new Permission("Reports", "Reports.View", "View Reports", "Allows viewing financial and operational reports"),
+
+            // Staff Module
+            new Permission("Staff", "Staff.View", "View Staff", "Allows viewing staff members"),
+            new Permission("Staff", "Staff.Create", "Create Staff", "Allows creating new staff members"),
+            new Permission("Staff", "Staff.Edit", "Edit Staff", "Allows editing existing staff members"),
+
+            // Users Module
+            new Permission("Users", "Users.View", "View Users", "Allows viewing user accounts"),
+            new Permission("Users", "Users.Create", "Create User", "Allows creating new user accounts"),
+            new Permission("Users", "Users.Edit", "Edit User", "Allows editing existing user accounts"),
+            new Permission("Users", "Users.ResetPassword", "Reset Password", "Allows resetting user passwords"),
+
+            // Roles Module
+            new Permission("Roles", "Roles.View", "View Roles", "Allows viewing role mappings"),
+            new Permission("Roles", "Roles.Create", "Create Role", "Allows creating new security roles"),
+            new Permission("Roles", "Roles.Edit", "Edit Role", "Allows editing existing security roles"),
+
+            // Dashboard Module
+            new Permission("Dashboard", "Dashboard.View", "View Dashboard", "Allows viewing system overview dashboard")
+        };
+
+        var existingPerms = await _context.Permissions.IgnoreQueryFilters().ToListAsync();
+        var existingCodes = existingPerms.Select(p => p.PermissionCode).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var missingPerms = defaultPermissions.Where(p => !existingCodes.Contains(p.PermissionCode)).ToList();
+        if (missingPerms.Count > 0)
+        {
+            foreach (var p in missingPerms)
+            {
+                p.CompanyId = companyId;
+                p.BranchId = branchId;
+            }
+            _context.Permissions.AddRange(missingPerms);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} new permissions.", missingPerms.Count);
+            existingPerms.AddRange(missingPerms);
+        }
+
+        // 1c. Mapped Roles permissions
+        // Admin mappings: Assign ALL permissions
+        var adminRolePerms = await _context.RolePermissions.IgnoreQueryFilters().Where(rp => rp.RoleId == adminRole.Id).ToListAsync();
+        if (adminRolePerms.Count != existingPerms.Count)
+        {
+            _context.RolePermissions.RemoveRange(adminRolePerms);
+            await _context.SaveChangesAsync();
+
+            var newAdminMappings = existingPerms.Select(p => new RolePermission(adminRole.Id, p.Id)).ToList();
+            _context.RolePermissions.AddRange(newAdminMappings);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Successfully mapped all {Count} permissions to Admin role.", existingPerms.Count);
+        }
+
+        // Operator mappings: Assign dynamic Operator permissions
+        var operatorAllowedCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Dashboard.View",
+            "Rental.View",
+            "Rental.Start",
+            "Rental.Complete",
+            "Invoice.Create"
+        };
+        var operatorPerms = existingPerms.Where(p => operatorAllowedCodes.Contains(p.PermissionCode)).ToList();
+        var operatorRolePerms = await _context.RolePermissions.IgnoreQueryFilters().Where(rp => rp.RoleId == operatorRole.Id).ToListAsync();
+
+        if (operatorRolePerms.Count != operatorPerms.Count)
+        {
+            _context.RolePermissions.RemoveRange(operatorRolePerms);
+            await _context.SaveChangesAsync();
+
+            var newOpMappings = operatorPerms.Select(p => new RolePermission(operatorRole.Id, p.Id)).ToList();
+            _context.RolePermissions.AddRange(newOpMappings);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Successfully mapped specific permissions to Operator role.");
+        }
+
         // 2. Seed Asset Classes
         var defaultAssetClasses = new List<AssetClass>
         {
@@ -171,6 +287,24 @@ public class CermsDbContextInitialiser
             _context.Staffs.Update(adminStaff);
             await _context.SaveChangesAsync();
         }
+        else
+        {
+            // Self-heal: ensure existing admin user is mapped to Admin role
+            var hasCorrectAdminRole = await _context.UserRoles.IgnoreQueryFilters().AnyAsync(ur => ur.UserId == adminUser.Id && ur.RoleId == adminRole.Id && !ur.IsDeleted);
+            if (!hasCorrectAdminRole)
+            {
+                var existingUserRoles = await _context.UserRoles.IgnoreQueryFilters().Where(ur => ur.UserId == adminUser.Id).ToListAsync();
+                if (existingUserRoles.Any())
+                {
+                    _context.UserRoles.RemoveRange(existingUserRoles);
+                    await _context.SaveChangesAsync();
+                }
+                var adminUserRole = new CERMS.Domain.Entities.UserRole(adminUser.Id, adminRole.Id) { CompanyId = companyId, BranchId = branchId };
+                _context.UserRoles.Add(adminUserRole);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Self-healed: Restored missing or incorrect UserRole mapping for Admin user.");
+            }
+        }
 
         var operatorEmail = "operator@cerms.com";
         var opUser = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == operatorEmail);
@@ -193,6 +327,24 @@ public class CermsDbContextInitialiser
             operatorStaff.UserId = opUser.Id;
             _context.Staffs.Update(operatorStaff);
             await _context.SaveChangesAsync();
+        }
+        else
+        {
+            // Self-heal: ensure existing operator user is mapped to Operator role
+            var hasCorrectOpRole = await _context.UserRoles.IgnoreQueryFilters().AnyAsync(ur => ur.UserId == opUser.Id && ur.RoleId == operatorRole.Id && !ur.IsDeleted);
+            if (!hasCorrectOpRole)
+            {
+                var existingUserRoles = await _context.UserRoles.IgnoreQueryFilters().Where(ur => ur.UserId == opUser.Id).ToListAsync();
+                if (existingUserRoles.Any())
+                {
+                    _context.UserRoles.RemoveRange(existingUserRoles);
+                    await _context.SaveChangesAsync();
+                }
+                var operatorUserRole = new CERMS.Domain.Entities.UserRole(opUser.Id, operatorRole.Id) { CompanyId = companyId, BranchId = branchId };
+                _context.UserRoles.Add(operatorUserRole);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Self-healed: Restored missing or incorrect UserRole mapping for Operator user.");
+            }
         }
 
         // Seed Asset Categories

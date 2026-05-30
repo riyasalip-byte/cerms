@@ -1,21 +1,24 @@
 using CERMS.Domain.Common;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CERMS.Domain.Entities;
 
 public class User : BaseEntity
 {
     public string Username { get; private set; }
-    public string Email { get; private set; } // Kept for backward compatibility and notifications
+    public string Email { get; private set; }
     public string PasswordHash { get; private set; }
     
-    // References to dynamic Staff and Role Entities
     public Guid StaffId { get; private set; }
     public Staff Staff { get; private set; }
 
-    public Guid RoleId { get; private set; }
-    public Role Role { get; private set; }
+    public ICollection<UserRole> UserRoles { get; private set; } = new List<UserRole>();
+
+    // Computed / Mapped properties for backward compatibility
+    public Guid RoleId => UserRoles.FirstOrDefault()?.RoleId ?? Guid.Empty;
+    public Role Role => UserRoles.FirstOrDefault()?.Role;
 
     public bool IsActive { get; private set; }
     public DateTime? LastLoginAt { get; private set; }
@@ -36,10 +39,11 @@ public class User : BaseEntity
         Email = email;
         PasswordHash = passwordHash;
         StaffId = staffId;
-        RoleId = roleId;
         CompanyId = companyId;
         BranchId = branchId;
         IsActive = true;
+
+        UserRoles.Add(new UserRole(Id, roleId));
     }
 
     public void UpdateProfile(string username, string email)
@@ -55,7 +59,8 @@ public class User : BaseEntity
     public void UpdateRole(Guid roleId)
     {
         if (roleId == Guid.Empty) throw new ArgumentException("RoleId is required.", nameof(roleId));
-        RoleId = roleId;
+        UserRoles.Clear();
+        UserRoles.Add(new UserRole(Id, roleId));
         Update();
     }
 
