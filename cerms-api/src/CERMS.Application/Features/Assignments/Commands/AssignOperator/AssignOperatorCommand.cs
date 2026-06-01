@@ -32,11 +32,15 @@ public class AssignOperatorHandler : IRequestHandler<AssignOperatorCommand, Resu
         if (op == null) return Result<Guid>.Failure("Operator not found.");
         if (!op.IsActive) return Result<Guid>.Failure("Operator is currently inactive.");
 
-        // Check if there is already an active assignment for this rental
-        var existingAssignment = await _unitOfWork.Repository<RentalAssignment>().Entities
-            .FirstOrDefaultAsync(ra => ra.RentalId == request.RentalId && ra.AssignmentStatus != AssignmentStatus.Closed, cancellationToken);
-        if (existingAssignment != null)
-            return Result<Guid>.Failure("This rental booking already has an active operator assignment.");
+        // Remove any existing active assignments for this rental to allow clean reassignment
+        var existingAssignments = await _unitOfWork.Repository<RentalAssignment>().Entities
+            .Where(ra => ra.RentalId == request.RentalId && ra.AssignmentStatus != AssignmentStatus.Closed)
+            .ToListAsync(cancellationToken);
+        
+        foreach (var existing in existingAssignments)
+        {
+            _unitOfWork.Repository<RentalAssignment>().Delete(existing);
+        }
 
         var currentUserId = _currentTenantService.UserId;
 
@@ -48,6 +52,11 @@ public class AssignOperatorHandler : IRequestHandler<AssignOperatorCommand, Resu
             if (rental.Status == RentalStatus.Draft)
             {
                 rental.Confirm();
+                _unitOfWork.Repository<RentalBooking>().Update(rental);
+            }
+            else if (rental.Status == RentalStatus.Confirmed)
+            {
+                rental.Dispatch();
                 _unitOfWork.Repository<RentalBooking>().Update(rental);
             }
 

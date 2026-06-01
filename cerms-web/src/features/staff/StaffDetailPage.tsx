@@ -66,6 +66,7 @@ const statusClasses: Record<string | number, string> = {
 export function StaffDetailPage() {
   const { id = "" } = useParams()
   const navigate = useNavigate()
+  const apiBase = (import.meta.env.VITE_API_BASE_URL || "").replace("/api/v1", "")
   const { data: staff, isLoading, isError, refetch } = useStaff(id)
   const deactivateStaff = useDeactivateStaff()
   const { canEditStaff } = usePermission()
@@ -301,7 +302,7 @@ export function StaffDetailPage() {
                     variant="outline"
                     size="sm"
                     className="font-bold border-slate-200 text-slate-700 hover:text-primary dark:text-slate-300"
-                    onClick={() => window.open(`http://localhost:5000${staff.licenseDocumentUrl}`, "_blank")}
+                    onClick={() => window.open(`${apiBase}${staff.licenseDocumentUrl}`, "_blank")}
                   >
                     <Eye className="size-3.5 mr-1.5" />
                     View Document
@@ -323,7 +324,7 @@ export function StaffDetailPage() {
                     variant="outline"
                     size="sm"
                     className="font-bold border-slate-200 text-slate-700 hover:text-primary dark:text-slate-300"
-                    onClick={() => window.open(`http://localhost:5000${staff.idProofUrl}`, "_blank")}
+                    onClick={() => window.open(`${apiBase}${staff.idProofUrl}`, "_blank")}
                   >
                     <Eye className="size-3.5 mr-1.5" />
                     View Document

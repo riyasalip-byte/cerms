@@ -203,6 +203,7 @@ export function StaffFormPage() {
   const navigate = useNavigate()
   const { id: staffId = "" } = useParams()
   const isEditMode = Boolean(staffId)
+  const apiBase = (import.meta.env.VITE_API_BASE_URL || "").replace("/api/v1", "")
 
   const { data: existingStaff, isLoading: isStaffLoading } = useStaff(staffId)
   const { data: assetClasses = [] } = useAssetClasses()
@@ -985,7 +986,7 @@ export function StaffFormPage() {
                           variant="outline"
                           size="sm"
                           className="h-8 font-semibold text-slate-700 border-slate-200"
-                          onClick={() => window.open(`http://localhost:5000${form.watch("licenseDocumentUrl")}`, "_blank")}
+                          onClick={() => window.open(`${apiBase}${form.watch("licenseDocumentUrl")}`, "_blank")}
                         >
                           <Eye className="size-3.5 mr-1.5" />
                           View
@@ -1047,7 +1048,7 @@ export function StaffFormPage() {
                           variant="outline"
                           size="sm"
                           className="h-8 font-semibold text-slate-700 border-slate-200"
-                          onClick={() => window.open(`http://localhost:5000${form.watch("idProofUrl")}`, "_blank")}
+                          onClick={() => window.open(`${apiBase}${form.watch("idProofUrl")}`, "_blank")}
                         >
                           <Eye className="size-3.5 mr-1.5" />
                           View

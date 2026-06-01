@@ -54,6 +54,7 @@ export function OperatorDashboardPage() {
 
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [unsyncedCount, setUnsyncedCount] = useState(0)
+  const [offlineActions, setOfflineActions] = useState<any[]>([])
 
   // Dialog states
   const [selectedJob, setSelectedJob] = useState<OperatorAssignment | null>(null)
@@ -78,11 +79,51 @@ export function OperatorDashboardPage() {
     }
     return assignments
       .filter(job => job !== null && job !== undefined)
-      .map(job => ({
-        ...job,
-        assignmentStatus: statusMap[job.assignmentStatus] ?? 0
-      }))
-  }, [assignments])
+      .map(job => {
+        let currentStatus = statusMap[job.assignmentStatus] ?? 0
+        let startMeterReading = job.startMeterReading
+        let endMeterReading = job.endMeterReading
+        let actualStartDateTime = job.actualStartDateTime
+        let actualEndDateTime = job.actualEndDateTime
+        let invoiceId = job.invoiceId
+
+        // Chronologically merge any unsynced offline actions to progress the UI offline
+        const pendingActions = offlineActions
+          .filter(a => a.assignmentId === job.id && !a.synced)
+          .sort((a, b) => a.timestamp - b.timestamp)
+
+        for (const action of pendingActions) {
+          if (action.actionType === 'accept') {
+            currentStatus = Math.max(currentStatus, 1)
+          } else if (action.actionType === 'start') {
+            currentStatus = Math.max(currentStatus, 2)
+            if (action.data) {
+              startMeterReading = action.data.startMeterReading
+              actualStartDateTime = action.data.actualStartDateTime
+            }
+          } else if (action.actionType === 'complete') {
+            currentStatus = Math.max(currentStatus, 3)
+            if (action.data) {
+              endMeterReading = action.data.endMeterReading
+              actualEndDateTime = action.data.actualEndDateTime
+            }
+          } else if (action.actionType === 'generate-invoice') {
+            currentStatus = Math.max(currentStatus, 4)
+            invoiceId = invoiceId || `offline-inv-${job.id}`
+          }
+        }
+
+        return {
+          ...job,
+          assignmentStatus: currentStatus,
+          startMeterReading,
+          endMeterReading,
+          actualStartDateTime,
+          actualEndDateTime,
+          invoiceId
+        }
+      })
+  }, [assignments, offlineActions])
 
 
   // Monitor online status
@@ -107,6 +148,7 @@ export function OperatorDashboardPage() {
   const updateUnsyncedCount = async () => {
     const queue = await offlineQueue.getAssignmentQueue()
     setUnsyncedCount(queue.filter(q => !q.synced).length)
+    setOfflineActions(queue)
   }
 
   const syncLocalQueue = async () => {
@@ -326,6 +368,122 @@ export function OperatorDashboardPage() {
     return Number((rentalCharge + transportCharge).toFixed(2))
   }
 
+  // Previews & Offline Slip Downloads
+  const handleDownloadReceiptOffline = (job: any) => {
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      toast.error('Pop-up blocked. Please allow pop-ups to print the receipt.')
+      return
+    }
+
+    const hours = getUsageHours(job)
+    const rate = job.rateAmount || 0
+    const rentalCharge = rate * hours
+    const transportCharge = (job.pickupTransportCharge || 0) + (job.returnTransportCharge || 0)
+    const grossAmount = rentalCharge + transportCharge
+
+    const htmlContent = `
+      <html>
+        <head>
+          <title>Operational Invoice - ${job.assetCode}</title>
+          <style>
+            body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 40px; color: #1e293b; max-width: 600px; margin: auto; }
+            .header { text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
+            .logo { font-size: 24px; font-weight: 800; color: #059669; margin-bottom: 5px; }
+            .title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: bold; }
+            .section { margin-bottom: 25px; }
+            .section-title { font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: 800; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 10px; }
+            .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+            .row.total { font-size: 18px; font-weight: 800; border-top: 1px dashed #cbd5e1; padding-top: 12px; margin-top: 15px; }
+            .value { font-weight: bold; text-align: right; }
+            .badge { display: inline-block; padding: 4px 8px; font-size: 10px; font-weight: bold; background: #fffbeb; border-radius: 4px; color: #b45309; border: 1px solid #fde68a; }
+            .footer { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+            @media print {
+              body { padding: 20px; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">CERMS</div>
+            <div class="title">Operator Billing Slip (Offline)</div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">Rental Information</div>
+            <div class="row"><span>Customer Name</span><span class="value">${job.customerName}</span></div>
+            <div class="row"><span>Equipment Asset</span><span class="value">${job.assetName} (${job.assetCode})</span></div>
+            <div class="row"><span>Status</span><span class="value"><span class="badge">Offline Sync Pending</span></span></div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Metrics Logged</div>
+            <div class="row"><span>Start Odometer</span><span class="value">${job.startMeterReading} Hrs</span></div>
+            <div class="row"><span>End Odometer</span><span class="value">${job.endMeterReading} Hrs</span></div>
+            <div class="row"><span>Total Hours Operated</span><span class="value">${hours} Hrs</span></div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Billing Breakdown</div>
+            <div class="row"><span>Cycle Rate</span><span class="value">₹${rate.toFixed(2)}/Hr</span></div>
+            <div class="row"><span>Rental Cost</span><span class="value">₹${rentalCharge.toFixed(2)}</span></div>
+            <div class="row"><span>Logistical Transport Fee</span><span class="value">₹${transportCharge.toFixed(2)}</span></div>
+            <div class="row total"><span>Total Amount Due</span><span class="value" style="color: #059669;">₹${grossAmount.toFixed(2)}</span></div>
+          </div>
+
+          <div class="footer">
+            <p>Generated offline by CERMS Operator Portal on ${new Date().toLocaleString()}</p>
+            <button onclick="window.print()" class="no-print" style="margin-top: 15px; padding: 10px 20px; background: #059669; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">Print / Save as PDF</button>
+          </div>
+        </body>
+      </html>
+    `
+
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+  }
+
+  const handleShareReceipt = async (job: any) => {
+    const hours = getUsageHours(job)
+    const rate = job.rateAmount || 0
+    const rentalCharge = rate * hours
+    const transportCharge = (job.pickupTransportCharge || 0) + (job.returnTransportCharge || 0)
+    const grossAmount = rentalCharge + transportCharge
+
+    const shareText = `*CERMS Operator Invoice Slip (Offline)*\n` +
+      `----------------------------------\n` +
+      `*Client:* ${job.customerName}\n` +
+      `*Equipment:* ${job.assetName} (${job.assetCode})\n` +
+      `*Hours Worked:* ${hours} Hrs\n` +
+      `*Rate:* ₹${rate.toFixed(2)}/Hr\n` +
+      `*Rental Charge:* ₹${rentalCharge.toFixed(2)}\n` +
+      `*Logistics Charge:* ₹${transportCharge.toFixed(2)}\n` +
+      `----------------------------------\n` +
+      `*Total Amount:* ₹${grossAmount.toFixed(2)}\n` +
+      `----------------------------------\n` +
+      `Generated offline by CERMS Operator Portal.`
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Invoice - ${job.assetCode}`,
+          text: shareText
+        })
+        toast.success('Shared successfully!')
+      } catch (error) {
+        console.error('Sharing failed:', error)
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareText)
+        toast.success('Invoice text copied to clipboard! You can now paste and share it.')
+      } catch (e) {
+        toast.error('Sharing not supported on this browser.')
+      }
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -467,37 +625,52 @@ export function OperatorDashboardPage() {
             )}
 
             {job.assignmentStatus === 4 && (
-              <div className="flex gap-2 w-full">
-                <Button 
-                  variant="outline"
-                  className="flex-1 h-11 text-xs font-bold rounded-xl border-slate-200 text-slate-700 dark:border-slate-800 dark:text-slate-300 flex items-center justify-center gap-1.5"
-                  onClick={async () => {
-                    if (!job.invoiceId) {
-                      toast.error('Invoice details not found.')
-                      return
-                    }
-                    try {
-                      toast.loading('Downloading invoice PDF...', { id: 'pdf-download' })
-                      const blob = await invoiceService.getPdf(job.invoiceId)
-                      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
-                      const link = document.createElement('a')
-                      link.href = url
-                      link.setAttribute('download', `Invoice-${job.assetCode || job.id}.pdf`)
-                      document.body.appendChild(link)
-                      link.click()
-                      document.body.removeChild(link)
-                      toast.success('Invoice PDF downloaded successfully!', { id: 'pdf-download' })
-                    } catch (e) {
-                      console.error("PDF download error:", e)
-                      toast.error('Failed to download invoice PDF.', { id: 'pdf-download' })
-                    }
-                  }}
-                >
-                  <Download className="size-4" /> Get PDF Invoice
-                </Button>
-                <Badge className="bg-slate-100 hover:bg-slate-100 text-slate-700 border-none font-bold text-xs rounded-xl px-4 flex items-center">
-                  Closed
-                </Badge>
+              <div className="flex flex-col gap-2.5 w-full">
+                <div className="flex gap-2 w-full">
+                  <Button 
+                    variant="outline"
+                    className="flex-1 h-11 text-xs font-bold rounded-xl border-slate-200 text-slate-700 dark:border-slate-800 dark:text-slate-300 flex items-center justify-center gap-1.5"
+                    onClick={async () => {
+                      if (!isOnline || String(job.invoiceId).startsWith('offline-inv')) {
+                        handleDownloadReceiptOffline(job)
+                        return
+                      }
+                      if (!job.invoiceId) {
+                        toast.error('Invoice details not found.')
+                        return
+                      }
+                      try {
+                        toast.loading('Downloading invoice PDF...', { id: 'pdf-download' })
+                        const blob = await invoiceService.getPdf(job.invoiceId)
+                        const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+                        const link = document.createElement('a')
+                        link.href = url
+                        link.setAttribute('download', `Invoice-${job.assetCode || job.id}.pdf`)
+                        document.body.appendChild(link)
+                        link.click()
+                        document.body.removeChild(link)
+                        toast.success('Invoice PDF downloaded successfully!', { id: 'pdf-download' })
+                      } catch (e) {
+                        console.error("PDF download error:", e)
+                        toast.error('Failed to download invoice PDF.', { id: 'pdf-download' })
+                      }
+                    }}
+                  >
+                    <Download className="size-4" /> Get PDF Invoice
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-11 px-4 text-xs font-bold rounded-xl border-emerald-250 text-emerald-600 dark:border-emerald-800 dark:text-emerald-450 hover:bg-emerald-50/50 flex items-center justify-center gap-1.5"
+                    onClick={() => handleShareReceipt(job)}
+                  >
+                    <Smartphone className="size-4 animate-pulse" /> Share
+                  </Button>
+                </div>
+                <div className="w-full text-center">
+                  <Badge className="bg-slate-100 hover:bg-slate-100 text-slate-700 border-none font-bold text-[10px] uppercase rounded-lg px-2.5 py-0.5">
+                    {String(job.invoiceId).startsWith('offline-inv') ? "Offline Sync Pending" : "Closed"}
+                  </Badge>
+                </div>
               </div>
             )}
           </div>

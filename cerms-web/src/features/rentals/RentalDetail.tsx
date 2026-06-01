@@ -64,6 +64,7 @@ export function RentalDetail() {
   const { data: operators, isLoading: isLoadingOperators } = useOperators()
   const assignOperatorMutation = useAssignOperator()
   const [selectedOperatorId, setSelectedOperatorId] = React.useState("")
+  const [showAssignForm, setShowAssignForm] = React.useState(false)
 
   const [startOdometer, setStartOdometer] = React.useState("")
   const [showStartForm, setShowStartForm] = React.useState(false)
@@ -147,6 +148,7 @@ export function RentalDetail() {
       operatorId: selectedOperatorId
     })
     setSelectedOperatorId("")
+    setShowAssignForm(false)
     refetch()
   }
 
@@ -186,7 +188,7 @@ export function RentalDetail() {
   const timelineSteps = [
     { label: "Draft", statusVal: 0 },
     { label: "Confirmed", statusVal: 1 },
-    { label: "Dispatched", statusVal: 2 },
+    { label: "Assign Operator", statusVal: 2 },
     { label: "Active", statusVal: 3 },
     { label: "Completed", statusVal: 4 },
     { label: "Closed", statusVal: 5 }
@@ -332,21 +334,94 @@ export function RentalDetail() {
               {/* Confirmed Status (1) */}
               {statusVal === 1 && (
                 <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
-                  <p className="text-xs text-muted-foreground">The agreement is Confirmed. Coordinate Wide-Load Flatbed dispatch logistics to send the asset to the site.</p>
-                  
-                  {canEditRental ? (
+                  {rental.assignedOperatorName && !showAssignForm ? (
                     <>
-                      <Button className="w-full h-10 font-semibold" onClick={handleDispatch} disabled={isAnyLoading}>
-                        {dispatchRental.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Truck className="mr-2 size-4" />}
-                        Dispatch Equipment
-                      </Button>
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-500/5 p-4 text-xs space-y-2.5 animate-in slide-in-from-top-2">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="font-bold text-emerald-800 dark:text-emerald-400">Operator Assigned Successfully</span>
+                        </div>
+                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                          <strong>{rental.assignedOperatorName}</strong> ({rental.assignedOperatorCode || "N/A"}) is assigned to this equipment lease. Coordinate the transport/dispatch now.
+                        </p>
+                        {canEditRental && (
+                          <button
+                            type="button"
+                            onClick={() => setShowAssignForm(true)}
+                            className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 underline cursor-pointer"
+                          >
+                            Change/Reassign Operator
+                          </button>
+                        )}
+                      </div>
 
-                      <Button variant="outline" className="w-full text-rose-600 border-rose-200 hover:bg-rose-50" onClick={handleCancel} disabled={isAnyLoading}>
-                        Cancel Agreement
-                      </Button>
+                      {canEditRental ? (
+                        <Button 
+                          className="w-full h-10 font-bold bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center gap-1.5 shadow-sm"
+                          onClick={handleDispatch}
+                          disabled={isAnyLoading}
+                        >
+                          {dispatchRental.isPending ? <Loader2 className="size-4 animate-spin" /> : <Truck className="size-4" />}
+                          Dispatch Equipment
+                        </Button>
+                      ) : (
+                        <p className="text-xs text-amber-600 font-semibold">You do not have permission to dispatch this equipment.</p>
+                      )}
                     </>
                   ) : (
-                    <p className="text-xs text-amber-600 font-semibold">You do not have permission to dispatch or cancel this booking.</p>
+                    <>
+                      <p className="text-xs text-muted-foreground">The booking is Confirmed. Please select and assign an active operator to dispatch the equipment.</p>
+                      
+                      {canEditRental ? (
+                        <form onSubmit={handleAssignOperator} className="space-y-3 rounded-xl border p-4 bg-muted/20 animate-in slide-in-from-top-2">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-700 dark:text-slate-350">Select Active Operator</label>
+                            <select
+                              value={selectedOperatorId}
+                              onChange={(e) => setSelectedOperatorId(e.target.value)}
+                              disabled={isLoadingOperators || assignOperatorMutation.isPending}
+                              className="w-full h-10 rounded-xl border border-slate-200 bg-background/50 pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                              required
+                            >
+                              <option value="">-- Select Operator --</option>
+                              {operators?.filter((op: any) => op.isActive).map((op: any) => (
+                                <option key={op.id} value={op.id}>
+                                  {op.fullName} ({op.operatorCode})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              type="submit" 
+                              disabled={!selectedOperatorId || assignOperatorMutation.isPending}
+                              className="flex-1 h-10 font-bold bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center gap-1.5"
+                            >
+                              {assignOperatorMutation.isPending && <Loader2 className="size-4 animate-spin" />}
+                              Assign & Dispatch
+                            </Button>
+                            {rental.assignedOperatorName && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setShowAssignForm(false)}
+                                disabled={isAnyLoading}
+                              >
+                                Cancel
+                              </Button>
+                            )}
+                          </div>
+                        </form>
+                      ) : (
+                        <p className="text-xs text-amber-600 font-semibold">You do not have permission to assign operators.</p>
+                      )}
+                    </>
+                  )}
+
+                  {canEditRental && (
+                    <Button variant="outline" className="w-full text-rose-600 border-rose-200 hover:bg-rose-50 mt-2" onClick={handleCancel} disabled={isAnyLoading}>
+                      Cancel Agreement
+                    </Button>
                   )}
                 </div>
               )}
@@ -559,11 +634,11 @@ export function RentalDetail() {
               </CardContent>
             </Card>
 
-            {/* Operator Assignment Card */}
+            {/* Operator Information Card */}
             <Card className="bg-card/60 backdrop-blur-sm border-none shadow-sm sm:col-span-2 overflow-hidden">
               <CardHeader className="pb-3 border-b border-border/50 bg-slate-50/50 dark:bg-slate-900/50">
                 <CardTitle className="text-base font-bold flex items-center gap-2 text-slate-800 dark:text-slate-200">
-                  <User className="size-4 text-emerald-600 dark:text-emerald-450" /> Operator Assignment
+                  <User className="size-4 text-emerald-600 dark:text-emerald-450" /> Operator Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4 space-y-4 text-sm">
@@ -581,7 +656,7 @@ export function RentalDetail() {
                     </div>
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                       {statusVal >= 4 ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-805 border border-slate-200 dark:border-slate-700">
+                        <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-850 border border-slate-200 dark:border-slate-700">
                           ● Completed
                         </span>
                       ) : (
@@ -596,46 +671,10 @@ export function RentalDetail() {
                     <div className="rounded-xl border border-dashed border-amber-250 bg-amber-500/5 p-4 text-xs flex gap-2">
                       <AlertCircle className="size-4 text-amber-500 shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-bold text-amber-850 dark:text-amber-450">No Operator Assigned</span>
-                        <p className="text-slate-500 mt-1">An operator is required to accept field dispatches, log odometer readings, and coordinate return/handover logistics via the operator app portal.</p>
+                        <span className="font-bold text-amber-850 dark:text-amber-450">Awaiting Operator Assignment</span>
+                        <p className="text-slate-500 mt-1">Please select and assign an operator from the <strong>Contract Lifecycle Actions</strong> panel in the left column to proceed with equipment dispatch.</p>
                       </div>
                     </div>
-                    
-                    {/* Select Form */}
-                    {statusVal < 4 ? (
-                      canEditRental ? (
-                        <form onSubmit={handleAssignOperator} className="flex flex-col sm:flex-row gap-3 items-end sm:items-center">
-                          <div className="flex-1 w-full space-y-1.5">
-                            <label className="text-xs font-bold text-muted-foreground">Select Active Operator</label>
-                            <select
-                              value={selectedOperatorId}
-                              onChange={(e) => setSelectedOperatorId(e.target.value)}
-                              disabled={isLoadingOperators || assignOperatorMutation.isPending}
-                              className="w-full h-10 rounded-xl border border-slate-200 bg-background/50 pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                            >
-                              <option value="">-- Select Operator --</option>
-                              {operators?.filter((op: any) => op.isActive).map((op: any) => (
-                                <option key={op.id} value={op.id}>
-                                  {op.fullName} ({op.operatorCode})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <Button 
-                            type="submit" 
-                            disabled={!selectedOperatorId || assignOperatorMutation.isPending}
-                            className="h-10 px-5 font-bold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 w-full sm:w-auto mt-2 sm:mt-0 flex items-center justify-center gap-1.5"
-                          >
-                            {assignOperatorMutation.isPending && <Loader2 className="size-4 animate-spin" />}
-                            Assign to Contract
-                          </Button>
-                        </form>
-                      ) : (
-                        <p className="text-xs text-amber-600 font-semibold">You do not have permission to assign operators.</p>
-                      )
-                    ) : (
-                      <p className="text-xs text-muted-foreground italic">Operator assignment is closed for this completed/cancelled booking.</p>
-                    )}
                   </div>
                 )}
               </CardContent>
